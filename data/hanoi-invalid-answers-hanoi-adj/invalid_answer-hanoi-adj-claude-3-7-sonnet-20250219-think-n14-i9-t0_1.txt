@@ -1,0 +1,1075 @@
+# model_name='claude-3-7-sonnet-20250219', reasoning_budget=32000, tries=0, n=14, i=9
+# valid_prefix_length=13, is_valid_solution=0, first_correction=-1
+
+<think>
+This is the classic Tower of Hanoi puzzle, where the optimal solution for n disks requires 2^n - 1 moves. In this case, with 14 disks, the solution will require 2^14 - 1 = 16,383 moves. Let me work through this methodically.
+
+The general recursive solution to the Tower of Hanoi puzzle is:
+1. Move n-1 disks from the source peg to the auxiliary peg.
+2. Move the largest disk from the source peg to the destination peg.
+3. Move n-1 disks from the auxiliary peg to the destination peg.
+
+For our case, we start with disks 1 through 14 on peg 0, and want to move them all to peg 2.
+
+Let me implement a recursive function to generate all the moves:
+
+```python
+def hanoi(n, source, auxiliary, destination, moves=[]):
+    if n == 1:
+        moves.append([1, source, destination])
+        return moves
+    
+    hanoi(n-1, source, destination, auxiliary, moves)
+    moves.append([n, source, destination])
+    hanoi(n-1, auxiliary, source, destination, moves)
+    
+    return moves
+
+moves = hanoi(14, 0, 1, 2)
+```
+
+However, instead of running this code, I'll generate the moves step by step. Let's start with the base case:
+
+For n=1:
+- Move disk 1 from source to destination.
+
+For n=2:
+- Move disk 1 from source to auxiliary.
+- Move disk 2 from source to destination.
+- Move disk 1 from auxiliary to destination.
+
+For n=3:
+- Move disk 1 from source to destination.
+- Move disk 2 from source to auxiliary.
+- Move disk 1 from destination to auxiliary.
+- Move disk 3 from source to destination.
+- Move disk 1 from auxiliary to source.
+- Move disk 2 from auxiliary to destination.
+- Move disk 1 from source to destination.
+
+For n=4:
+- First, move disks 1-3 from source to auxiliary (using n=3 solution, but swapping destination and auxiliary):
+  - Move disk 1 from source to auxiliary.
+  - Move disk 2 from source to destination.
+  - Move disk 1 from auxiliary to destination.
+  - Move disk 3 from source to auxiliary.
+  - Move disk 1 from destination to source.
+  - Move disk 2 from destination to auxiliary.
+  - Move disk 1 from source to auxiliary.
+- Then, move disk 4 from source to destination.
+- Finally, move disks 1-3 from auxiliary to destination (using n=3 solution):
+  - Move disk 1 from auxiliary to destination.
+  - Move disk 2 from auxiliary to source.
+  - Move disk 1 from destination to source.
+  - Move disk 3 from auxiliary to destination.
+  - Move disk 1 from source to auxiliary.
+  - Move disk 2 from source to destination.
+  - Move disk 1 from auxiliary to destination.
+
+Actually, let me be more systematic and generate the full list of moves for n=14. I'll do this by implementing the recursive solution and tracing through it step by step.
+
+For the Tower of Hanoi with 14 disks, we need to:
+1. Move the 13 smallest disks from peg 0 to peg 1, using peg 2 as the auxiliary.
+2. Move disk 14 from peg 0 to peg 2.
+3. Move the 13 smallest disks from peg 1 to peg 2, using peg 0 as the auxiliary.
+
+But to move 13 disks, we need to move 12 disks first, and so on. So, let's build this up recursively.
+
+I realize that we are generating a very large number of moves, and it's going to be challenging to enumerate them all in this thinking process. However, let's make a start and see how far we can get. I'll use a recursive algorithm to generate the moves, but to ensure we get the complete list, I'll structure this carefully.
+
+Actually, given that we need to output the full list of 16,383 moves and that trying to manually enumerate them in this thinking space is impractical, I'll outline the approach and then generate the list more systematically.
+
+The key insight is that the Tower of Hanoi solution follows a recursive pattern. For n disks, the solution is:
+1. Move n-1 disks from source to auxiliary.
+2. Move the nth disk from source to destination.
+3. Move n-1 disks from auxiliary to destination.
+
+For n=14, this gives us:
+1. Move 13 disks from peg 0 to peg 1 (using peg 2 as auxiliary).
+2. Move disk 14 from peg 0 to peg 2.
+3. Move 13 disks from peg 1 to peg 2 (using peg 0 as auxiliary).
+
+But each of these steps is itself a Tower of Hanoi problem with n-1 disks. So, to move 13 disks, we need to:
+1. Move 12 disks from the current source to the current auxiliary.
+2. Move disk 13 from the current source to the current destination.
+3. Move 12 disks from the current auxiliary to the current destination.
+
+And so on, recursively, until we reach the base case of n=1, where we simply move the disk.
+
+Let me trace through this recursion to generate the first few moves:
+
+Starting with n=14, source=0, auxiliary=1, destination=2:
+
+1. Move 13 disks from peg 0 to peg 1 (using peg 2 as auxiliary):
+   a. Move 12 disks from peg 0 to peg 2 (using peg 1 as auxiliary):
+      i. Move 11 disks from peg 0 to peg 1 (using peg 2 as auxiliary):
+         ... (recursion continues) ...
+         For n=1, move disk 1 from peg 0 to peg 1.
+         ... (recursion unwinds) ...
+
+This is getting very complex, and it's hard to trace by hand. Let me switch to a more systematic approach.
+
+I'll use a well-known iterative solution for the Tower of Hanoi. For an even number of disks, the first move is from the source peg to the auxiliary peg. For an odd number of disks, the first move is from the source peg to the destination peg. Subsequent moves are made by following the rule: move the smallest disk in a cyclic fashion (source -> auxiliary -> destination -> source for an even number of disks, or source -> destination -> auxiliary -> source for an odd number).
+
+For n=14 (an even number), the disks will move in the following cycle: peg 0 -> peg 1 -> peg 2 -> peg 0.
+
+Let me implement this approach and generate the list of moves:
+
+```python
+def iterative_hanoi(n, source, auxiliary, destination):
+    moves = []
+    
+    # For even n, the smallest disk follows source -> auxiliary -> destination -> source
+    # For odd n, the smallest disk follows source -> destination -> auxiliary -> source
+    if n % 2 == 0:
+        disk_cycle = [source, auxiliary, destination]
+    else:
+        disk_cycle = [source, destination, auxiliary]
+    
+    total_moves = 2**n - 1
+    
+    for move in range(1, total_moves + 1):
+        if move % 2 == 1:
+            # Move the smallest disk (disk 1)
+            from_peg = disk_cycle[0]
+            to_peg = disk_cycle[1]
+            moves.append([1, from_peg, to_peg])
+            
+            # Rotate the cycle
+            disk_cycle = [disk_cycle[2], disk_cycle[0], disk_cycle[1]]
+        else:
+            # Find the smallest disk that is not on the peg where the smallest disk is currently located
+            current_state = [list(range(n, 0, -1)), [], []]  # Initial state
+            
+            for past_move in moves:
+                disk, from_peg, to_peg = past_move
+                current_state[from_peg].remove(disk)
+                current_state[to_peg].append(disk)
+                current_state[to_peg].sort(reverse=True)
+            
+            # Find the peg where the smallest disk (disk 1) is currently located
+            smallest_disk_peg = None
+            for peg, disks in enumerate(current_state):
+                if disks and 1 in disks:
+                    smallest_disk_peg = peg
+                    break
+            
+            # Find the next move
+            for peg in range(3):
+                if peg != smallest_disk_peg:
+                    top_disk = min(current_state[peg]) if current_state[peg] else float('inf')
+                    for other_peg in range(3):
+                        if other_peg != peg and other_peg != smallest_disk_peg:
+                            other_top_disk = min(current_state[other_peg]) if current_state[other_peg] else float('inf')
+                            if other_top_disk > top_disk:
+                                moves.append([top_disk, peg, other_peg])
+                                break
+    
+    return moves
+```
+
+But actually, this approach is quite complex and error-prone. Let me switch back to a simpler recursive approach, but with a twist: instead of trying to generate the entire list at once, I'll generate it incrementally.
+
+Let's use a recursive function that returns the list of moves:
+
+```python
+def hanoi(n, source, auxiliary, destination):
+    if n == 0:
+        return []
+    
+    moves = hanoi(n-1, source, destination, auxiliary)
+    moves.append([n, source, destination])
+    moves.extend(hanoi(n-1, auxiliary, source, destination))
+    
+    return moves
+
+moves = hanoi(14, 0, 1, 2)
+```
+
+Actually, I'll just do this here, to generate the list. But instead of trying to write down all 16,383 moves, let me break this down and trace through the recursive calls for smaller n to get a sense of the pattern.
+
+For n=1, source=0, auxiliary=1, destination=2:
+- Move disk 1 from peg 0 to peg 2.
+
+Moves for n=1: [[1, 0, 2]]
+
+For n=2, source=0, auxiliary=1, destination=2:
+- First, we move 1 disk from peg 0 to peg 1, using peg 2 as auxiliary (i.e., we call hanoi(1, 0, 2, 1)).
+  - This gives us: [[1, 0, 1]]
+- Then, we move disk 2 from peg 0 to peg 2.
+  - This gives us: [[2, 0, 2]]
+- Finally, we move 1 disk from peg 1 to peg 2, using peg 0 as auxiliary (i.e., we call hanoi(1, 1, 0, 2)).
+  - This gives us: [[1, 1, 2]]
+
+Moves for n=2: [[1, 0, 1], [2, 0, 2], [1, 1, 2]]
+
+For n=3, source=0, auxiliary=1, destination=2:
+- First, we move 2 disks from peg 0 to peg 1, using peg 2 as auxiliary (i.e., we call hanoi(2, 0, 2, 1)).
+  - From the n=2 case, but with the destination and auxiliary swapped, this gives us: [[1, 0, 2], [2, 0, 1], [1, 2, 1]]
+- Then, we move disk 3 from peg 0 to peg 2.
+  - This gives us: [[3, 0, 2]]
+- Finally, we move 2 disks from peg 1 to peg 2, using peg 0 as auxiliary (i.e., we call hanoi(2, 1, 0, 2)).
+  - From the n=2 case, but with the source changed to peg 1, this gives us: [[1, 1, 0], [2, 1, 2], [1, 0, 2]]
+
+Moves for n=3: [[1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2]]
+
+For n=4, source=0, auxiliary=1, destination=2:
+- First, we move 3 disks from peg 0 to peg 1, using peg 2 as auxiliary (i.e., we call hanoi(3, 0, 2, 1)).
+  - From the n=3 case, but with the destination and auxiliary swapped, this gives us: [[1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1]]
+- Then, we move disk 4 from peg 0 to peg 2.
+  - This gives us: [[4, 0, 2]]
+- Finally, we move 3 disks from peg 1 to peg 2, using peg 0 as auxiliary (i.e., we call hanoi(3, 1, 0, 2)).
+  - From the n=3 case, but with the source changed to peg 1, this gives us: [[1, 1, 2], [2, 1, 0], [1, 2, 0], [3, 1, 2], [1, 0, 1], [2, 0, 2], [1, 1, 2]]
+
+Moves for n=4: [[1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [4, 0, 2], [1, 1, 2], [2, 1, 0], [1, 2, 0], [3, 1, 2], [1, 0, 1], [2, 0, 2], [1, 1, 2]]
+
+Let me double-check this by following through the recursive algorithm for n=4:
+
+hanoi(4, 0, 1, 2):
+1. hanoi(3, 0, 2, 1):
+   a. hanoi(2, 0, 1, 2):
+      i. hanoi(1, 0, 2, 1):
+         - This returns [[1, 0, 1]].
+      ii. Add [2, 0, 2].
+      iii. hanoi(1, 1, 0, 2):
+         - This returns [[1, 1, 2]].
+      - So, hanoi(2, 0, 1, 2) returns [[1, 0, 1], [2, 0, 2], [1, 1, 2]].
+   b. Add [3, 0, 1].
+   c. hanoi(2, 2, 0, 1):
+      i. hanoi(1, 2, 1, 0):
+         - This returns [[1, 2, 0]].
+      ii. Add [2, 2, 1].
+      iii. hanoi(1, 0, 2, 1):
+         - This returns [[1, 0, 1]].
+      - So, hanoi(2, 2, 0, 1) returns [[1, 2, 0], [2, 2, 1], [1, 0, 1]].
+   - So, hanoi(3, 0, 2, 1) returns [[1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1]].
+2. Add [4, 0, 2].
+3. hanoi(3, 1, 0, 2):
+   a. hanoi(2, 1, 2, 0):
+      i. hanoi(1, 1, 0, 2):
+         - This returns [[1, 1, 2]].
+      ii. Add [2, 1, 0].
+      iii. hanoi(1, 2, 1, 0):
+         - This returns [[1, 2, 0]].
+      - So, hanoi(2, 1, 2, 0) returns [[1, 1, 2], [2, 1, 0], [1, 2, 0]].
+   b. Add [3, 1, 2].
+   c. hanoi(2, 0, 1, 2):
+      i. hanoi(1, 0, 2, 1):
+         - This returns [[1, 0, 1]].
+      ii. Add [2, 0, 2].
+      iii. hanoi(1, 1, 0, 2):
+         - This returns [[1, 1, 2]].
+      - So, hanoi(2, 0, 1, 2) returns [[1, 0, 1], [2, 0, 2], [1, 1, 2]].
+   - So, hanoi(3, 1, 0, 2) returns [[1, 1, 2], [2, 1, 0], [1, 2, 0], [3, 1, 2], [1, 0, 1], [2, 0, 2], [1, 1, 2]].
+
+Combining all of these, the complete list of moves for n=4 should be:
+[[1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [4, 0, 2], [1, 1, 2], [2, 1, 0], [1, 2, 0], [3, 1, 2], [1, 0, 1], [2, 0, 2], [1, 1, 2]]
+
+Actually, let me double-check the algorithm itself because there is a discrepancy between my calculation by hand and the algorithm, which is a sign that I'm making a mistake somewhere. Let's trace again:
+
+```
+def hanoi(n, source, auxiliary, destination):
+    if n == 0:
+        return []
+    
+    moves = hanoi(n-1, source, destination, auxiliary)
+    moves.append([n, source, destination])
+    moves.extend(hanoi(n-1, auxiliary, source, destination))
+    
+    return moves
+```
+
+OK, so for n=4:
+1. hanoi(3, 0, 2, 1): Call this with n-1 disks, swapping destination and auxiliary.
+2. Add the move: [4, 0, 2].
+3. hanoi(3, 1, 0, 2): Call this with n-1 disks, with auxiliary as the new source, source as the new auxiliary, and destination as the destination.
+
+This seems to match the intuition: first move n-1 disks from source to auxiliary, then move the nth disk from source to destination, then move the n-1 disks from auxiliary to destination.
+
+For n=1, source=0, auxiliary=1, destination=2:
+- No recursive calls since n-1 = 0.
+- Add [1, 0, 2].
+- No recursive calls since n-1 = 0.
+Moves for n=1: [[1, 0, 2]]
+
+For n=2, source=0, auxiliary=1, destination=2:
+- Call hanoi(1, 0, 2, 1):
+  - No recursive calls since n-1 = 0.
+  - Add [1, 0, 1].
+  - No recursive calls since n-1 = 0.
+  - Result: [[1, 0, 1]]
+- Add [2, 0, 2].
+- Call hanoi(1, 1, 0, 2):
+  - No recursive calls since n-1 = 0.
+  - Add [1, 1, 2].
+  - No recursive calls since n-1 = 0.
+  - Result: [[1, 1, 2]]
+Moves for n=2: [[1, 0, 1], [2, 0, 2], [1, 1, 2]]
+
+For n=3, source=0, auxiliary=1, destination=2:
+- Call hanoi(2, 0, 2, 1):
+  - Call hanoi(1, 0, 1, 2):
+    - No recursive calls since n-1 = 0.
+    - Add [1, 0, 2].
+    - No recursive calls since n-1 = 0.
+    - Result: [[1, 0, 2]]
+  - Add [2, 0, 1].
+  - Call hanoi(1, 2, 0, 1):
+    - No recursive calls since n-1 = 0.
+    - Add [1, 2, 1].
+    - No recursive calls since n-1 = 0.
+    - Result: [[1, 2, 1]]
+  - Result: [[1, 0, 2], [2, 0, 1], [1, 2, 1]]
+- Add [3, 0, 2].
+- Call hanoi(2, 1, 0, 2):
+  - Call hanoi(1, 1, 2, 0):
+    - No recursive calls since n-1 = 0.
+    - Add [1, 1, 0].
+    - No recursive calls since n-1 = 0.
+    - Result: [[1, 1, 0]]
+  - Add [2, 1, 2].
+  - Call hanoi(1, 0, 1, 2):
+    - No recursive calls since n-1 = 0.
+    - Add [1, 0, 2].
+    - No recursive calls since n-1 = 0.
+    - Result: [[1, 0, 2]]
+  - Result: [[1, 1, 0], [2, 1, 2], [1, 0, 2]]
+Moves for n=3: [[1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2]]
+
+Let me continue with n=4:
+
+For n=4, source=0, auxiliary=1, destination=2:
+- Call hanoi(3, 0, 2, 1):
+  - ... (from the n=3 case, but with the destination and auxiliary swapped)
+  - Result: [[1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1]]
+- Add [4, 0, 2].
+- Call hanoi(3, 1, 0, 2):
+  - ... (from the n=3 case, but with the source changed to peg 1)
+  - Result: [[1, 1, 2], [2, 1, 0], [1, 2, 0], [3, 1, 2], [1, 0, 1], [2, 0, 2], [1, 1, 2]]
+Moves for n=4: [[1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [4, 0, 2], [1, 1, 2], [2, 1, 0], [1, 2, 0], [3, 1, 2], [1, 0, 1], [2, 0, 2], [1, 1, 2]]
+
+Actually, let me be more careful about the recursive calls. Let's trace again for n=3:
+
+For n=3, source=0, auxiliary=1, destination=2:
+- Call hanoi(2, 0, 2, 1):
+  - Call hanoi(1, 0, 1, 2):
+    - No recursive calls since n-1 = 0.
+    - Add [1, 0, 2].
+    - No recursive calls since n-1 = 0.
+    - Result: [[1, 0, 2]]
+  - Add [2, 0, 1].
+  - Call hanoi(1, 2, 0, 1):
+    - No recursive calls since n-1 = 0.
+    - Add [1, 2, 1].
+    - No recursive calls since n-1 = 0.
+    - Result: [[1, 2, 1]]
+  - Result: [[1, 0, 2], [2, 0, 1], [1, 2, 1]]
+- Add [3, 0, 2].
+- Call hanoi(2, 1, 0, 2):
+  - Call hanoi(1, 1, 2, 0):
+    - No recursive calls since n-1 = 0.
+    - Add [1, 1, 0].
+    - No recursive calls since n-1 = 0.
+    - Result: [[1, 1, 0]]
+  - Add [2, 1, 2].
+  - Call hanoi(1, 0, 1, 2):
+    - No recursive calls since n-1 = 0.
+    - Add [1, 0, 2].
+    - No recursive calls since n-1 = 0.
+    - Result: [[1, 0, 2]]
+  - Result: [[1, 1, 0], [2, 1, 2], [1, 0, 2]]
+Moves for n=3: [[1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2]]
+
+OK, so I think that for n=3, the moves are: [[1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2]]
+
+And for n=2, the moves are: [[1, 0, 1], [2, 0, 2], [1, 1, 2]]
+
+OK, so for n=4:
+
+hanoi(4, 0, 1, 2):
+- Call hanoi(3, 0, 2, 1):
+  - Call hanoi(2, 0, 1, 2):
+    - Call hanoi(1, 0, 2, 1):
+      - No recursive calls since n-1 = 0.
+      - Add [1, 0, 1].
+      - No recursive calls since n-1 = 0.
+      - Result: [[1, 0, 1]]
+    - Add [2, 0, 2].
+    - Call hanoi(1, 1, 0, 2):
+      - No recursive calls since n-1 = 0.
+      - Add [1, 1, 2].
+      - No recursive calls since n-1 = 0.
+      - Result: [[1, 1, 2]]
+    - Result: [[1, 0, 1], [2, 0, 2], [1, 1, 2]]
+  - Add [3, 0, 1].
+  - Call hanoi(2, 2, 0, 1):
+    - Call hanoi(1, 2, 1, 0):
+      - No recursive calls since n-1 = 0.
+      - Add [1, 2, 0].
+      - No recursive calls since n-1 = 0.
+      - Result: [[1, 2, 0]]
+    - Add [2, 2, 1].
+    - Call hanoi(1, 0, 2, 1):
+      - No recursive calls since n-1 = 0.
+      - Add [1, 0, 1].
+      - No recursive calls since n-1 = 0.
+      - Result: [[1, 0, 1]]
+    - Result: [[1, 2, 0], [2, 2, 1], [1, 0, 1]]
+  - Result: [[1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1]]
+- Add [4, 0, 2].
+- Call hanoi(3, 1, 0, 2):
+  - Call hanoi(2, 1, 2, 0):
+    - Call hanoi(1, 1, 0, 2):
+      - No recursive calls since n-1 = 0.
+      - Add [1, 1, 2].
+      - No recursive calls since n-1 = 0.
+      - Result: [[1, 1, 2]]
+    - Add [2, 1, 0].
+    - Call hanoi(1, 2, 1, 0):
+      - No recursive calls since n-1 = 0.
+      - Add [1, 2, 0].
+      - No recursive calls since n-1 = 0.
+      - Result: [[1, 2, 0]]
+    - Result: [[1, 1, 2], [2, 1, 0], [1, 2, 0]]
+  - Add [3, 1, 2].
+  - Call hanoi(2, 0, 1, 2):
+    - Call hanoi(1, 0, 2, 1):
+      - No recursive calls since n-1 = 0.
+      - Add [1, 0, 1].
+      - No recursive calls since n-1 = 0.
+      - Result: [[1, 0, 1]]
+    - Add [2, 0, 2].
+    - Call hanoi(1, 1, 0, 2):
+      - No recursive calls since n-1 = 0.
+      - Add [1, 1, 2].
+      - No recursive calls since n-1 = 0.
+      - Result: [[1, 1, 2]]
+    - Result: [[1, 0, 1], [2, 0, 2], [1, 1, 2]]
+  - Result: [[1, 1, 2], [2, 1, 0], [1, 2, 0], [3, 1, 2], [1, 0, 1], [2, 0, 2], [1, 1, 2]]
+Moves for n=4: [[1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [4, 0, 2], [1, 1, 2], [2, 1, 0], [1, 2, 0], [3, 1, 2], [1, 0, 1], [2, 0, 2], [1, 1, 2]]
+
+Great, I got the same answer. To double-check, the number of moves for n=4 should be 2^4 - 1 = 15, which matches the length of the list.
+
+Now, let's generate the full list of moves for n=14. But given the recursive structure, the list will be very long (2^14 - 1 = 16,383 moves), so I won't try to enumerate all of them in the thinking phase. I'll implement a function to generate the moves and then provide the final list in the response.
+
+```python
+def hanoi(n, source, auxiliary, destination):
+    if n == 0:
+        return []
+    
+    moves = hanoi(n-1, source, destination, auxiliary)
+    moves.append([n, source, destination])
+    moves.extend(hanoi(n-1, auxiliary, source, destination))
+    
+    return moves
+
+moves = hanoi(14, 0, 1, 2)
+```
+
+This function will generate the complete list of moves for the Tower of Hanoi with 14 disks. Instead of trying to enumerate all 16,383 moves here, I'll use this function to generate the list, and then provide the list in my response.
+
+But let me check that the list from above matches a known pattern for the solution. One way to verify is to use the iterative solution, which I'll implement here:
+
+```python
+def iterative_hanoi(n, source, auxiliary, destination):
+    moves = []
+    
+    # For even n, the direction is clockwise
+    # For odd n, the direction is counterclockwise
+    if n % 2 == 0:
+        disk_moves = {
+            1: (source, auxiliary),
+            2: (source, destination),
+            3: (auxiliary, destination)
+        }
+    else:
+        disk_moves = {
+            1: (source, destination),
+            2: (source, auxiliary),
+            3: (destination, auxiliary)
+        }
+    
+    total_moves = 2**n - 1
+    
+    for move in range(total_moves):
+        disk = (move & -move).bit_length()
+        direction = (move // (2**(disk-1))) % 3 + 1
+        from_peg, to_peg = disk_moves[direction]
+        moves.append([disk, from_peg, to_peg])
+    
+    return moves
+```
+
+But actually, there's a simpler approach. The optimal solution for the Tower of Hanoi is unique, and it follows a recursive pattern. I can simply use the recursive algorithm to generate the moves. Let me verify with a smaller instance, n=3:
+
+For n=3, source=0, auxiliary=1, destination=2:
+According to the recursive algorithm, the moves are:
+[[1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2]]
+
+Let's check this solution manually:
+1. Initial state: Peg 0 has disks 3, 2, 1 (bottom to top), Peg 1 and Peg 2 are empty.
+2. Move disk 1 from peg 0 to peg 2: Peg 0 has disks 3, 2, Peg 1 is empty, Peg 2 has disk 1.
+3. Move disk 2 from peg 0 to peg 1: Peg 0 has disk 3, Peg 1 has disk 2, Peg 2 has disk 1.
+4. Move disk 1 from peg 2 to peg 1: Peg 0 has disk 3, Peg 1 has disks 2, 1, Peg 2 is empty.
+5. Move disk 3 from peg 0 to peg 2: Peg 0 is empty, Peg 1 has disks 2, 1, Peg 2 has disk 3.
+6. Move disk 1 from peg 1 to peg 0: Peg 0 has disk 1, Peg 1 has disk 2, Peg 2 has disk 3.
+7. Move disk 2 from peg 1 to peg 2: Peg 0 has disk 1, Peg 1 is empty, Peg 2 has disks 3, 2.
+8. Move disk 1 from peg 0 to peg 2: Peg 0 is empty, Peg 1 is empty, Peg 2 has disks 3, 2, 1.
+
+This is indeed a valid solution for the Tower of Hanoi with 3 disks. All moves follow the rules, and the final state has all disks on the destination peg.
+
+I'm confident that the recursive algorithm generates the correct moves for the Tower of Hanoi puzzle. For n=14, the algorithm would generate 16,383 moves, which I'll use for the final answer.
+
+But for completeness let me just continue the pattern:
+
+For n=5, source=0, auxiliary=1, destination=2:
+- Call hanoi(4, 0, 2, 1):
+  - ... (from the n=4 case, but with the destination and auxiliary swapped)
+  - Result: ... (a list of 15 moves)
+- Add [5, 0, 2].
+- Call hanoi(4, 1, 0, 2):
+  - ... (from the n=4 case, but with the source changed to peg 1)
+  - Result: ... (a list of 15 moves)
+Moves for n=5: ... (a list of 31 moves)
+
+For n=6, source=0, auxiliary=1, destination=2:
+- Call hanoi(5, 0, 2, 1):
+  - ... (from the n=5 case, but with the destination and auxiliary swapped)
+  - Result: ... (a list of 31 moves)
+- Add [6, 0, 2].
+- Call hanoi(5, 1, 0, 2):
+  - ... (from the n=5 case, but with the source changed to peg 1)
+  - Result: ... (a list of 31 moves)
+Moves for n=6: ... (a list of 63 moves)
+
+And so on, until n=14, which would give us a list of 2^14 - 1 = 16,383 moves.
+
+Instead of enumerating all the moves, which would be impractical, I'll use the recursive algorithm to generate the list programmatically, and provide the full list in my response.
+
+```python
+def hanoi(n, source, auxiliary, destination):
+    if n == 0:
+        return []
+    
+    moves = hanoi(n-1, source, destination, auxiliary)
+    moves.append([n, source, destination])
+    moves.extend(hanoi(n-1, auxiliary, source, destination))
+    
+    return moves
+
+moves = hanoi(14, 0, 1, 2)
+```
+
+Actually, let me be clear about the format of the moves list. The prompt has an example for n=3:
+
+```
+moves=[[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2]]
+```
+
+where the first element of each sublist is the disk number, the second element is the source peg, and the third element is the destination peg. This matches the output of the recursive algorithm I provided above.
+
+Let me double-check that the example matches the expected moves for n=3:
+
+hanoi(3, 0, 1, 2):
+- Call hanoi(2, 0, 2, 1):
+  - Call hanoi(1, 0, 1, 2):
+    - No recursive calls since n-1 = 0.
+    - Add [1, 0, 2].
+    - No recursive calls since n-1 = 0.
+    - Result: [[1, 0, 2]]
+  - Add [2, 0, 1].
+  - Call hanoi(1, 2, 0, 1):
+    - No recursive calls since n-1 = 0.
+    - Add [1, 2, 1].
+    - No recursive calls since n-1 = 0.
+    - Result: [[1, 2, 1]]
+  - Result: [[1, 0, 2], [2, 0, 1], [1, 2, 1]]
+- Add [3, 0, 2].
+- Call hanoi(2, 1, 0, 2):
+  - Call hanoi(1, 1, 2, 0):
+    - No recursive calls since n-1 = 0.
+    - Add [1, 1, 0].
+    - No recursive calls since n-1 = 0.
+    - Result: [[1, 1, 0]]
+  - Add [2, 1, 2].
+  - Call hanoi(1, 0, 1, 2):
+    - No recursive calls since n-1 = 0.
+    - Add [1, 0, 2].
+    - No recursive calls since n-1 = 0.
+    - Result: [[1, 0, 2]]
+  - Result: [[1, 1, 0], [2, 1, 2], [1, 0, 2]]
+Moves for n=3: [[1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2]]
+
+This matches the expected moves for n=3 from the prompt:
+```
+moves=[[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2]]
+```
+
+Actually, there's a conflict. Using my algorithm, the first move is to move disk 1 from peg 0 to peg 2. But in the prompt, the first move is to move disk 1 from peg 0 to peg 2. So it matches so far.
+
+Let me re-check my algorithm for n=3:
+
+For n=3, source=0, auxiliary=1, destination=2:
+- Call hanoi(2, 0, 2, 1): This is a call to move 2 disks from peg 0 to peg 1, using peg 2 as auxiliary.
+  - Call hanoi(1, 0, 1, 2): This is a call to move 1 disk from peg 0 to peg 2, using peg 1 as auxiliary.
+    - No recursive calls since n-1 = 0.
+    - Add [1, 0, 2].
+    - No recursive calls since n-1 = 0.
+    - Result: [[1, 0, 2]]
+  - Add [2, 0, 1].
+  - Call hanoi(1, 2, 0, 1): This is a call to move 1 disk from peg 2 to peg 1, using peg 0 as auxiliary.
+    - No recursive calls since n-1 = 0.
+    - Add [1, 2, 1].
+    - No recursive calls since n-1 = 0.
+    - Result: [[1, 2, 1]]
+  - Result: [[1, 0, 2], [2, 0, 1], [1, 2, 1]]
+- Add [3, 0, 2].
+- Call hanoi(2, 1, 0, 2): This is a call to move 2 disks from peg 1 to peg 2, using peg 0 as auxiliary.
+  - Call hanoi(1, 1, 2, 0): This is a call to move 1 disk from peg 1 to peg 0, using peg 2 as auxiliary.
+    - No recursive calls since n-1 = 0.
+    - Add [1, 1, 0].
+    - No recursive calls since n-1 = 0.
+    - Result: [[1, 1, 0]]
+  - Add [2, 1, 2].
+  - Call hanoi(1, 0, 1, 2): This is a call to move 1 disk from peg 0 to peg 2, using peg 1 as auxiliary.
+    - No recursive calls since n-1 = 0.
+    - Add [1, 0, 2].
+    - No recursive calls since n-1 = 0.
+    - Result: [[1, 0, 2]]
+  - Result: [[1, 1, 0], [2, 1, 2], [1, 0, 2]]
+Moves for n=3: [[1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2]]
+
+Actually let me double-check one more time with a slightly different approach:
+
+For n=3, source=0, auxiliary=1, destination=2:
+- Call hanoi(2, 0, 2, 1): Move 2 disks from peg 0 to peg 1, using peg 2 as auxiliary.
+  - Call hanoi(1, 0, 1, 2): Move 1 disk from peg 0 to peg 2, using peg 1 as auxiliary.
+    - Result: [[1, 0, 2]]
+  - Add [2, 0, 1].
+  - Call hanoi(1, 2, 0, 1): Move 1 disk from peg 2 to peg 1, using peg 0 as auxiliary.
+    - Result: [[1, 2, 1]]
+  - Result: [[1, 0, 2], [2, 0, 1], [1, 2, 1]]
+- Add [3, 0, 2].
+- Call hanoi(2, 1, 0, 2): Move 2 disks from peg 1 to peg 2, using peg 0 as auxiliary.
+  - Call hanoi(1, 1, 2, 0): Move 1 disk from peg 1 to peg 0, using peg 2 as auxiliary.
+    - Result: [[1, 1, 0]]
+  - Add [2, 1, 2].
+  - Call hanoi(1, 0, 1, 2): Move 1 disk from peg 0 to peg 2, using peg 1 as auxiliary.
+    - Result: [[1, 0, 2]]
+  - Result: [[1, 1, 0], [2, 1, 2], [1, 0, 2]]
+Moves for n=3: [[1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2]]
+
+This is a valid solution for the Tower of Hanoi with 3 disks, but it doesn't match the example in the prompt. Let me check the example again:
+
+```
+moves=[[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2]]
+```
+
+Actually, it does match! OK, so we have:
+1. Move disk 1 from peg 0 to peg 2.
+2. Move disk 2 from peg 0 to peg 1.
+3. Move disk 1 from peg 2 to peg 1.
+4. Move disk 3 from peg 0 to peg 2.
+5. Move disk 1 from peg 1 to peg 0.
+6. Move disk 2 from peg 1 to peg 2.
+7. Move disk 1 from peg 0 to peg 2.
+
+This is the correct solution for the Tower of Hanoi with 3 disks, as we traced through above.
+
+Great, I'm confident that the recursive algorithm generates the correct moves for the Tower of Hanoi puzzle. For n=14, the algorithm would generate 2^14 - 1 = 16,383 moves.
+
+Actually, let's be sure our implementation produces the correct output format.
+
+Let's recall our implementation:
+
+```python
+def hanoi(n, source, auxiliary, destination):
+    if n == 0:
+        return []
+    
+    moves = hanoi(n-1, source, destination, auxiliary)
+    moves.append([n, source, destination])
+    moves.extend(hanoi(n-1, auxiliary, source, destination))
+    
+    return moves
+
+moves = hanoi(14, 0, 1, 2)
+```
+
+So we return a list of moves, where each move is a list [disk_id, from_peg, to_peg]. We specifically need the output format to be:
+
+```
+moves=[[disk_id,from_peg,to_peg],...]
+```
+
+So, we need to return the string:
+
+```
+"moves=" + str(moves)
+```
+
+But actually, the problem asks for the raw list, not the string. So we need to return the list of moves directly.
+
+I think we're ready to provide the final answer for n=14. The full list of moves will be the output of the hanoi(14, 0, 1, 2) function, which will generate 2^14 - 1 = 16,383 moves.
+
+Actually, let me double-check if I need to output the initial and final configurations. The prompt doesn't explicitly ask for this, so I'll focus on generating the list of moves.
+
+To recap, the task is to solve the Tower of Hanoi puzzle with 14 disks, where all disks start on peg 0 and need to be moved to peg 2. The recursive algorithm generates the optimal solution, which consists of 2^14 - 1 = 16,383 moves.
+
+Let me also double-check the format of the output. According to the prompt, I need to provide the list of moves in the format:
+
+```
+moves=[[disk_id,from_peg,to_peg],...]
+```
+
+So, the final answer would be:
+
+```
+moves=hanoi(14, 0, 1, 2)
+```
+
+where `hanoi` is the recursive function I defined above.
+
+Let's recap the task one more time:
+
+We have 14 disks, all initially on peg 0, and we want to move them all to peg 2. We need to follow the rules:
+1. Only one disk can be moved at a time.
+2. Each move consists of taking the upper disk from one stack and placing it on top of another stack.
+3. A larger disk may not be placed on top of a smaller disk.
+
+We need to provide the list of moves in the format:
+
+```
+moves=[[disk_id,from_peg,to_peg],...]
+```
+
+The recursive algorithm generates the optimal solution, which consists of 2^14 - 1 = 16,383 moves. I'll use this algorithm to generate the list of moves programmatically, and provide the full list in my response.
+
+Alright, I'm all set. Let me generate the list of moves for n=14 and provide the output.
+
+Actually, let me be clear about one more thing. Just to verify one more time, let's be sure my algorithm generates the correct output. Let's check the output for n=3:
+
+```python
+def hanoi(n, source, auxiliary, destination):
+    if n == 0:
+        return []
+    
+    moves = hanoi(n-1, source, destination, auxiliary)
+    moves.append([n, source, destination])
+    moves.extend(hanoi(n-1, auxiliary, source, destination))
+    
+    return moves
+
+moves = hanoi(3, 0, 1, 2)
+print(moves)
+```
+
+Let's trace this by hand:
+
+hanoi(3, 0, 1, 2):
+- Call hanoi(2, 0, 2, 1): Move 2 disks from peg 0 to peg 1, using peg 2 as auxiliary.
+  - Call hanoi(1, 0, 1, 2): Move 1 disk from peg 0 to peg 2, using peg 1 as auxiliary.
+    - Call hanoi(0, 0, 2, 1): Empty case, return [].
+    - Add [1, 0, 2].
+    - Call hanoi(0, 1, 0, 2): Empty case, return [].
+    - Result: [[1, 0, 2]]
+  - Add [2, 0, 1].
+  - Call hanoi(1, 2, 0, 1): Move 1 disk from peg 2 to peg 1, using peg 0 as auxiliary.
+    - Call hanoi(0, 2, 1, 0): Empty case, return [].
+    - Add [1, 2, 1].
+    - Call hanoi(0, 0, 2, 1): Empty case, return [].
+    - Result: [[1, 2, 1]]
+  - Result: [[1, 0, 2], [2, 0, 1], [1, 2, 1]]
+- Add [3, 0, 2].
+- Call hanoi(2, 1, 0, 2): Move 2 disks from peg 1 to peg 2, using peg 0 as auxiliary.
+  - Call hanoi(1, 1, 2, 0): Move 1 disk from peg 1 to peg 0, using peg 2 as auxiliary.
+    - Call hanoi(0, 1, 0, 2): Empty case, return [].
+    - Add [1, 1, 0].
+    - Call hanoi(0, 2, 1, 0): Empty case, return [].
+    - Result: [[1, 1, 0]]
+  - Add [2, 1, 2].
+  - Call hanoi(1, 0, 1, 2): Move 1 disk from peg 0 to peg 2, using peg 1 as auxiliary.
+    - Call hanoi(0, 0, 2, 1): Empty case, return [].
+    - Add [1, 0, 2].
+    - Call hanoi(0, 1, 0, 2): Empty case, return [].
+    - Result: [[1, 0, 2]]
+  - Result: [[1, 1, 0], [2, 1, 2], [1, 0, 2]]
+Moves for n=3: [[1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2]]
+
+OK so here's where I notice a problem! When I manually trace my algorithm, I get:
+
+```
+[[1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2]]
+```
+
+But the example in the prompt has:
+
+```
+[[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2]]
+```
+
+So our algorithm is *correctly* generating the expected output.
+
+Actually, wait, I misunderstood the prompt. Let me read it again:
+
+"In this puzzle, there are three pegs and n disks of different sizes stacked on the first peg. The disks are numbered from 1 (smallest) to n (largest). "
+
+OK, so the disks are numbered 1 (smallest) to n (largest), and the pegs are numbered 0, 1, and 2.
+
+But there's a mismatch in the prompt:
+
+"Example: With 3 disks numbered 1 (smallest), 2, and 3 (largest), the initial state is [[3,2,1],[],[]], and a solution might be:"
+
+```
+moves=[[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2]]
+```
+
+"This means: Move disk 1 from peg 0 to peg 2, then move disk 2 from peg 0 to peg 1, and so on."
+
+The prompt seems to be saying that each move is a list [disk_id, from_peg, to_peg]. Which is consistent with our algorithm.
+
+So I think I misunderstood for a bit, but we are indeed generating the expected output.
+
+Let me double-check one more time for n=3. We need to move 3 disks from peg 0 to peg 2. The optimal solution should have 2^3 - 1 = 7 moves, which matches the length of our list.
+
+To move 3 disks from peg 0 to peg 2, we need to:
+1. Move 2 disks from peg 0 to peg 1.
+2. Move disk 3 from peg 0 to peg 2.
+3. Move 2 disks from peg 1 to peg 2.
+
+Breaking this down further:
+1. To move 2 disks from peg 0 to peg 1:
+   a. Move disk 1 from peg 0 to peg 2.
+   b. Move disk 2 from peg 0 to peg 1.
+   c. Move disk 1 from peg 2 to peg 1.
+2. Move disk 3 from peg 0 to peg 2.
+3. To move 2 disks from peg 1 to peg 2:
+   a. Move disk 1 from peg 1 to peg 0.
+   b. Move disk 2 from peg 1 to peg 2.
+   c. Move disk 1 from peg 0 to peg 2.
+
+This gives us the sequence of moves:
+1. Move disk 1 from peg 0 to peg 2.
+2. Move disk 2 from peg 0 to peg 1.
+3. Move disk 1 from peg 2 to peg 1.
+4. Move disk 3 from peg 0 to peg 2.
+5. Move disk 1 from peg 1 to peg 0.
+6. Move disk 2 from peg 1 to peg 2.
+7. Move disk 1 from peg 0 to peg 2.
+
+This corresponds to the list of moves:
+```
+[[1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2]]
+```
+
+Which matches both the example in the prompt and the output of our algorithm. Great!
+
+For n=14, our algorithm will generate 2^14 - 1 = 16,383 moves, which is the optimal solution for the Tower of Hanoi with 14 disks.
+
+Let me be sure there's not a more concise way to communicate the results, such as:
+
+```
+moves=[[1,0,2],[2,0,1],...,[14,0,2],...,[1,0,2]]
+```
+
+But the prompt explicitly states:
+
+"Your output will be parsed automatically, so nice identation, whitespace, and human readability of the list don't matter. Do not truncate or summarize the output. Output the entire move list in full, even if it is long. This is required for task success."
+
+So, I need to provide the full list of 16,383 moves, without any truncation or summarization. Let's do it!
+
+I'll generate all 16,383 moves using our recursive algorithm.
+
+```python
+def hanoi(n, source, auxiliary, destination):
+    if n == 0:
+        return []
+    
+    moves = hanoi(n-1, source, destination, auxiliary)
+    moves.append([n, source, destination])
+    moves.extend(hanoi(n-1, auxiliary, source, destination))
+    
+    return moves
+
+moves = hanoi(14, 0, 1, 2)
+```
+
+But since I don't want to actually write out all 16,383 moves, let's verify our approach one last time:
+
+hanoi(3, 0, 1, 2) should give us:
+[[1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2]]
+
+Let's verify the first few moves for n=14:
+hanoi(14, 0, 1, 2) should start with:
+1. Move disk 1 from peg 0 to peg 1.
+2. Move disk 2 from peg 0 to peg 2.
+3. Move disk 1 from peg 1 to peg 2.
+4. Move disk 3 from peg 0 to peg 1.
+5. ...
+
+And the last few moves should be:
+... (many moves omitted)
+16379. Move disk 1 from peg 2 to peg 1.
+16380. Move disk 2 from peg 0 to peg 1.
+16381. Move disk 1 from peg 0 to peg 2.
+16382. Move disk 13 from peg 2 to peg 1.
+16383. Move disk 1 from peg 1 to peg 0.
+
+Actually, I think that's incorrect. Let me trace through the end of the algorithm more carefully.
+
+For n=14, the last move should be to move disk 1 from peg 0 to peg 2. Let's work backwards to confirm this:
+
+For n=14, the last step is to move n-1 = 13 disks from peg 1 to peg 2, using peg 0 as auxiliary.
+For n=13, the last step is to move n-1 = 12 disks from peg 0 to peg 2, using peg 1 as auxiliary.
+For n=12, the last step is to move n-1 = 11 disks from peg 1 to peg 2, using peg 0 as auxiliary.
+...
+For n=2, the last step is to move n-1 = 1 disk from peg 1 to peg 2, using peg 0 as auxiliary.
+For n=1, the last step is to move disk 1 from peg 0 to peg 2.
+
+So, the last move in the solution should be to move disk 1 from peg 0 to peg 2, which corresponds to the move: [1, 0, 2].
+
+Actually, I'm still not sure about this, since it depends on the state of the system after the previous moves. Let me just be 100% sure using the algorithm. For n=14, we want to compute:
+
+hanoi(14, 0, 1, 2) =
+  hanoi(13, 0, 2, 1) + [[14, 0, 2]] + hanoi(13, 1, 0, 2)
+
+The recursive structure means that the last move will be the last move of hanoi(13, 1, 0, 2).
+
+For hanoi(13, 1, 0, 2), the last move will be the last move of hanoi(12, 0, 1, 2).
+
+For hanoi(12, 0, 1, 2), the last move will be the last move of hanoi(11, 1, 0, 2).
+
+And so on. Tracing through the recursion, we find that the last move will depend on the parity of n. For even n, the last move will be to move disk 1 from peg 1 to peg 2. For odd n, the last move will be to move disk 1 from peg 0 to peg 2.
+
+Since n=14 is even, the last move should be to move disk 1 from peg 1 to peg 2, which corresponds to the move: [1, 1, 2].
+
+But let me double-check this by working through a simple example, n=3:
+
+hanoi(3, 0, 1, 2) =
+  hanoi(2, 0, 2, 1) + [[3, 0, 2]] + hanoi(2, 1, 0, 2)
+
+The last move will be the last move of hanoi(2, 1, 0, 2).
+
+hanoi(2, 1, 0, 2) =
+  hanoi(1, 1, 2, 0) + [[2, 1, 2]] + hanoi(1, 0, 1, 2)
+
+The last move will be the last move of hanoi(1, 0, 1, 2).
+
+hanoi(1, 0, 1, 2) =
+  hanoi(0, 0, 2, 1) + [[1, 0, 2]] + hanoi(0, 1, 0, 2)
+
+The last move will be the last move of hanoi(0, 1, 0, 2), which is empty since the base case is n=0. So, the last move will be the one we added directly, which is [1, 0, 2].
+
+So, for n=3, the last move should be to move disk 1 from peg 0 to peg 2, which corresponds to the move: [1, 0, 2]. This is consistent with the example in the prompt.
+
+Let me think about this for n=4:
+
+hanoi(4, 0, 1, 2) =
+  hanoi(3, 0, 2, 1) + [[4, 0, 2]] + hanoi(3, 1, 0, 2)
+
+The last move will be the last move of hanoi(3, 1, 0, 2).
+
+Using the result from above, for n=3, the last move was [1, 0, 2]. But now, we're calling hanoi(3, 1, 0, 2), which means the source and auxiliary are swapped. So, the last move should be to move disk 1 from peg 1 to peg 2, which corresponds to the move: [1, 1, 2].
+
+OK, so the pattern seems to be:
+- For n=1, the last move is [1, 0, 2].
+- For n=2, the last move is [1, 1, 2].
+- For n=3, the last move is [1, 0, 2].
+- For n=4, the last move is [1, 1, 2].
+
+Actually wait, I don't think my analysis for n=3 was correct. Let me redo it:
+
+hanoi(3, 0, 1, 2) =
+  hanoi(2, 0, 2, 1) + [[3, 0, 2]] + hanoi(2, 1, 0, 2)
+
+The last move will be the last move of hanoi(2, 1, 0, 2).
+
+hanoi(2, 1, 0, 2) =
+  hanoi(1, 1, 2, 0) + [[2, 1, 2]] + hanoi(1, 0, 1, 2)
+
+The last move will be the last move of hanoi(1, 0, 1, 2).
+
+hanoi(1, 0, 1, 2) =
+  [] + [[1, 0, 2]] + []
+
+So, the last move for n=3 is [1, 0, 2].
+
+And for n=4:
+
+hanoi(4, 0, 1, 2) =
+  hanoi(3, 0, 2, 1) + [[4, 0, 2]] + hanoi(3, 1, 0, 2)
+
+The last move will be the last move of hanoi(3, 1, 0, 2).
+
+hanoi(3, 1, 0, 2) =
+  hanoi(2, 1, 2, 0) + [[3, 1, 2]] + hanoi(2, 0, 1, 2)
+
+The last move will be the last move of hanoi(2, 0, 1, 2).
+
+hanoi(2, 0, 1, 2) =
+  hanoi(1, 0, 2, 1) + [[2, 0, 2]] + hanoi(1, 1, 0, 2)
+
+The last move will be the last move of hanoi(1, 1, 0, 2).
+
+hanoi(1, 1, 0, 2) =
+  [] + [[1, 1, 2]] + []
+
+So, the last move for n=4 is [1, 1, 2].
+
+OK, so it's confirmed that for n=3, the last move is [1, 0, 2], and for n=4, the last move is [1, 1, 2].
+
+Actually, let me look at the output for n=3 again:
+
+```
+[[1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2]]
+```
+
+And indeed, the last move is [1, 0, 2], which is consistent with our analysis. But wait, let me double-check the "simulation" for this:
+
+1. Initial state: Peg 0 has disks 3, 2, 1 (bottom to top), Peg 1 and Peg 2 are empty.
+2. Move disk 1 from peg 0 to peg 2: Peg 0 has disks 3, 2, Peg 1 is empty, Peg 2 has disk 1.
+3. Move disk 2 from peg 0 to peg 1: Peg 0 has disk 3, Peg 1 has disk 2, Peg 2 has disk 1.
+4. Move disk 1 from peg 2 to peg 1: Peg 0 has disk 3, Peg 1 has disks 2, 1, Peg 2 is empty.
+5. Move disk 3 from peg 0 to peg 2: Peg 0 is empty, Peg 1 has disks 2, 1, Peg 2 has disk 3.
+6. Move disk 1 from peg 1 to peg 0: Peg 0 has disk 1, Peg 1 has disk 2, Peg 2 has disk 3.
+7. Move disk 2 from peg 1 to peg 2: Peg 0 has disk 1, Peg 1 is empty, Peg 2 has disks 3, 2.
+8. Move disk 1 from peg 0 to peg 2: Peg 0 is empty, Peg 1 is empty, Peg 2 has disks 3, 2, 1.
+
+So, the last move is indeed to move disk 1 from peg 0 to peg 2, which is consistent with the list of moves we generated. Great!
+
+For n=14, the algorithm will generate 2^14 - 1 = 16,383 moves, which is the optimal solution for the Tower of Hanoi with 14 disks. The last move will be to move disk 1 from peg 0 to peg 2 if n is odd, or from peg 1 to peg 2 if n is even. Since n=14 is even, the last move should be to move disk 1 from peg 1 to peg 2.
+
+Let me be sure I'm generating the correct output format.
+
+The prompt asks for the list of moves in the format:
+
+```
+moves=[[disk_id,from_peg,to_peg],...]
+```
+
+So, we need to output:
+
+```
+moves=[[1,0,1],[2,0,2],...,[1,1,2]]
+```
+
+Where the moves are the output of the hanoi(14, 0, 1, 2) function.
+
+OK, I think we're good to go. Let's generate the full list of 16,383 moves for n=14 and provide the output.
+
+def hanoi(n, source, auxiliary, destination):
+    if n == 0:
+        return []
+    
+    moves = hanoi(n-1, source, destination, auxiliary)
+    moves.append([n, source, destination])
+    moves.extend(hanoi(n-1, auxiliary, source, destination))
+    
+    return moves
+
+moves = hanoi(14, 0, 1, 2)
+</think>
+
+```
+moves=[[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[4,0,2],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,0,1],[1,1,0],[5,0,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,2,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[7,0,2],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,1,2],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[8,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,2,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[7,2,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[9,0,2],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,1,2],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[7,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,2,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[8,1,2],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[7,0,2],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,1,2],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[10,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,2,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[7,2,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[8,2,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,1,2],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[7,0,2],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,2,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[9,2,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[7,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,1,2],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[8,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,2,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[7,2,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[11,0,2],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,1,2],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[7,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,2,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[8,1,2],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[7,0,2],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,1,2],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[9,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,2,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[7,2,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[8,2,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,1,2],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[7,0,2],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,2,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[10,1,2],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[7,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,1,2],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[8,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,2,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[7,2,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[9,0,2],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,1,2],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[7,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,2,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[8,1,2],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[7,0,2],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,1,2],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[12,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,2,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[7,2,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[8,2,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,1,2],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[7,0,2],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,2,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[9,2,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[7,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,1,2],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[8,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,2,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[7,2,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[11,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,2,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[7,2,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[8,1,2],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,1,2],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[7,0,2],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,2,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[9,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[7,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,1,2],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[8,2,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,2,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[7,0,2],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[10,2,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[7,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,1,2],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[8,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,2,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[7,2,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[9,0,2],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,1,2],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[7,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,2,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[8,1,2],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[7,0,2],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,1,2],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[13,0,2],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,2,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[7,2,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[8,2,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,1,2],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[7,0,2],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,2,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[9,2,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[7,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,1,2],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[8,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,2,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[7,2,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[11,2,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,2,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[7,2,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[8,1,2],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,1,2],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[7,0,2],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,2,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[9,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[7,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,1,2],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[8,2,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,2,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[7,0,2],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[10,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,2,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[7,2,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[8,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,2,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[7,2,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[9,0,2],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,1,2],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[7,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,2,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[8,1,2],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[7,0,2],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,1,2],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[14,0,2],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,2,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[7,2,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[8,2,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,1,2],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[7,0,2],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,2,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[9,2,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[7,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,1,2],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[8,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,2,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[7,2,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[12,1,2],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[7,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,1,2],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[8,2,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,2,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[7,0,2],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[9,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,2,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[7,2,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[8,1,2],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,1,2],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[7,0,2],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,2,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[11,1,2],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[7,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,1,2],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[8,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,2,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[7,2,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[10,2,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,2,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[7,2,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[8,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,1,2],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[7,0,2],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,2,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[9,0,2],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,1,2],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[7,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,2,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[8,1,2],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[7,0,2],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,1,2],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[13,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,2,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[7,2,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[8,2,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,1,2],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[7,0,2],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,2,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[9,2,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[7,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,1,2],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[8,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,2,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[7,2,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[12,2,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,2,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[7,2,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[8,1,2],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,1,2],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,0,2],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,0],[2,1,1],[1,0,1],[4,2,0],[1,1,0],[2,1,1],[1,0,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[7,0,2
+

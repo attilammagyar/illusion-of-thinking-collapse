@@ -1,0 +1,926 @@
+# model_name='claude-3-7-sonnet-20250219', reasoning_budget=32000, tries=0, n=8, i=2
+# valid_prefix_length=87, is_valid_solution=0, first_correction=-1
+
+<think>
+This is the classic Tower of Hanoi puzzle with 8 disks. The Tower of Hanoi has a well-known recursive solution. The optimal solution for n disks requires 2^n - 1 moves. For 8 disks, that's 2^8 - 1 = 256 - 1 = 255 moves.
+
+Let me work through the recursive algorithm to get the complete list of moves:
+
+For a Tower of Hanoi with n disks, to move the entire tower from peg A to peg C using peg B as an auxiliary:
+1. Move n-1 disks from A to B using C as auxiliary
+2. Move the largest disk (n) from A to C
+3. Move n-1 disks from B to C using A as auxiliary
+
+Let's track each step for 8 disks, where our pegs are 0, 1, and 2:
+
+- To move 8 disks from peg 0 to peg 2:
+  1. Move 7 disks from peg 0 to peg 1 using peg 2
+  2. Move disk 8 from peg 0 to peg 2
+  3. Move 7 disks from peg 1 to peg 2 using peg 0
+
+Now, each of these steps involves recursive calls. Let's expand them:
+
+For step 1 (Move 7 disks from peg 0 to peg 1 using peg 2):
+- Move 6 disks from peg 0 to peg 2 using peg 1
+- Move disk 7 from peg 0 to peg 1
+- Move 6 disks from peg 2 to peg 1 using peg 0
+
+For step 3 (Move 7 disks from peg 1 to peg 2 using peg 0):
+- Move 6 disks from peg 1 to peg 0 using peg 2
+- Move disk 7 from peg 1 to peg 2
+- Move 6 disks from peg 0 to peg 2 using peg 1
+
+And we continue this recursive expansion all the way down to the base case of moving 1 disk.
+
+Actually, let me write a recursive function to generate all the moves:
+
+```python
+def hanoi_moves(n, source, auxiliary, target):
+    if n == 1:
+        return [[1, source, target]]
+    else:
+        moves = []
+        # Move n-1 disks from source to auxiliary using target as auxiliary
+        moves.extend(hanoi_moves(n-1, source, target, auxiliary))
+        # Move the largest disk from source to target
+        moves.append([n, source, target])
+        # Move n-1 disks from auxiliary to target using source as auxiliary
+        moves.extend(hanoi_moves(n-1, auxiliary, source, target))
+        return moves
+
+moves = hanoi_moves(8, 0, 1, 2)
+```
+
+Let me trace through this for n=3 to ensure correctness:
+
+For n=3, source=0, auxiliary=1, target=2:
+1. Recursive call: hanoi_moves(2, 0, 2, 1)
+   a. Recursive call: hanoi_moves(1, 0, 1, 2) -> [[1, 0, 2]]
+   b. Add [2, 0, 1]
+   c. Recursive call: hanoi_moves(1, 2, 0, 1) -> [[1, 2, 1]]
+   d. Return [[1, 0, 2], [2, 0, 1], [1, 2, 1]]
+2. Add [3, 0, 2]
+3. Recursive call: hanoi_moves(2, 1, 0, 2)
+   a. Recursive call: hanoi_moves(1, 1, 2, 0) -> [[1, 1, 0]]
+   b. Add [2, 1, 2]
+   c. Recursive call: hanoi_moves(1, 0, 1, 2) -> [[1, 0, 2]]
+   d. Return [[1, 1, 0], [2, 1, 2], [1, 0, 2]]
+4. Return [[1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2]]
+
+This matches the example solution given in the problem statement, so the approach is correct.
+
+Now, let's trace through this for n=8 to get the full list of moves:
+
+Wait, actually, I want to make sure I'm understanding the format of the moves correctly. In the example, the first move is [1, 0, 2], which means "move disk 1 from peg 0 to peg 2." Disk 1 is the smallest disk.
+
+Let me double-check that our recursive function generates moves in the right format.
+
+For n=3:
+- First, move 2 disks from peg 0 to peg 1 using peg 2:
+  - Move 1 disk from peg 0 to peg 2 using peg 1: [1, 0, 2]
+  - Move disk 2 from peg 0 to peg 1: [2, 0, 1]
+  - Move 1 disk from peg 2 to peg 1 using peg 0: [1, 2, 1]
+- Then, move disk 3 from peg 0 to peg 2: [3, 0, 2]
+- Finally, move 2 disks from peg 1 to peg 2 using peg 0:
+  - Move 1 disk from peg 1 to peg 0 using peg 2: [1, 1, 0]
+  - Move disk 2 from peg 1 to peg 2: [2, 1, 2]
+  - Move 1 disk from peg 0 to peg 2 using peg 1: [1, 0, 2]
+
+So the complete list of moves is:
+[1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2]
+
+Wait, I think I'm making a mistake. Let's be more explicit:
+
+- The initial state is [[3, 2, 1], [], []] (disk 3 at the bottom, disk 1 at the top, all on peg 0)
+- Move 1: Move disk 1 from peg 0 to peg 2. State: [[3, 2], [], [1]]
+- Move 2: Move disk 2 from peg 0 to peg 1. State: [[3], [2], [1]]
+- Move 3: Move disk 1 from peg 2 to peg 1. State: [[3], [2, 1], []]
+- Move 4: Move disk 3 from peg 0 to peg 2. State: [[], [2, 1], [3]]
+- Move 5: Move disk 1 from peg 1 to peg 0. State: [[1], [2], [3]]
+- Move 6: Move disk 2 from peg 1 to peg 2. State: [[1], [], [3, 2]]
+- Move 7: Move disk 1 from peg 0 to peg 2. State: [[], [], [3, 2, 1]]
+
+This does match the given example, but I think the format of my recursive function is incorrect. The disk_id in the move should be the actual disk being moved, not the number of disks.
+
+Here's the corrected recursive function:
+
+```python
+def hanoi_moves(n, source, auxiliary, target):
+    if n == 0:
+        return []
+    
+    moves = []
+    # Move n-1 disks from source to auxiliary using target as auxiliary
+    moves.extend(hanoi_moves(n-1, source, target, auxiliary))
+    # Move the nth disk from source to target
+    moves.append([n, source, target])
+    # Move n-1 disks from auxiliary to target using source as auxiliary
+    moves.extend(hanoi_moves(n-1, auxiliary, source, target))
+    
+    return moves
+
+moves = hanoi_moves(8, 0, 1, 2)
+```
+
+With this corrected function, for n=3, we'd get:
+- hanoi_moves(2, 0, 2, 1)
+  - hanoi_moves(1, 0, 1, 2)
+    - hanoi_moves(0, 0, 2, 1) -> []
+    - [1, 0, 2]
+    - hanoi_moves(0, 1, 0, 2) -> []
+    - return [[1, 0, 2]]
+  - [2, 0, 1]
+  - hanoi_moves(1, 2, 0, 1)
+    - hanoi_moves(0, 2, 1, 0) -> []
+    - [1, 2, 1]
+    - hanoi_moves(0, 0, 2, 1) -> []
+    - return [[1, 2, 1]]
+  - return [[1, 0, 2], [2, 0, 1], [1, 2, 1]]
+- [3, 0, 2]
+- hanoi_moves(2, 1, 0, 2)
+  - hanoi_moves(1, 1, 2, 0)
+    - hanoi_moves(0, 1, 0, 2) -> []
+    - [1, 1, 0]
+    - hanoi_moves(0, 2, 1, 0) -> []
+    - return [[1, 1, 0]]
+  - [2, 1, 2]
+  - hanoi_moves(1, 0, 1, 2)
+    - hanoi_moves(0, 0, 2, 1) -> []
+    - [1, 0, 2]
+    - hanoi_moves(0, 1, 0, 2) -> []
+    - return [[1, 0, 2]]
+  - return [[1, 1, 0], [2, 1, 2], [1, 0, 2]]
+- return [[1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2]]
+
+This matches the expected output for n=3, so this function should correctly generate the moves for n=8.
+
+Let's generate all the moves for n=8:
+
+I'll use the recursive algorithm directly to work through the moves for n=8:
+
+For n=8, source=0, auxiliary=1, target=2:
+1. Move 7 disks from peg 0 to peg 1 using peg 2
+2. Move disk 8 from peg 0 to peg 2
+3. Move 7 disks from peg 1 to peg 2 using peg 0
+
+For step 1 (Move 7 disks from peg 0 to peg 1 using peg 2):
+1. Move 6 disks from peg 0 to peg 2 using peg 1
+2. Move disk 7 from peg 0 to peg 1
+3. Move 6 disks from peg 2 to peg 1 using peg 0
+
+For step 1.1 (Move 6 disks from peg 0 to peg 2 using peg 1):
+1. Move 5 disks from peg 0 to peg 1 using peg 2
+2. Move disk 6 from peg 0 to peg 2
+3. Move 5 disks from peg 1 to peg 2 using peg 0
+
+For step 1.1.1 (Move 5 disks from peg 0 to peg 1 using peg 2):
+1. Move 4 disks from peg 0 to peg 2 using peg 1
+2. Move disk 5 from peg 0 to peg 1
+3. Move 4 disks from peg 2 to peg 1 using peg 0
+
+OK I think we can continue this recursion and enumerate all moves, but there will be 255 moves for n=8 so it might be a bit lengthy. Let me write out the result using the recursive function to avoid errors:
+
+To verify, we know the number of moves for n disks is 2^n - 1. For n=8, that's 2^8 - 1 = 256 - 1 = 255 moves. Let's see if we can get all 255 moves:
+
+Wait, I see a potential optimization in writing out the moves. Since this is a recursive algorithm, the moves for n=8 will include the moves for n=7, n=6, and so on. So I can define it more concisely as:
+
+```
+Hanoi(n, source, auxiliary, target):
+    if n == 1:
+        Move disk 1 from source to target
+    else:
+        Hanoi(n-1, source, target, auxiliary)
+        Move disk n from source to target
+        Hanoi(n-1, auxiliary, source, target)
+```
+
+Using this, let's generate the moves for n=8:
+
+For n=1:
+1. Move disk 1 from peg 0 to peg 2: [1, 0, 2]
+
+For n=2:
+1. Move disk 1 from peg 0 to peg 1 (using the rule for n=1 but with different pegs): [1, 0, 1]
+2. Move disk 2 from peg 0 to peg 2: [2, 0, 2]
+3. Move disk 1 from peg 1 to peg 2 (using the rule for n=1 but with different pegs): [1, 1, 2]
+
+For n=3:
+1. Hanoi(2, 0, 2, 1):
+   - Move disk 1 from peg 0 to peg 2: [1, 0, 2]
+   - Move disk 2 from peg 0 to peg 1: [2, 0, 1]
+   - Move disk 1 from peg 2 to peg 1: [1, 2, 1]
+2. Move disk 3 from peg 0 to peg 2: [3, 0, 2]
+3. Hanoi(2, 1, 0, 2):
+   - Move disk 1 from peg 1 to peg 0: [1, 1, 0]
+   - Move disk 2 from peg 1 to peg 2: [2, 1, 2]
+   - Move disk 1 from peg 0 to peg 2: [1, 0, 2]
+
+I see, there's a pattern, but the recursive function expands differently based on the source, auxiliary, and target pegs.
+
+OK, let me just compute all 255 moves for n=8 directly. I'll use the recursive function to generate these moves:
+
+```python
+def hanoi_moves(n, source, auxiliary, target):
+    if n == 0:
+        return []
+    
+    moves = []
+    # Move n-1 disks from source to auxiliary using target as auxiliary
+    moves.extend(hanoi_moves(n-1, source, target, auxiliary))
+    # Move the nth disk from source to target
+    moves.append([n, source, target])
+    # Move n-1 disks from auxiliary to target using source as auxiliary
+    moves.extend(hanoi_moves(n-1, auxiliary, source, target))
+    
+    return moves
+
+moves = hanoi_moves(8, 0, 1, 2)
+```
+
+Let's write out all 255 moves:
+
+For n=8, source=0, auxiliary=1, target=2:
+1. Moves from hanoi_moves(7, 0, 2, 1):
+   a. Moves from hanoi_moves(6, 0, 1, 2):
+      i. Moves from hanoi_moves(5, 0, 2, 1):
+         * Moves from hanoi_moves(4, 0, 1, 2):
+            - Moves from hanoi_moves(3, 0, 2, 1):
+               * Moves from hanoi_moves(2, 0, 1, 2):
+                  - Moves from hanoi_moves(1, 0, 2, 1):
+                     * [1, 0, 1]
+                  - [2, 0, 2]
+                  - Moves from hanoi_moves(1, 1, 0, 2):
+                     * [1, 1, 2]
+               * [3, 0, 1]
+               * Moves from hanoi_moves(2, 2, 0, 1):
+                  - Moves from hanoi_moves(1, 2, 1, 0):
+                     * [1, 2, 0]
+                  - [2, 2, 1]
+                  - Moves from hanoi_moves(1, 0, 2, 1):
+                     * [1, 0, 1]
+            - [4, 0, 2]
+            - Moves from hanoi_moves(3, 1, 0, 2):
+               * Moves from hanoi_moves(2, 1, 2, 0):
+                  - Moves from hanoi_moves(1, 1, 0, 2):
+                     * [1, 1, 2]
+                  - [2, 1, 0]
+                  - Moves from hanoi_moves(1, 2, 1, 0):
+                     * [1, 2, 0]
+               * [3, 1, 2]
+               * Moves from hanoi_moves(2, 0, 1, 2):
+                  - Moves from hanoi_moves(1, 0, 2, 1):
+                     * [1, 0, 1]
+                  - [2, 0, 2]
+                  - Moves from hanoi_moves(1, 1, 0, 2):
+                     * [1, 1, 2]
+         * [5, 0, 1]
+         * Moves from hanoi_moves(4, 2, 0, 1):
+            - Moves from hanoi_moves(3, 2, 1, 0):
+               * Moves from hanoi_moves(2, 2, 0, 1):
+                  - Moves from hanoi_moves(1, 2, 1, 0):
+                     * [1, 2, 0]
+                  - [2, 2, 1]
+                  - Moves from hanoi_moves(1, 0, 2, 1):
+                     * [1, 0, 1]
+               * [3, 2, 0]
+               * Moves from hanoi_moves(2, 1, 2, 0):
+                  - Moves from hanoi_moves(1, 1, 0, 2):
+                     * [1, 1, 2]
+                  - [2, 1, 0]
+                  - Moves from hanoi_moves(1, 2, 1, 0):
+                     * [1, 2, 0]
+            - [4, 2, 1]
+            - Moves from hanoi_moves(3, 0, 2, 1):
+               * Moves from hanoi_moves(2, 0, 1, 2):
+                  - Moves from hanoi_moves(1, 0, 2, 1):
+                     * [1, 0, 1]
+                  - [2, 0, 2]
+                  - Moves from hanoi_moves(1, 1, 0, 2):
+                     * [1, 1, 2]
+               * [3, 0, 1]
+               * Moves from hanoi_moves(2, 2, 0, 1):
+                  - Moves from hanoi_moves(1, 2, 1, 0):
+                     * [1, 2, 0]
+                  - [2, 2, 1]
+                  - Moves from hanoi_moves(1, 0, 2, 1):
+                     * [1, 0, 1]
+
+Actually, the recursive expansion gets unwieldy very quickly, so I'll compute this directly.
+
+```python
+def hanoi_moves(n, source, auxiliary, target):
+    if n == 0:
+        return []
+    
+    moves = []
+    # Move n-1 disks from source to auxiliary using target as auxiliary
+    moves.extend(hanoi_moves(n-1, source, target, auxiliary))
+    # Move the nth disk from source to target
+    moves.append([n, source, target])
+    # Move n-1 disks from auxiliary to target using source as auxiliary
+    moves.extend(hanoi_moves(n-1, auxiliary, source, target))
+    
+    return moves
+
+# For n=1
+moves_n1 = hanoi_moves(1, 0, 1, 2)
+# For n=2
+moves_n2 = hanoi_moves(2, 0, 1, 2)
+# For n=3
+moves_n3 = hanoi_moves(3, 0, 1, 2)
+# For n=8
+moves_n8 = hanoi_moves(8, 0, 1, 2)
+
+print(moves_n1)  # Should be [[1, 0, 2]]
+print(moves_n2)  # Should be [[1, 0, 1], [2, 0, 2], [1, 1, 2]]
+print(moves_n3)  # Should match the example
+print(len(moves_n8))  # Should be 255
+```
+
+Since this is in thinking mode and I can't run code, I'll simulate the execution:
+
+For n=1:
+moves_n1 = hanoi_moves(1, 0, 1, 2)
+hanoi_moves(0, 0, 2, 1) -> []
+Add [1, 0, 2]
+hanoi_moves(0, 1, 0, 2) -> []
+moves_n1 = [[1, 0, 2]]
+
+For n=2:
+moves_n2 = hanoi_moves(2, 0, 1, 2)
+hanoi_moves(1, 0, 2, 1) -> [[1, 0, 1]]
+Add [2, 0, 2]
+hanoi_moves(1, 1, 0, 2) -> [[1, 1, 2]]
+moves_n2 = [[1, 0, 1], [2, 0, 2], [1, 1, 2]]
+
+For n=3:
+moves_n3 = hanoi_moves(3, 0, 1, 2)
+hanoi_moves(2, 0, 2, 1) -> [[1, 0, 2], [2, 0, 1], [1, 2, 1]]
+Add [3, 0, 2]
+hanoi_moves(2, 1, 0, 2) -> [[1, 1, 0], [2, 1, 2], [1, 0, 2]]
+moves_n3 = [[1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2]]
+
+Wait, there's an issue here. In the expected example:
+```
+moves=[[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2]]
+```
+
+But in the computed solution for n=3:
+For hanoi_moves(2, 0, 2, 1), the first step is hanoi_moves(1, 0, 1, 2), which should give [[1, 0, 2]]. But I've computed it as [[1, 0, 1]]. Let me revisit the algorithm:
+
+```python
+def hanoi_moves(n, source, auxiliary, target):
+    if n == 0:
+        return []
+    
+    moves = []
+    # Move n-1 disks from source to auxiliary using target as auxiliary
+    moves.extend(hanoi_moves(n-1, source, target, auxiliary))
+    # Move the nth disk from source to target
+    moves.append([n, source, target])
+    # Move n-1 disks from auxiliary to target using source as auxiliary
+    moves.extend(hanoi_moves(n-1, auxiliary, source, target))
+    
+    return moves
+```
+
+For hanoi_moves(2, 0, 2, 1):
+The first recursive call is hanoi_moves(1, 0, 1, 2), which should give [[1, 0, 1]].
+
+Wait, now I'm confused. Let me work through it step by step.
+
+For n=1, source=0, auxiliary=1, target=2:
+- Move disk 1 from peg 0 to peg 2: [1, 0, 2]
+
+This is simple.
+
+For n=2, source=0, auxiliary=1, target=2:
+- Move disk 1 from peg 0 to peg 1: [1, 0, 1]
+- Move disk 2 from peg 0 to peg 2: [2, 0, 2]
+- Move disk 1 from peg 1 to peg 2: [1, 1, 2]
+
+This makes sense.
+
+For n=3, source=0, auxiliary=1, target=2:
+- Move disk 1 from peg 0 to peg 2: [1, 0, 2]
+- Move disk 2 from peg 0 to peg 1: [2, 0, 1]
+- Move disk 1 from peg 2 to peg 1: [1, 2, 1]
+- Move disk 3 from peg 0 to peg 2: [3, 0, 2]
+- Move disk 1 from peg 1 to peg 0: [1, 1, 0]
+- Move disk 2 from peg 1 to peg 2: [2, 1, 2]
+- Move disk 1 from peg 0 to peg 2: [1, 0, 2]
+
+The confusion might be in the recursive calls. Let's try again:
+
+For n=3, source=0, auxiliary=1, target=2:
+1. Move 2 disks from peg 0 to peg 1 using peg 2
+2. Move disk 3 from peg 0 to peg 2
+3. Move 2 disks from peg 1 to peg 2 using peg 0
+
+For step 1 (Move 2 disks from peg 0 to peg 1 using peg 2), we need to apply Hanoi for n=2:
+- Move disk 1 from peg 0 to peg 2: [1, 0, 2]
+- Move disk 2 from peg 0 to peg 1: [2, 0, 1]
+- Move disk 1 from peg 2 to peg 1: [1, 2, 1]
+
+For step 3 (Move 2 disks from peg 1 to peg 2 using peg 0), we need to apply Hanoi for n=2:
+- Move disk 1 from peg 1 to peg 0: [1, 1, 0]
+- Move disk 2 from peg 1 to peg 2: [2, 1, 2]
+- Move disk 1 from peg 0 to peg 2: [1, 0, 2]
+
+So the complete list of moves for n=3 is:
+[1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2]
+
+This matches the expected result.
+
+The issue was in the recursive calls. When we're moving n disks from source to target using auxiliary, the recursive calls are:
+1. Move n-1 disks from source to auxiliary using target
+2. Move the nth disk from source to target
+3. Move n-1 disks from auxiliary to target using source
+
+I misunderstood this when trying to manually trace the execution. Let me be more careful:
+
+For n=2, source=0, auxiliary=1, target=2:
+1. Move 1 disk from peg 0 to peg 1 using peg 2 (hanoi_moves(1, 0, 2, 1)):
+   - Move disk 1 from peg 0 to peg 1: [1, 0, 1]
+2. Move disk 2 from peg 0 to peg 2: [2, 0, 2]
+3. Move 1 disk from peg 1 to peg 2 using peg 0 (hanoi_moves(1, 1, 0, 2)):
+   - Move disk 1 from peg 1 to peg 2: [1, 1, 2]
+
+For n=3, source=0, auxiliary=1, target=2:
+1. Move 2 disks from peg 0 to peg 1 using peg 2 (hanoi_moves(2, 0, 2, 1)):
+   a. Move 1 disk from peg 0 to peg 2 using peg 1 (hanoi_moves(1, 0, 1, 2)):
+      - Move disk 1 from peg 0 to peg 2: [1, 0, 2]
+   b. Move disk 2 from peg 0 to peg 1: [2, 0, 1]
+   c. Move 1 disk from peg 2 to peg 1 using peg 0 (hanoi_moves(1, 2, 0, 1)):
+      - Move disk 1 from peg 2 to peg 1: [1, 2, 1]
+2. Move disk 3 from peg 0 to peg 2: [3, 0, 2]
+3. Move 2 disks from peg 1 to peg 2 using peg 0 (hanoi_moves(2, 1, 0, 2)):
+   a. Move 1 disk from peg 1 to peg 0 using peg 2 (hanoi_moves(1, 1, 2, 0)):
+      - Move disk 1 from peg 1 to peg 0: [1, 1, 0]
+   b. Move disk 2 from peg 1 to peg 2: [2, 1, 2]
+   c. Move 1 disk from peg 0 to peg 2 using peg 1 (hanoi_moves(1, 0, 1, 2)):
+      - Move disk 1 from peg 0 to peg 2: [1, 0, 2]
+
+So the moves for n=3 are:
+[1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2]
+
+OK, I think I can now generate all the moves for n=8. We want to move 8 disks from peg 0 to peg 2 using peg 1 as an auxiliary.
+
+Since there will be 255 moves (2^8 - 1), I'll use a more systematic approach to generate them. I'll expand the recursive function step by step.
+
+def hanoi_moves(n, source, auxiliary, target):
+    if n == 0:
+        return []
+    
+    moves = []
+    # Move n-1 disks from source to auxiliary using target as auxiliary
+    moves.extend(hanoi_moves(n-1, source, target, auxiliary))
+    # Move the nth disk from source to target
+    moves.append([n, source, target])
+    # Move n-1 disks from auxiliary to target using source as auxiliary
+    moves.extend(hanoi_moves(n-1, auxiliary, source, target))
+    
+    return moves
+
+I think I'll just expand this function to generate all 255 moves. Let's see...
+
+I'll start by generating the moves for n=1, n=2, and n=3, then use those to build up to n=8. Since the Tower of Hanoi solution is recursive, the pattern repeats.
+
+For n=1, source=0, auxiliary=1, target=2:
+moves_n1 = [[1, 0, 2]]
+
+For n=2, source=0, auxiliary=1, target=2:
+- Move 1 disk from peg 0 to peg 1 using peg 2 (hanoi_moves(1, 0, 2, 1)):
+  - [1, 0, 1]
+- Move disk 2 from peg 0 to peg 2: [2, 0, 2]
+- Move 1 disk from peg 1 to peg 2 using peg 0 (hanoi_moves(1, 1, 0, 2)):
+  - [1, 1, 2]
+moves_n2 = [[1, 0, 1], [2, 0, 2], [1, 1, 2]]
+
+For n=3, source=0, auxiliary=1, target=2:
+- Move 2 disks from peg 0 to peg 1 using peg 2 (hanoi_moves(2, 0, 2, 1)):
+  - Move 1 disk from peg 0 to peg 2 using peg 1 (hanoi_moves(1, 0, 1, 2)):
+    - [1, 0, 2]
+  - Move disk 2 from peg 0 to peg 1: [2, 0, 1]
+  - Move 1 disk from peg 2 to peg 1 using peg 0 (hanoi_moves(1, 2, 0, 1)):
+    - [1, 2, 1]
+- Move disk 3 from peg 0 to peg 2: [3, 0, 2]
+- Move 2 disks from peg 1 to peg 2 using peg 0 (hanoi_moves(2, 1, 0, 2)):
+  - Move 1 disk from peg 1 to peg 0 using peg 2 (hanoi_moves(1, 1, 2, 0)):
+    - [1, 1, 0]
+  - Move disk 2 from peg 1 to peg 2: [2, 1, 2]
+  - Move 1 disk from peg 0 to peg 2 using peg 1 (hanoi_moves(1, 0, 1, 2)):
+    - [1, 0, 2]
+moves_n3 = [[1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2]]
+
+For n=4, source=0, auxiliary=1, target=2:
+- Move 3 disks from peg 0 to peg 1 using peg 2 (hanoi_moves(3, 0, 2, 1)):
+  - Move 2 disks from peg 0 to peg 2 using peg 1 (hanoi_moves(2, 0, 1, 2)):
+    - Move 1 disk from peg 0 to peg 1 using peg 2 (hanoi_moves(1, 0, 2, 1)):
+      - [1, 0, 1]
+    - Move disk 2 from peg 0 to peg 2: [2, 0, 2]
+    - Move 1 disk from peg 1 to peg 2 using peg 0 (hanoi_moves(1, 1, 0, 2)):
+      - [1, 1, 2]
+  - Move disk 3 from peg 0 to peg 1: [3, 0, 1]
+  - Move 2 disks from peg 2 to peg 1 using peg 0 (hanoi_moves(2, 2, 0, 1)):
+    - Move 1 disk from peg 2 to peg 0 using peg 1 (hanoi_moves(1, 2, 1, 0)):
+      - [1, 2, 0]
+    - Move disk 2 from peg 2 to peg 1: [2, 2, 1]
+    - Move 1 disk from peg 0 to peg 1 using peg 2 (hanoi_moves(1, 0, 2, 1)):
+      - [1, 0, 1]
+- Move disk 4 from peg 0 to peg 2: [4, 0, 2]
+- Move 3 disks from peg 1 to peg 2 using peg 0 (hanoi_moves(3, 1, 0, 2)):
+  - Move 2 disks from peg 1 to peg 0 using peg 2 (hanoi_moves(2, 1, 2, 0)):
+    - Move 1 disk from peg 1 to peg 2 using peg 0 (hanoi_moves(1, 1, 0, 2)):
+      - [1, 1, 2]
+    - Move disk 2 from peg 1 to peg 0: [2, 1, 0]
+    - Move 1 disk from peg 2 to peg 0 using peg 1 (hanoi_moves(1, 2, 1, 0)):
+      - [1, 2, 0]
+  - Move disk 3 from peg 1 to peg 2: [3, 1, 2]
+  - Move 2 disks from peg 0 to peg 2 using peg 1 (hanoi_moves(2, 0, 1, 2)):
+    - Move 1 disk from peg 0 to peg 1 using peg 2 (hanoi_moves(1, 0, 2, 1)):
+      - [1, 0, 1]
+    - Move disk 2 from peg 0 to peg 2: [2, 0, 2]
+    - Move 1 disk from peg 1 to peg 2 using peg 0 (hanoi_moves(1, 1, 0, 2)):
+      - [1, 1, 2]
+moves_n4 = [[1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [4, 0, 2], [1, 1, 2], [2, 1, 0], [1, 2, 0], [3, 1, 2], [1, 0, 1], [2, 0, 2], [1, 1, 2]]
+
+I'm starting to see that this is going to be quite lengthy. Instead of manually enumerating all the moves, let me give the conceptual solution and then the final list of all 255 moves for n=8:
+
+For n=8, source=0, auxiliary=1, target=2:
+1. Move 7 disks from peg 0 to peg 1 using peg 2 (hanoi_moves(7, 0, 2, 1))
+2. Move disk 8 from peg 0 to peg 2: [8, 0, 2]
+3. Move 7 disks from peg 1 to peg 2 using peg 0 (hanoi_moves(7, 1, 0, 2))
+
+Let me actually try a different approach. Let's use the known recursive pattern of the Tower of Hanoi to directly generate the moves for n=8.
+
+It's well-known that for an n-disk Tower of Hanoi, the kth move (0-indexed) can be determined as follows:
+1. Disk: The disk to move is the least significant 1-bit position in k+1. (For example, if k+1 = 12 = 1100 in binary, the least significant 1-bit is at position 2, so we move disk 3).
+2. Source and Target: If the kth move is moving disk d, then the source and target pegs can be determined based on the parity of (k+1)/2^d.
+
+Actually, let's generate all 255 moves using a direct recursion. We'll use the recursive function we've already verified:
+
+```python
+def hanoi_moves(n, source, auxiliary, target):
+    if n == 0:
+        return []
+    
+    moves = []
+    # Move n-1 disks from source to auxiliary using target as auxiliary
+    moves.extend(hanoi_moves(n-1, source, target, auxiliary))
+    # Move the nth disk from source to target
+    moves.append([n, source, target])
+    # Move n-1 disks from auxiliary to target using source as auxiliary
+    moves.extend(hanoi_moves(n-1, auxiliary, source, target))
+    
+    return moves
+
+moves_n8 = hanoi_moves(8, 0, 1, 2)
+```
+
+For n=1, the moves are:
+[[1, 0, 2]]
+
+For n=2, the moves are:
+[[1, 0, 1], [2, 0, 2], [1, 1, 2]]
+
+For n=3, the moves are:
+[[1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2]]
+
+I'm going to expand this for n=8, but it will take a lot of space. I already verified the function for n=3, so I'll trust that it works for n=8 as well. Let's generate all 255 moves for n=8:
+
+OK, let me try to be more systematic. For the Tower of Hanoi, there are patterns in the moves, so I'll try to exploit that.
+
+The recursive solution for hanoi_moves(n, source, auxiliary, target) is:
+- If n == 0, return []
+- Recursively move n-1 disks from source to auxiliary using target as the auxiliary peg
+- Move disk n from source to target
+- Recursively move n-1 disks from auxiliary to target using source as the auxiliary peg
+
+Let's use this to generate the moves for n=8:
+
+For hanoi_moves(8, 0, 1, 2):
+1. hanoi_moves(7, 0, 2, 1)
+2. [8, 0, 2]
+3. hanoi_moves(7, 1, 0, 2)
+
+For hanoi_moves(7, 0, 2, 1):
+1. hanoi_moves(6, 0, 1, 2)
+2. [7, 0, 1]
+3. hanoi_moves(6, 2, 0, 1)
+
+For hanoi_moves(6, 0, 1, 2):
+1. hanoi_moves(5, 0, 2, 1)
+2. [6, 0, 2]
+3. hanoi_moves(5, 1, 0, 2)
+
+For hanoi_moves(5, 0, 2, 1):
+1. hanoi_moves(4, 0, 1, 2)
+2. [5, 0, 1]
+3. hanoi_moves(4, 2, 0, 1)
+
+For hanoi_moves(4, 0, 1, 2):
+1. hanoi_moves(3, 0, 2, 1)
+2. [4, 0, 2]
+3. hanoi_moves(3, 1, 0, 2)
+
+For hanoi_moves(3, 0, 2, 1):
+1. hanoi_moves(2, 0, 1, 2)
+2. [3, 0, 1]
+3. hanoi_moves(2, 2, 0, 1)
+
+For hanoi_moves(2, 0, 1, 2):
+1. hanoi_moves(1, 0, 2, 1)
+2. [2, 0, 2]
+3. hanoi_moves(1, 1, 0, 2)
+
+For hanoi_moves(1, 0, 2, 1):
+- [1, 0, 1]
+
+So the first few moves for n=8 are:
+[1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], ...
+
+It's still going to be a long enumeration. Let me just generate all 255 moves directly:
+
+For n=8, we have 2^8 - 1 = 255 moves. Let me trust the recursive solution and list all 255 moves:
+
+Actually, I think there will be too many tokens to list all 255 moves here. Let's try to be more concise.
+
+For n=8, we have:
+1. hanoi_moves(7, 0, 2, 1)
+2. [8, 0, 2]
+3. hanoi_moves(7, 1, 0, 2)
+
+Let's just compute these 255 moves, but without trying to show the intermediate steps.
+
+Ok, I'm going to directly list all 255 moves for hanoi_moves(8, 0, 1, 2):
+
+1. [1, 0, 2]
+2. [2, 0, 1]
+3. [1, 2, 1]
+4. [3, 0, 2]
+5. [1, 1, 0]
+6. [2, 1, 2]
+7. [1, 0, 2]
+8. [4, 0, 1]
+9. [1, 2, 1]
+10. [2, 2, 0]
+11. [1, 1, 0]
+12. [3, 2, 1]
+13. [1, 0, 2]
+14. [2, 0, 1]
+15. [1, 2, 1]
+16. [5, 0, 2]
+17. [1, 1, 0]
+18. [2, 1, 2]
+19. [1, 0, 2]
+20. [3, 1, 0]
+21. [1, 2, 1]
+22. [2, 2, 0]
+23. [1, 1, 0]
+24. [4, 1, 2]
+25. [1, 0, 2]
+26. [2, 0, 1]
+27. [1, 2, 1]
+28. [3, 0, 2]
+29. [1, 1, 0]
+30. [2, 1, 2]
+31. [1, 0, 2]
+32. [6, 0, 1]
+33. [1, 2, 1]
+34. [2, 2, 0]
+35. [1, 1, 0]
+36. [3, 2, 1]
+37. [1, 0, 2]
+38. [2, 0, 1]
+39. [1, 2, 1]
+40. [4, 2, 0]
+41. [1, 1, 0]
+42. [2, 1, 2]
+43. [1, 0, 2]
+44. [3, 1, 0]
+45. [1, 2, 1]
+46. [2, 2, 0]
+47. [1, 1, 0]
+48. [5, 2, 1]
+49. [1, 0, 2]
+50. [2, 0, 1]
+51. [1, 2, 1]
+52. [3, 0, 2]
+53. [1, 1, 0]
+54. [2, 1, 2]
+55. [1, 0, 2]
+56. [4, 0, 1]
+57. [1, 2, 1]
+58. [2, 2, 0]
+59. [1, 1, 0]
+60. [3, 2, 1]
+61. [1, 0, 2]
+62. [2, 0, 1]
+63. [1, 2, 1]
+64. [7, 0, 2]
+65. [1, 1, 0]
+66. [2, 1, 2]
+67. [1, 0, 2]
+68. [3, 1, 0]
+69. [1, 2, 1]
+70. [2, 2, 0]
+71. [1, 1, 0]
+72. [4, 1, 2]
+73. [1, 0, 2]
+74. [2, 0, 1]
+75. [1, 2, 1]
+76. [3, 0, 2]
+77. [1, 1, 0]
+78. [2, 1, 2]
+79. [1, 0, 2]
+80. [5, 1, 0]
+81. [1, 2, 1]
+82. [2, 2, 0]
+83. [1, 1, 0]
+84. [3, 2, 1]
+85. [1, 0, 2]
+86. [2, 0, 1]
+87. [1, 2, 1]
+88. [4, 0, 1]
+89. [1, 1, 0]
+90. [2, 1, 2]
+91. [1, 0, 2]
+92. [3, 1, 0]
+93. [1, 2, 1]
+94. [2, 2, 0]
+95. [1, 1, 0]
+96. [6, 1, 2]
+97. [1, 0, 2]
+98. [2, 0, 1]
+99. [1, 2, 1]
+100. [3, 0, 2]
+101. [1, 1, 0]
+102. [2, 1, 2]
+103. [1, 0, 2]
+104. [4, 0, 1]
+105. [1, 2, 1]
+106. [2, 2, 0]
+107. [1, 1, 0]
+108. [3, 2, 1]
+109. [1, 0, 2]
+110. [2, 0, 1]
+111. [1, 2, 1]
+112. [5, 0, 2]
+113. [1, 1, 0]
+114. [2, 1, 2]
+115. [1, 0, 2]
+116. [3, 1, 0]
+117. [1, 2, 1]
+118. [2, 2, 0]
+119. [1, 1, 0]
+120. [4, 1, 2]
+121. [1, 0, 2]
+122. [2, 0, 1]
+123. [1, 2, 1]
+124. [3, 0, 2]
+125. [1, 1, 0]
+126. [2, 1, 2]
+127. [1, 0, 2]
+128. [8, 0, 2]
+129. [1, 1, 0]
+130. [2, 1, 2]
+131. [1, 0, 2]
+132. [3, 1, 0]
+133. [1, 2, 1]
+134. [2, 2, 0]
+135. [1, 1, 0]
+136. [4, 1, 2]
+137. [1, 0, 2]
+138. [2, 0, 1]
+139. [1, 2, 1]
+140. [3, 0, 2]
+141. [1, 1, 0]
+142. [2, 1, 2]
+143. [1, 0, 2]
+144. [5, 1, 0]
+145. [1, 2, 1]
+146. [2, 2, 0]
+147. [1, 1, 0]
+148. [3, 2, 1]
+149. [1, 0, 2]
+150. [2, 0, 1]
+151. [1, 2, 1]
+152. [4, 0, 1]
+153. [1, 1, 0]
+154. [2, 1, 2]
+155. [1, 0, 2]
+156. [3, 1, 0]
+157. [1, 2, 1]
+158. [2, 2, 0]
+159. [1, 1, 0]
+160. [6, 1, 2]
+161. [1, 0, 2]
+162. [2, 0, 1]
+163. [1, 2, 1]
+164. [3, 0, 2]
+165. [1, 1, 0]
+166. [2, 1, 2]
+167. [1, 0, 2]
+168. [4, 0, 1]
+169. [1, 2, 1]
+170. [2, 2, 0]
+171. [1, 1, 0]
+172. [3, 2, 1]
+173. [1, 0, 2]
+174. [2, 0, 1]
+175. [1, 2, 1]
+176. [5, 0, 2]
+177. [1, 1, 0]
+178. [2, 1, 2]
+179. [1, 0, 2]
+180. [3, 1, 0]
+181. [1, 2, 1]
+182. [2, 2, 0]
+183. [1, 1, 0]
+184. [4, 1, 2]
+185. [1, 0, 2]
+186. [2, 0, 1]
+187. [1, 2, 1]
+188. [3, 0, 2]
+189. [1, 1, 0]
+190. [2, 1, 2]
+191. [1, 0, 2]
+192. [7, 1, 2]
+193. [1, 1, 0]
+194. [2, 1, 2]
+195. [1, 0, 2]
+196. [3, 1, 0]
+197. [1, 2, 1]
+198. [2, 2, 0]
+199. [1, 1, 0]
+200. [4, 1, 2]
+201. [1, 0, 2]
+202. [2, 0, 1]
+203. [1, 2, 1]
+204. [3, 0, 2]
+205. [1, 1, 0]
+206. [2, 1, 2]
+207. [1, 0, 2]
+208. [5, 1, 0]
+209. [1, 2, 1]
+210. [2, 2, 0]
+211. [1, 1, 0]
+212. [3, 2, 1]
+213. [1, 0, 2]
+214. [2, 0, 1]
+215. [1, 2, 1]
+216. [4, 0, 1]
+217. [1, 1, 0]
+218. [2, 1, 2]
+219. [1, 0, 2]
+220. [3, 1, 0]
+221. [1, 2, 1]
+222. [2, 2, 0]
+223. [1, 1, 0]
+224. [6, 1, 2]
+225. [1, 0, 2]
+226. [2, 0, 1]
+227. [1, 2, 1]
+228. [3, 0, 2]
+229. [1, 1, 0]
+230. [2, 1, 2]
+231. [1, 0, 2]
+232. [4, 0, 1]
+233. [1, 2, 1]
+234. [2, 2, 0]
+235. [1, 1, 0]
+236. [3, 2, 1]
+237. [1, 0, 2]
+238. [2, 0, 1]
+239. [1, 2, 1]
+240. [5, 0, 2]
+241. [1, 1, 0]
+242. [2, 1, 2]
+243. [1, 0, 2]
+244. [3, 1, 0]
+245. [1, 2, 1]
+246. [2, 2, 0]
+247. [1, 1, 0]
+248. [4, 1, 2]
+249. [1, 0, 2]
+250. [2, 0, 1]
+251. [1, 2, 1]
+252. [3, 0, 2]
+253. [1, 1, 0]
+254. [2, 1, 2]
+255. [1, 0, 2]
+
+That's all 255 moves for the Tower of Hanoi with 8 disks, following the recursive algorithm. The format of each move is [disk_id, from_peg, to_peg].
+
+Now, to format it as required in the problem statement:
+
+moves=[[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[5,0,2],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[4,2,0],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[5,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[7,0,2],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[4,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[6,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[5,0,2],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[8,0,2],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[4,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[6,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[5,0,2],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[7,1,2],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[4,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[6,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[5,0,2],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2]]
+</think>
+
+To solve the Tower of Hanoi puzzle with 8 disks, I need to find the optimal sequence of moves. This is a classic recursive problem where the optimal solution requires 2^n - 1 moves (255 moves for 8 disks).
+
+Here's the complete solution:
+
+moves=[[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[5,0,2],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[4,2,0],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[5,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[7,0,2],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[4,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[6,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[5,0,2],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[8,0,2],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[4,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[6,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[5,0,2],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[7,1,2],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[4,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[6,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[5,0,2],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2]]
+

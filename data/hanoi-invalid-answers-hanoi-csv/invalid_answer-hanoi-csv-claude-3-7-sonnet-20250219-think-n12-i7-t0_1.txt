@@ -1,0 +1,4671 @@
+# model_name='claude-3-7-sonnet-20250219', reasoning_budget=32000, tries=0, n=12, i=7
+# valid_prefix_length=23, is_valid_solution=0, first_correction=-1
+
+<think>
+This is the classic Tower of Hanoi puzzle. The optimal solution for moving $n$ disks from peg 0 to peg 2 requires $2^n - 1$ moves. For 12 disks, that would be $2^{12} - 1 = 4096 - 1 = 4095$ moves.
+
+Let me solve this systematically.
+
+First, let's understand the recursive nature of this problem:
+- To move a stack of $n$ disks from peg 0 to peg 2:
+  1. Move the top $n-1$ disks from peg 0 to peg 1 (using peg 2 as an auxiliary)
+  2. Move the largest disk (disk $n$) from peg 0 to peg 2
+  3. Move the $n-1$ disks from peg 1 to peg 2 (using peg 0 as an auxiliary)
+
+Let me implement this algorithm to generate all moves:
+
+```
+function hanoi(n, source, target, auxiliary):
+    if n == 1:
+        output: move disk 1 from source to target
+        return
+    hanoi(n-1, source, auxiliary, target)
+    output: move disk n from source to target
+    hanoi(n-1, auxiliary, target, source)
+```
+
+Now let's execute this algorithm for 12 disks:
+
+**hanoi(12, 0, 2, 1)**
+- Since n > 1, we recursively call **hanoi(11, 0, 1, 2)**
+  - Since n > 1, we recursively call **hanoi(10, 0, 2, 1)**
+    - Since n > 1, we recursively call **hanoi(9, 0, 1, 2)**
+      - Since n > 1, we recursively call **hanoi(8, 0, 2, 1)**
+        - Since n > 1, we recursively call **hanoi(7, 0, 1, 2)**
+          - Since n > 1, we recursively call **hanoi(6, 0, 2, 1)**
+            - Since n > 1, we recursively call **hanoi(5, 0, 1, 2)**
+              - Since n > 1, we recursively call **hanoi(4, 0, 2, 1)**
+                - Since n > 1, we recursively call **hanoi(3, 0, 1, 2)**
+                  - Since n > 1, we recursively call **hanoi(2, 0, 2, 1)**
+                    - Since n > 1, we recursively call **hanoi(1, 0, 1, 2)**
+                      - n == 1, so output: 1,0,1
+                    - output: 2,0,2
+                    - we recursively call **hanoi(1, 1, 2, 0)**
+                      - n == 1, so output: 1,1,2
+                  - output: 3,0,1
+                  - we recursively call **hanoi(2, 2, 1, 0)**
+                    - Since n > 1, we recursively call **hanoi(1, 2, 0, 1)**
+                      - n == 1, so output: 1,2,0
+                    - output: 2,2,1
+                    - we recursively call **hanoi(1, 0, 1, 2)**
+                      - n == 1, so output: 1,0,1
+                - output: 4,0,2
+                - we recursively call **hanoi(3, 1, 2, 0)**
+                  - Since n > 1, we recursively call **hanoi(2, 1, 0, 2)**
+                    - Since n > 1, we recursively call **hanoi(1, 1, 2, 0)**
+                      - n == 1, so output: 1,1,2
+                    - output: 2,1,0
+                    - we recursively call **hanoi(1, 2, 0, 1)**
+                      - n == 1, so output: 1,2,0
+                  - output: 3,1,2
+                  - we recursively call **hanoi(2, 0, 2, 1)**
+                    - Since n > 1, we recursively call **hanoi(1, 0, 1, 2)**
+                      - n == 1, so output: 1,0,1
+                    - output: 2,0,2
+                    - we recursively call **hanoi(1, 1, 2, 0)**
+                      - n == 1, so output: 1,1,2
+
+I realize this will get very lengthy. Let me implement a more direct algorithm to output all moves.
+
+Actually, instead of doing the full recursion by hand, let me write it as a step-by-step algorithm and execute it:
+
+1. Let's identify the pattern for moving disk 1 (the smallest):
+   - For even n, disk 1 moves in the pattern: 0→1, 1→2, 2→0, ...
+   - For odd n, disk 1 moves in the pattern: 0→2, 2→1, 1→0, ...
+
+2. Let's identify when each disk moves:
+   - Disk 1 moves on steps 1, 3, 5, ...
+   - Disk 2 moves on steps 2, 6, 10, ...
+   - Disk 3 moves on steps 4, 12, 20, ...
+   - Disk d moves on steps that are multiples of 2^(d-1)
+
+3. For each disk d:
+   - If d is odd, it alternates between two pegs
+   - If d is even, it moves in a cycle of all three pegs
+
+For n=12, this is quite complex, so let me implement the recursive algorithm and trace its execution:
+
+```
+function generateHanoiMoves(n, source, target, auxiliary):
+    if n == 0:
+        return []
+    moves = []
+    moves.extend(generateHanoiMoves(n-1, source, auxiliary, target))
+    moves.append((n, source, target))
+    moves.extend(generateHanoiMoves(n-1, auxiliary, target, source))
+    return moves
+```
+
+Let me execute this algorithm with n=3 first to make sure I understand it correctly.
+
+**generateHanoiMoves(3, 0, 2, 1)**
+- We call **generateHanoiMoves(2, 0, 1, 2)**
+  - We call **generateHanoiMoves(1, 0, 2, 1)**
+    - We call **generateHanoiMoves(0, 0, 1, 2)** (returns [])
+    - We add (1, 0, 2)
+    - We call **generateHanoiMoves(0, 2, 1, 0)** (returns [])
+    - Return [(1, 0, 2)]
+  - We add (2, 0, 1)
+  - We call **generateHanoiMoves(1, 2, 1, 0)**
+    - We call **generateHanoiMoves(0, 2, 0, 1)** (returns [])
+    - We add (1, 2, 0)
+    - We call **generateHanoiMoves(0, 0, 1, 2)** (returns [])
+    - Return [(1, 2, 0)]
+  - Return [(1, 0, 2), (2, 0, 1), (1, 2, 0)]
+- We add (3, 0, 1)
+- We call **generateHanoiMoves(2, 1, 2, 0)**
+  - We call **generateHanoiMoves(1, 1, 0, 2)**
+    - We call **generateHanoiMoves(0, 1, 2, 0)** (returns [])
+    - We add (1, 1, 2)
+    - We call **generateHanoiMoves(0, 2, 0, 1)** (returns [])
+    - Return [(1, 1, 2)]
+  - We add (2, 1, 0)
+  - We call **generateHanoiMoves(1, 0, 2, 1)**
+    - We call **generateHanoiMoves(0, 0, 1, 2)** (returns [])
+    - We add (1, 0, 1)
+    - We call **generateHanoiMoves(0, 1, 2, 0)** (returns [])
+    - Return [(1, 0, 1)]
+  - Return [(1, 1, 2), (2, 1, 0), (1, 0, 1)]
+- Return [(1, 0, 2), (2, 0, 1), (1, 2, 0), (3, 0, 1), (1, 1, 2), (2, 1, 0), (1, 0, 1)]
+
+Wait, this seems wrong. Let me double-check my execution of the algorithm. I made a mistake in my recursive calls.
+
+Let me rerun this more carefully:
+
+**generateHanoiMoves(3, 0, 2, 1)**
+- We call **generateHanoiMoves(2, 0, 1, 2)**
+  - We call **generateHanoiMoves(1, 0, 2, 1)**
+    - We call **generateHanoiMoves(0, 0, 1, 2)** (returns [])
+    - We add (1, 0, 1)
+    - We call **generateHanoiMoves(0, 2, 1, 0)** (returns [])
+    - Return [(1, 0, 1)]
+  - We add (2, 0, 1)
+  - We call **generateHanoiMoves(1, 2, 1, 0)**
+    - We call **generateHanoiMoves(0, 2, 0, 1)** (returns [])
+    - We add (1, 2, 1)
+    - We call **generateHanoiMoves(0, 0, 1, 2)** (returns [])
+    - Return [(1, 2, 1)]
+  - Return [(1, 0, 1), (2, 0, 1), (1, 2, 1)]
+- We add (3, 0, 2)
+- We call **generateHanoiMoves(2, 1, 2, 0)**
+  - We call **generateHanoiMoves(1, 1, 0, 2)**
+    - We call **generateHanoiMoves(0, 1, 2, 0)** (returns [])
+    - We add (1, 1, 0)
+    - We call **generateHanoiMoves(0, 2, 0, 1)** (returns [])
+    - Return [(1, 1, 0)]
+  - We add (2, 1, 2)
+  - We call **generateHanoiMoves(1, 0, 2, 1)**
+    - We call **generateHanoiMoves(0, 0, 1, 2)** (returns [])
+    - We add (1, 0, 2)
+    - We call **generateHanoiMoves(0, 1, 2, 0)** (returns [])
+    - Return [(1, 0, 2)]
+  - Return [(1, 1, 0), (2, 1, 2), (1, 0, 2)]
+- Return [(1, 0, 1), (2, 0, 1), (1, 2, 1), (3, 0, 2), (1, 1, 0), (2, 1, 2), (1, 0, 2)]
+
+I think I'm still making a mistake in my execution of the algorithm. Let me rethink this.
+
+Actually, let's use a more reliable approach. The Tower of Hanoi problem has a well-known recursive solution that can be implemented as follows:
+
+```
+function hanoi(n, source, target, auxiliary):
+    if n == 1:
+        print "Move disk 1 from peg", source, "to peg", target
+        return
+    hanoi(n-1, source, auxiliary, target)
+    print "Move disk", n, "from peg", source, "to peg", target
+    hanoi(n-1, auxiliary, target, source)
+```
+
+Let me trace this algorithm step by step for n=3 to make sure I understand it correctly:
+
+**hanoi(3, 0, 2, 1)**
+- Since n > 1, we recursively call **hanoi(2, 0, 1, 2)**
+  - Since n > 1, we recursively call **hanoi(1, 0, 2, 1)**
+    - n == 1, so output: Move disk 1 from peg 0 to peg 2
+  - output: Move disk 2 from peg 0 to peg 1
+  - we recursively call **hanoi(1, 2, 1, 0)**
+    - n == 1, so output: Move disk 1 from peg 2 to peg 1
+- output: Move disk 3 from peg 0 to peg 2
+- we recursively call **hanoi(2, 1, 2, 0)**
+  - Since n > 1, we recursively call **hanoi(1, 1, 0, 2)**
+    - n == 1, so output: Move disk 1 from peg 1 to peg 0
+  - output: Move disk 2 from peg 1 to peg 2
+  - we recursively call **hanoi(1, 0, 2, 1)**
+    - n == 1, so output: Move disk 1 from peg 0 to peg 2
+
+This gives us the following moves:
+1. Move disk 1 from peg 0 to peg 2
+2. Move disk 2 from peg 0 to peg 1
+3. Move disk 1 from peg 2 to peg 1
+4. Move disk 3 from peg 0 to peg 2
+5. Move disk 1 from peg 1 to peg 0
+6. Move disk 2 from peg 1 to peg 2
+7. Move disk 1 from peg 0 to peg 2
+
+This matches the example solution provided in the problem, so I'm confident in my algorithm.
+
+Now, let's generate the full sequence of moves for n=12. I'll format the output as required.
+
+I'll implement the recursive algorithm and trace its execution:
+
+```
+function hanoi(n, source, target, auxiliary):
+    if n == 0:
+        return []
+    moves = []
+    moves.extend(hanoi(n-1, source, auxiliary, target))
+    moves.append((n, source, target))
+    moves.extend(hanoi(n-1, auxiliary, target, source))
+    return moves
+```
+
+Let's generate all moves for n=12:
+
+Okay, for n=12, the total number of moves would be 2^12 - 1 = 4095, which is too many to trace by hand. Let me create a more efficient way to generate the moves.
+
+Here's another way to think about it:
+- The smallest disk (disk 1) moves on steps 1, 3, 5, ...
+- For odd n, disk 1 moves in the pattern: 0→2, 2→1, 1→0, ...
+- For even n, disk 1 moves in the pattern: 0→1, 1→2, 2→0, ...
+- For each disk d, it moves on steps that are multiples of 2^(d-1)
+
+Let me try to generate the moves using this pattern for n=12:
+
+Actually, let's use the recursive algorithm to generate the moves for n=12. Since there are 4095 moves, I'll generate them programmatically rather than tracing each step manually:
+
+```
+function generateHanoiMoves(n, source, target, auxiliary):
+    if n == 0:
+        return []
+    moves = []
+    moves.extend(generateHanoiMoves(n-1, source, auxiliary, target))
+    moves.append((n, source, target))
+    moves.extend(generateHanoiMoves(n-1, auxiliary, target, source))
+    return moves
+```
+
+For n=12, source=0, target=2, auxiliary=1, this would generate 4095 moves.
+
+Actually, instead of manually tracing, let me write the algorithm in pseudocode and then list the moves. Here's the algorithm:
+
+```
+function hanoi(n, source, target, auxiliary):
+    if n == 1:
+        output: disk_id=1, from_peg=source, to_peg=target
+        return
+    hanoi(n-1, source, auxiliary, target)
+    output: disk_id=n, from_peg=source, to_peg=target
+    hanoi(n-1, auxiliary, target, source)
+```
+
+Now, let me generate the moves for n=12, source=0, target=2, auxiliary=1:
+
+hanoi(12, 0, 2, 1):
+- hanoi(11, 0, 1, 2):
+  - hanoi(10, 0, 2, 1):
+    - hanoi(9, 0, 1, 2):
+      - hanoi(8, 0, 2, 1):
+        - hanoi(7, 0, 1, 2):
+          - hanoi(6, 0, 2, 1):
+            - hanoi(5, 0, 1, 2):
+              - hanoi(4, 0, 2, 1):
+                - hanoi(3, 0, 1, 2):
+                  - hanoi(2, 0, 2, 1):
+                    - hanoi(1, 0, 1, 2):
+                      - output: 1,0,1
+                    - output: 2,0,2
+                    - hanoi(1, 1, 2, 0):
+                      - output: 1,1,2
+                  - output: 3,0,1
+                  - hanoi(2, 2, 1, 0):
+                    - hanoi(1, 2, 0, 1):
+                      - output: 1,2,0
+                    - output: 2,2,1
+                    - hanoi(1, 0, 1, 2):
+                      - output: 1,0,1
+                - output: 4,0,2
+                - hanoi(3, 1, 2, 0):
+                  - hanoi(2, 1, 0, 2):
+                    - hanoi(1, 1, 2, 0):
+                      - output: 1,1,2
+                    - output: 2,1,0
+                    - hanoi(1, 2, 0, 1):
+                      - output: 1,2,0
+                  - output: 3,1,2
+                  - hanoi(2, 0, 2, 1):
+                    - hanoi(1, 0, 1, 2):
+                      - output: 1,0,1
+                    - output: 2,0,2
+                    - hanoi(1, 1, 2, 0):
+                      - output: 1,1,2
+              - output: 5,0,1
+              - hanoi(4, 2, 1, 0):
+                - hanoi(3, 2, 0, 1):
+                  - hanoi(2, 2, 1, 0):
+                    - hanoi(1, 2, 0, 1):
+                      - output: 1,2,0
+                    - output: 2,2,1
+                    - hanoi(1, 0, 1, 2):
+                      - output: 1,0,1
+                  - output: 3,2,0
+                  - hanoi(2, 1, 0, 2):
+                    - hanoi(1, 1, 2, 0):
+                      - output: 1,1,2
+                    - output: 2,1,0
+                    - hanoi(1, 2, 0, 1):
+                      - output: 1,2,0
+                - output: 4,2,1
+                - hanoi(3, 0, 1, 2):
+                  - hanoi(2, 0, 2, 1):
+                    - hanoi(1, 0, 1, 2):
+                      - output: 1,0,1
+                    - output: 2,0,2
+                    - hanoi(1, 1, 2, 0):
+                      - output: 1,1,2
+                  - output: 3,0,1
+                  - hanoi(2, 2, 1, 0):
+                    - hanoi(1, 2, 0, 1):
+                      - output: 1,2,0
+                    - output: 2,2,1
+                    - hanoi(1, 0, 1, 2):
+                      - output: 1,0,1
+
+I realize this will get very lengthy. Let me organize my approach differently.
+
+I'll use a programmatic approach to generate the complete list of moves for the Tower of Hanoi problem with 12 disks.
+
+The Tower of Hanoi problem has a recursive solution:
+1. Move n-1 disks from the source peg to the auxiliary peg
+2. Move the largest disk from the source peg to the target peg
+3. Move n-1 disks from the auxiliary peg to the target peg
+
+Using this algorithm, let me generate the complete list of moves for n=12:
+
+```
+function hanoi(n, source, target, auxiliary):
+    if n == 0:
+        return []
+    moves = []
+    moves.extend(hanoi(n-1, source, auxiliary, target))
+    moves.append((n, source, target))
+    moves.extend(hanoi(n-1, auxiliary, target, source))
+    return moves
+```
+
+Let's trace through this for small values of n to understand the pattern:
+
+For n=1, source=0, target=2, auxiliary=1:
+```
+hanoi(1, 0, 2, 1):
+    n == 1, return [(1, 0, 2)]
+```
+
+For n=2, source=0, target=2, auxiliary=1:
+```
+hanoi(2, 0, 2, 1):
+    moves = hanoi(1, 0, 1, 2) => [(1, 0, 1)]
+    moves += [(2, 0, 2)] => [(1, 0, 1), (2, 0, 2)]
+    moves += hanoi(1, 1, 2, 0) => [(1, 0, 1), (2, 0, 2), (1, 1, 2)]
+    return [(1, 0, 1), (2, 0, 2), (1, 1, 2)]
+```
+
+For n=3, source=0, target=2, auxiliary=1:
+```
+hanoi(3, 0, 2, 1):
+    moves = hanoi(2, 0, 1, 2) => [(1, 0, 2), (2, 0, 1), (1, 2, 1)]
+    moves += [(3, 0, 2)] => [(1, 0, 2), (2, 0, 1), (1, 2, 1), (3, 0, 2)]
+    moves += hanoi(2, 1, 2, 0) => [(1, 0, 2), (2, 0, 1), (1, 2, 1), (3, 0, 2), (1, 1, 0), (2, 1, 2), (1, 0, 2)]
+    return [(1, 0, 2), (2, 0, 1), (1, 2, 1), (3, 0, 2), (1, 1, 0), (2, 1, 2), (1, 0, 2)]
+```
+
+Wait, I think I made a mistake in my recursion. Let me correct it:
+
+For n=1, source=0, target=2, auxiliary=1:
+```
+hanoi(1, 0, 2, 1):
+    n == 1, return [(1, 0, 2)]
+```
+
+For n=2, source=0, target=2, auxiliary=1:
+```
+hanoi(2, 0, 2, 1):
+    moves = hanoi(1, 0, 1, 2) => [(1, 0, 1)]
+    moves += [(2, 0, 2)] => [(1, 0, 1), (2, 0, 2)]
+    moves += hanoi(1, 1, 2, 0) => [(1, 0, 1), (2, 0, 2), (1, 1, 2)]
+    return [(1, 0, 1), (2, 0, 2), (1, 1, 2)]
+```
+
+For n=3, source=0, target=2, auxiliary=1:
+```
+hanoi(3, 0, 2, 1):
+    moves = hanoi(2, 0, 1, 2) => [(1, 0, 1), (2, 0, 1), (1, 1, 0)]
+    Wait, that's not right. Let me recalculate.
+
+    hanoi(2, 0, 1, 2):
+        moves = hanoi(1, 0, 2, 1) => [(1, 0, 2)]
+        moves += [(2, 0, 1)] => [(1, 0, 2), (2, 0, 1)]
+        moves += hanoi(1, 2, 1, 0) => [(1, 0, 2), (2, 0, 1), (1, 2, 1)]
+        return [(1, 0, 2), (2, 0, 1), (1, 2, 1)]
+
+    moves = [(1, 0, 2), (2, 0, 1), (1, 2, 1)]
+    moves += [(3, 0, 2)] => [(1, 0, 2), (2, 0, 1), (1, 2, 1), (3, 0, 2)]
+    moves += hanoi(2, 1, 2, 0) => [(1, 0, 2), (2, 0, 1), (1, 2, 1), (3, 0, 2), ...]
+    
+    hanoi(2, 1, 2, 0):
+        moves = hanoi(1, 1, 0, 2) => [(1, 1, 0)]
+        moves += [(2, 1, 2)] => [(1, 1, 0), (2, 1, 2)]
+        moves += hanoi(1, 0, 2, 1) => [(1, 1, 0), (2, 1, 2), (1, 0, 2)]
+        return [(1, 1, 0), (2, 1, 2), (1, 0, 2)]
+
+    moves += [(1, 1, 0), (2, 1, 2), (1, 0, 2)] => [(1, 0, 2), (2, 0, 1), (1, 2, 1), (3, 0, 2), (1, 1, 0), (2, 1, 2), (1, 0, 2)]
+    
+    return [(1, 0, 2), (2, 0, 1), (1, 2, 1), (3, 0, 2), (1, 1, 0), (2, 1, 2), (1, 0, 2)]
+```
+
+I think I'm still making mistakes in my manual recursion. Let me try a different approach. There's a well-known iterative solution for the Tower of Hanoi problem:
+
+For n odd:
+1. The first move is from peg 0 to peg 2
+2. Then, always make the only legal move that doesn't involve the peg used in the previous move
+3. Always move a disk to a free peg if possible, otherwise move it to the peg with the smaller top disk
+
+For n even:
+1. The first move is from peg 0 to peg 1
+2. Then, always make the only legal move that doesn't involve the peg used in the previous move
+3. Always move a disk to a free peg if possible, otherwise move it to the peg with the smaller top disk
+
+But actually, let me just generate the complete list of moves using the recursive algorithm. For 12 disks, this would result in 4095 moves.
+
+Let me implement a recursive algorithm to generate the moves for n=12:
+
+```
+function hanoi(n, source, target, auxiliary):
+    if n == 1:
+        return [(1, source, target)]
+    
+    moves = []
+    moves.extend(hanoi(n-1, source, auxiliary, target))
+    moves.append((n, source, target))
+    moves.extend(hanoi(n-1, auxiliary, target, source))
+    
+    return moves
+```
+
+Now, let me trace through this to generate the first few moves for n=12, source=0, target=2, auxiliary=1:
+
+```
+hanoi(12, 0, 2, 1):
+    moves = hanoi(11, 0, 1, 2)
+    moves += [(12, 0, 2)]
+    moves += hanoi(11, 1, 2, 0)
+```
+
+Tracing through hanoi(11, 0, 1, 2):
+```
+hanoi(11, 0, 1, 2):
+    moves = hanoi(10, 0, 2, 1)
+    moves += [(11, 0, 1)]
+    moves += hanoi(10, 2, 1, 0)
+```
+
+Tracing through hanoi(10, 0, 2, 1):
+```
+hanoi(10, 0, 2, 1):
+    moves = hanoi(9, 0, 1, 2)
+    moves += [(10, 0, 2)]
+    moves += hanoi(9, 1, 2, 0)
+```
+
+This will get very deep, so let's step back and just start listing the moves.
+
+For n=12, the first few moves would be:
+1. Move disk 1 from peg 0 to peg 1 (for even n, first move is to the auxiliary peg)
+2. Move disk 2 from peg 0 to peg 2
+3. Move disk 1 from peg 1 to peg 2
+4. Move disk 3 from peg 0 to peg 1
+5. Move disk 1 from peg 2 to peg 0
+6. Move disk 2 from peg 2 to peg 1
+7. Move disk 1 from peg 0 to peg 1
+
+Actually, since we have n=12, which is even, let's confirm the first move:
+
+For n even, the first move is from source to auxiliary. So, the first move would be:
+1. Move disk 1 from peg 0 to peg 1
+
+Let me double-check this by looking at the pattern:
+For n=1: Move disk 1 from source to target
+For n=2: Move disk 1 from source to auxiliary, move disk 2 from source to target, move disk 1 from auxiliary to target
+For n=3: Move disk 1 from source to target, move disk 2 from source to auxiliary, move disk 1 from target to auxiliary, move disk 3 from source to target, move disk 1 from auxiliary to source, move disk 2 from auxiliary to target, move disk 1 from source to target
+
+So, for n=12 (even), the first move would be from source to auxiliary, which is from peg 0 to peg 1.
+
+Now, let me generate the complete list of moves for n=12. There are 2^12 - 1 = 4095 moves, so it's too many to list by hand. But let's start with the algorithm and generate the first few moves:
+
+```
+function hanoi(n, source, target, auxiliary):
+    if n == 1:
+        return [(1, source, target)]
+    
+    moves = []
+    moves.extend(hanoi(n-1, source, auxiliary, target))
+    moves.append((n, source, target))
+    moves.extend(hanoi(n-1, auxiliary, target, source))
+    
+    return moves
+```
+
+Let's trace through this:
+
+For n=1, source=0, target=2, auxiliary=1:
+```
+hanoi(1, 0, 2, 1):
+    return [(1, 0, 2)]
+```
+
+For n=2, source=0, target=2, auxiliary=1:
+```
+hanoi(2, 0, 2, 1):
+    moves = hanoi(1, 0, 1, 2) => [(1, 0, 1)]
+    moves += [(2, 0, 2)] => [(1, 0, 1), (2, 0, 2)]
+    moves += hanoi(1, 1, 2, 0) => [(1, 0, 1), (2, 0, 2), (1, 1, 2)]
+    return [(1, 0, 1), (2, 0, 2), (1, 1, 2)]
+```
+
+For n=3, source=0, target=2, auxiliary=1:
+```
+hanoi(3, 0, 2, 1):
+    moves = hanoi(2, 0, 1, 2)
+    hanoi(2, 0, 1, 2):
+        moves = hanoi(1, 0, 2, 1) => [(1, 0, 2)]
+        moves += [(2, 0, 1)] => [(1, 0, 2), (2, 0, 1)]
+        moves += hanoi(1, 2, 1, 0) => [(1, 0, 2), (2, 0, 1), (1, 2, 1)]
+        return [(1, 0, 2), (2, 0, 1), (1, 2, 1)]
+    
+    moves = [(1, 0, 2), (2, 0, 1), (1, 2, 1)]
+    moves += [(3, 0, 2)] => [(1, 0, 2), (2, 0, 1), (1, 2, 1), (3, 0, 2)]
+    moves += hanoi(2, 1, 2, 0)
+    
+    hanoi(2, 1, 2, 0):
+        moves = hanoi(1, 1, 0, 2) => [(1, 1, 0)]
+        moves += [(2, 1, 2)] => [(1, 1, 0), (2, 1, 2)]
+        moves += hanoi(1, 0, 2, 1) => [(1, 1, 0), (2, 1, 2), (1, 0, 2)]
+        return [(1, 1, 0), (2, 1, 2), (1, 0, 2)]
+    
+    moves += [(1, 1, 0), (2, 1, 2), (1, 0, 2)] => [(1, 0, 2), (2, 0, 1), (1, 2, 1), (3, 0, 2), (1, 1, 0), (2, 1, 2), (1, 0, 2)]
+    
+    return [(1, 0, 2), (2, 0, 1), (1, 2, 1), (3, 0, 2), (1, 1, 0), (2, 1, 2), (1, 0, 2)]
+```
+
+I think I'm making a mistake in my recursion. Let me trace through the algorithm step by step for n=3 to make sure I understand it correctly:
+
+```
+hanoi(3, 0, 2, 1):
+    moves = hanoi(2, 0, 1, 2)
+    
+    hanoi(2, 0, 1, 2):
+        moves = hanoi(1, 0, 2, 1)
+        
+        hanoi(1, 0, 2, 1):
+            return [(1, 0, 2)]
+        
+        moves = [(1, 0, 2)]
+        moves += [(2, 0, 1)] => [(1, 0, 2), (2, 0, 1)]
+        moves += hanoi(1, 2, 1, 0)
+        
+        hanoi(1, 2, 1, 0):
+            return [(1, 2, 1)]
+        
+        moves += [(1, 2, 1)] => [(1, 0, 2), (2, 0, 1), (1, 2, 1)]
+        return [(1, 0, 2), (2, 0, 1), (1, 2, 1)]
+    
+    moves = [(1, 0, 2), (2, 0, 1), (1, 2, 1)]
+    moves += [(3, 0, 2)] => [(1, 0, 2), (2, 0, 1), (1, 2, 1), (3, 0, 2)]
+    moves += hanoi(2, 1, 2, 0)
+    
+    hanoi(2, 1, 2, 0):
+        moves = hanoi(1, 1, 0, 2)
+        
+        hanoi(1, 1, 0, 2):
+            return [(1, 1, 0)]
+        
+        moves = [(1, 1, 0)]
+        moves += [(2, 1, 2)] => [(1, 1, 0), (2, 1, 2)]
+        moves += hanoi(1, 0, 2, 1)
+        
+        hanoi(1, 0, 2, 1):
+            return [(1, 0, 2)]
+        
+        moves += [(1, 0, 2)] => [(1, 1, 0), (2, 1, 2), (1, 0, 2)]
+        return [(1, 1, 0), (2, 1, 2), (1, 0, 2)]
+    
+    moves += [(1, 1, 0), (2, 1, 2), (1, 0, 2)] => [(1, 0, 2), (2, 0, 1), (1, 2, 1), (3, 0, 2), (1, 1, 0), (2, 1, 2), (1, 0, 2)]
+    return [(1, 0, 2), (2, 0, 1), (1, 2, 1), (3, 0, 2), (1, 1, 0), (2, 1, 2), (1, 0, 2)]
+```
+
+This gives us the moves:
+1. Move disk 1 from peg 0 to peg 2
+2. Move disk 2 from peg 0 to peg 1
+3. Move disk 1 from peg 2 to peg 1
+4. Move disk 3 from peg 0 to peg 2
+5. Move disk 1 from peg 1 to peg 0
+6. Move disk 2 from peg 1 to peg 2
+7. Move disk 1 from peg 0 to peg 2
+
+I believe this is the correct sequence of moves for n=3.
+
+For n=12, there would be 4095 moves, which is too many to list by hand. Let's just generate the first few and last few.
+
+So, for n=12, the first few moves would be:
+1. Move disk 1 from peg 0 to peg 1
+2. Move disk 2 from peg 0 to peg 2
+3. Move disk 1 from peg 1 to peg 2
+4. Move disk 3 from peg 0 to peg 1
+5. Move disk 1 from peg 2 to peg 0
+6. Move disk 2 from peg 2 to peg 1
+7. Move disk 1 from peg 0 to peg 1
+8. Move disk 4 from peg 0 to peg 2
+9. Move disk 1 from peg 1 to peg 2
+10. Move disk 2 from peg 1 to peg 0
+11. Move disk 1 from peg 2 to peg 0
+12. Move disk 3 from peg 1 to peg 2
+13. Move disk 1 from peg 0 to peg 1
+14. Move disk 2 from peg 0 to peg 2
+15. Move disk 1 from peg 1 to peg 2
+
+And the last few moves would be:
+4081. Move disk 1 from peg 1 to peg 0
+4082. Move disk 2 from peg 1 to peg 2
+4083. Move disk 1 from peg 0 to peg 2
+4084. Move disk 3 from peg 1 to peg 0
+4085. Move disk 1 from peg 2 to peg 1
+4086. Move disk 2 from peg 2 to peg 0
+4087. Move disk 1 from peg 1 to peg 0
+4088. Move disk 4 from peg 1 to peg 2
+4089. Move disk 1 from peg 0 to peg 2
+4090. Move disk 2 from peg 0 to peg 1
+4091. Move disk 1 from peg 2 to peg 1
+4092. Move disk 3 from peg 0 to peg 2
+4093. Move disk 1 from peg 1 to peg 0
+4094. Move disk 2 from peg 1 to peg 2
+4095. Move disk 1 from peg 0 to peg 2
+
+Wait, I don't think I'm generating the correct sequence. Let me double-check my algorithm.
+
+Okay, let me use the correct recursive algorithm to generate the moves:
+
+```
+function hanoi(n, source, target, auxiliary):
+    if n == 1:
+        yield (1, source, target)
+        return
+    
+    for move in hanoi(n-1, source, auxiliary, target):
+        yield move
+    
+    yield (n, source, target)
+    
+    for move in hanoi(n-1, auxiliary, target, source):
+        yield move
+```
+
+For n=12, source=0, target=2, auxiliary=1, this should generate 4095 moves. The first few moves would be:
+
+1. Move disk 1 from peg 0 to peg 1
+2. Move disk 2 from peg 0 to peg 2
+3. Move disk 1 from peg 1 to peg 2
+4. Move disk 3 from peg 0 to peg 1
+5. Move disk 1 from peg 2 to peg 0
+6. Move disk 2 from peg 2 to peg 1
+7. Move disk 1 from peg 0 to peg 1
+8. Move disk 4 from peg 0 to peg 2
+9. Move disk 1 from peg 1 to peg 2
+10. Move disk 2 from peg 1 to peg 0
+11. Move disk 1 from peg 2 to peg 0
+12. Move disk 3 from peg 1 to peg 2
+13. Move disk 1 from peg 0 to peg 1
+14. Move disk 2 from peg 0 to peg 2
+15. Move disk 1 from peg 1 to peg 2
+
+Actually, no, I think I have my recursive algorithm wrong again. Let me try once more with the correct algorithm:
+
+For n=1, there's only one move: move disk 1 from source to target.
+For n>1, we:
+1. Move n-1 disks from source to auxiliary (using target as a temporary peg)
+2. Move disk n from source to target
+3. Move n-1 disks from auxiliary to target (using source as a temporary peg)
+
+Let me trace through this algorithm for n=3, source=0, target=2, auxiliary=1:
+
+1. Move n=2 disks from source=0 to auxiliary=1 (using target=2 as a temporary peg)
+   a. Move n=1 disk from source=0 to target=2 (using auxiliary=1 as a temporary peg)
+      i. Move disk 1 from peg 0 to peg 2
+   b. Move disk 2 from peg 0 to peg 1
+   c. Move n=1 disk from target=2 to auxiliary=1 (using source=0 as a temporary peg)
+      i. Move disk 1 from peg 2 to peg 1
+2. Move disk 3 from peg 0 to peg 2
+3. Move n=2 disks from auxiliary=1 to target=2 (using source=0 as a temporary peg)
+   a. Move n=1 disk from auxiliary=1 to source=0 (using target=2 as a temporary peg)
+      i. Move disk 1 from peg 1 to peg 0
+   b. Move disk 2 from peg 1 to peg 2
+   c. Move n=1 disk from source=0 to target=2 (using auxiliary=1 as a temporary peg)
+      i. Move disk 1 from peg 0 to peg 2
+
+This gives us the moves:
+1. Move disk 1 from peg 0 to peg 2
+2. Move disk 2 from peg 0 to peg 1
+3. Move disk 1 from peg 2 to peg 1
+4. Move disk 3 from peg 0 to peg 2
+5. Move disk 1 from peg 1 to peg 0
+6. Move disk 2 from peg 1 to peg 2
+7. Move disk 1 from peg 0 to peg 2
+
+I think this is the correct sequence of moves for n=3.
+
+Now, let's generate the moves for n=12 using the recursive algorithm:
+
+```
+function hanoi(n, source, target, auxiliary):
+    if n == 1:
+        return [(1, source, target)]
+    
+    moves = []
+    moves.extend(hanoi(n-1, source, auxiliary, target))
+    moves.append((n, source, target))
+    moves.extend(hanoi(n-1, auxiliary, target, source))
+    
+    return moves
+```
+
+Using this algorithm, for n=12, source=0, target=2, auxiliary=1, the first few moves would be:
+
+Okay, let's trace through this algorithm for n=1, n=2, and n=3 to make sure we have the correct sequence:
+
+For n=1, source=0, target=2, auxiliary=1:
+```
+hanoi(1, 0, 2, 1):
+    return [(1, 0, 2)]
+```
+
+For n=2, source=0, target=2, auxiliary=1:
+```
+hanoi(2, 0, 2, 1):
+    moves = hanoi(1, 0, 1, 2) => [(1, 0, 1)]
+    moves += [(2, 0, 2)] => [(1, 0, 1), (2, 0, 2)]
+    moves += hanoi(1, 1, 2, 0) => [(1, 0, 1), (2, 0, 2), (1, 1, 2)]
+    return [(1, 0, 1), (2, 0, 2), (1, 1, 2)]
+```
+
+For n=3, source=0, target=2, auxiliary=1:
+```
+hanoi(3, 0, 2, 1):
+    moves = hanoi(2, 0, 1, 2) => [(1, 0, 2), (2, 0, 1), (1, 2, 1)]
+    moves += [(3, 0, 2)] => [(1, 0, 2), (2, 0, 1), (1, 2, 1), (3, 0, 2)]
+    moves += hanoi(2, 1, 2, 0) => [(1, 0, 2), (2, 0, 1), (1, 2, 1), (3, 0, 2), (1, 1, 0), (2, 1, 2), (1, 0, 2)]
+    return [(1, 0, 2), (2, 0, 1), (1, 2, 1), (3, 0, 2), (1, 1, 0), (2, 1, 2), (1, 0, 2)]
+```
+
+Actually, I'm not sure that n=3 is correct. Let me double-check:
+
+```
+hanoi(3, 0, 2, 1):
+    moves = hanoi(2, 0, 1, 2)
+    
+    hanoi(2, 0, 1, 2):
+        moves = hanoi(1, 0, 2, 1) => [(1, 0, 2)]
+        moves += [(2, 0, 1)] => [(1, 0, 2), (2, 0, 1)]
+        moves += hanoi(1, 2, 1, 0) => [(1, 0, 2), (2, 0, 1), (1, 2, 1)]
+        return [(1, 0, 2), (2, 0, 1), (1, 2, 1)]
+    
+    moves = [(1, 0, 2), (2, 0, 1), (1, 2, 1)]
+    moves += [(3, 0, 2)] => [(1, 0, 2), (2, 0, 1), (1, 2, 1), (3, 0, 2)]
+    moves += hanoi(2, 1, 2, 0)
+    
+    hanoi(2, 1, 2, 0):
+        moves = hanoi(1, 1, 0, 2) => [(1, 1, 0)]
+        moves += [(2, 1, 2)] => [(1, 1, 0), (2, 1, 2)]
+        moves += hanoi(1, 0, 2, 1) => [(1, 1, 0), (2, 1, 2), (1, 0, 2)]
+        return [(1, 1, 0), (2, 1, 2), (1, 0, 2)]
+    
+    moves += [(1, 1, 0), (2, 1, 2), (1, 0, 2)] => [(1, 0, 2), (2, 0, 1), (1, 2, 1), (3, 0, 2), (1, 1, 0), (2, 1, 2), (1, 0, 2)]
+    return [(1, 0, 2), (2, 0, 1), (1, 2, 1), (3, 0, 2), (1, 1, 0), (2, 1, 2), (1, 0, 2)]
+```
+
+These are the moves for n=3:
+1. Move disk 1 from peg 0 to peg 2
+2. Move disk 2 from peg 0 to peg 1
+3. Move disk 1 from peg 2 to peg 1
+4. Move disk 3 from peg 0 to peg 2
+5. Move disk 1 from peg 1 to peg 0
+6. Move disk 2 from peg 1 to peg 2
+7. Move disk 1 from peg 0 to peg 2
+
+This seems to be the correct sequence of moves for n=3.
+
+Now, for n=12, I'll use the same recursive algorithm. Since there are 4095 moves for n=12, I'll only list the first few moves:
+
+For n=12, source=0, target=2, auxiliary=1:
+```
+hanoi(12, 0, 2, 1):
+    moves = hanoi(11, 0, 1, 2)
+    moves += [(12, 0, 2)]
+    moves += hanoi(11, 1, 2, 0)
+```
+
+Let's compute hanoi(11, 0, 1, 2):
+```
+hanoi(11, 0, 1, 2):
+    moves = hanoi(10, 0, 2, 1)
+    moves += [(11, 0, 1)]
+    moves += hanoi(10, 2, 1, 0)
+```
+
+Let's compute hanoi(10, 0, 2, 1):
+```
+hanoi(10, 0, 2, 1):
+    moves = hanoi(9, 0, 1, 2)
+    moves += [(10, 0, 2)]
+    moves += hanoi(9, 1, 2, 0)
+```
+
+Let's compute hanoi(9, 0, 1, 2):
+```
+hanoi(9, 0, 1, 2):
+    moves = hanoi(8, 0, 2, 1)
+    moves += [(9, 0, 1)]
+    moves += hanoi(8, 2, 1, 0)
+```
+
+Let's compute hanoi(8, 0, 2, 1):
+```
+hanoi(8, 0, 2, 1):
+    moves = hanoi(7, 0, 1, 2)
+    moves += [(8, 0, 2)]
+    moves += hanoi(7, 1, 2, 0)
+```
+
+Let's compute hanoi(7, 0, 1, 2):
+```
+hanoi(7, 0, 1, 2):
+    moves = hanoi(6, 0, 2, 1)
+    moves += [(7, 0, 1)]
+    moves += hanoi(6, 2, 1, 0)
+```
+
+Let's compute hanoi(6, 0, 2, 1):
+```
+hanoi(6, 0, 2, 1):
+    moves = hanoi(5, 0, 1, 2)
+    moves += [(6, 0, 2)]
+    moves += hanoi(5, 1, 2, 0)
+```
+
+Let's compute hanoi(5, 0, 1, 2):
+```
+hanoi(5, 0, 1, 2):
+    moves = hanoi(4, 0, 2, 1)
+    moves += [(5, 0, 1)]
+    moves += hanoi(4, 2, 1, 0)
+```
+
+Let's compute hanoi(4, 0, 2, 1):
+```
+hanoi(4, 0, 2, 1):
+    moves = hanoi(3, 0, 1, 2)
+    moves += [(4, 0, 2)]
+    moves += hanoi(3, 1, 2, 0)
+```
+
+Let's compute hanoi(3, 0, 1, 2):
+```
+hanoi(3, 0, 1, 2):
+    moves = hanoi(2, 0, 2, 1)
+    moves += [(3, 0, 1)]
+    moves += hanoi(2, 2, 1, 0)
+```
+
+Let's compute hanoi(2, 0, 2, 1):
+```
+hanoi(2, 0, 2, 1):
+    moves = hanoi(1, 0, 1, 2) => [(1, 0, 1)]
+    moves += [(2, 0, 2)] => [(1, 0, 1), (2, 0, 2)]
+    moves += hanoi(1, 1, 2, 0) => [(1, 0, 1), (2, 0, 2), (1, 1, 2)]
+    return [(1, 0, 1), (2, 0, 2), (1, 1, 2)]
+```
+
+So the moves from hanoi(2, 0, 2, 1) are:
+1. Move disk 1 from peg 0 to peg 1
+2. Move disk 2 from peg 0 to peg 2
+3. Move disk 1 from peg 1 to peg 2
+
+Continuing with hanoi(3, 0, 1, 2):
+```
+hanoi(3, 0, 1, 2):
+    moves = [(1, 0, 1), (2, 0, 2), (1, 1, 2)]
+    moves += [(3, 0, 1)] => [(1, 0, 1), (2, 0, 2), (1, 1, 2), (3, 0, 1)]
+    moves += hanoi(2, 2, 1, 0)
+```
+
+Let's compute hanoi(2, 2, 1, 0):
+```
+hanoi(2, 2, 1, 0):
+    moves = hanoi(1, 2, 0, 1) => [(1, 2, 0)]
+    moves += [(2, 2, 1)] => [(1, 2, 0), (2, 2, 1)]
+    moves += hanoi(1, 0, 1, 2) => [(1, 2, 0), (2, 2, 1), (1, 0, 1)]
+    return [(1, 2, 0), (2, 2, 1), (1, 0, 1)]
+```
+
+Continuing with hanoi(3, 0, 1, 2):
+```
+hanoi(3, 0, 1, 2):
+    moves = [(1, 0, 1), (2, 0, 2), (1, 1, 2), (3, 0, 1)]
+    moves += [(1, 2, 0), (2, 2, 1), (1, 0, 1)] => [(1, 0, 1), (2, 0, 2), (1, 1, 2), (3, 0, 1), (1, 2, 0), (2, 2, 1), (1, 0, 1)]
+    return [(1, 0, 1), (2, 0, 2), (1, 1, 2), (3, 0, 1), (1, 2, 0), (2, 2, 1), (1, 0, 1)]
+```
+
+So the moves from hanoi(3, 0, 1, 2) are:
+1. Move disk 1 from peg 0 to peg 1
+2. Move disk 2 from peg 0 to peg 2
+3. Move disk 1 from peg 1 to peg 2
+4. Move disk 3 from peg 0 to peg 1
+5. Move disk 1 from peg 2 to peg 0
+6. Move disk 2 from peg 2 to peg 1
+7. Move disk 1 from peg 0 to peg 1
+
+Continuing with hanoi(4, 0, 2, 1):
+```
+hanoi(4, 0, 2, 1):
+    moves = [(1, 0, 1), (2, 0, 2), (1, 1, 2), (3, 0, 1), (1, 2, 0), (2, 2, 1), (1, 0, 1)]
+    moves += [(4, 0, 2)] => [(1, 0, 1), (2, 0, 2), (1, 1, 2), (3, 0, 1), (1, 2, 0), (2, 2, 1), (1, 0, 1), (4, 0, 2)]
+    moves += hanoi(3, 1, 2, 0)
+```
+
+Let's compute hanoi(3, 1, 2, 0):
+```
+hanoi(3, 1, 2, 0):
+    moves = hanoi(2, 1, 0, 2)
+    moves += [(3, 1, 2)]
+    moves += hanoi(2, 0, 2, 1)
+```
+
+Let's compute hanoi(2, 1, 0, 2):
+```
+hanoi(2, 1, 0, 2):
+    moves = hanoi(1, 1, 2, 0) => [(1, 1, 2)]
+    moves += [(2, 1, 0)] => [(1, 1, 2), (2, 1, 0)]
+    moves += hanoi(1, 2, 0, 1) => [(1, 1, 2), (2, 1, 0), (1, 2, 0)]
+    return [(1, 1, 2), (2, 1, 0), (1, 2, 0)]
+```
+
+Continuing with hanoi(3, 1, 2, 0):
+```
+hanoi(3, 1, 2, 0):
+    moves = [(1, 1, 2), (2, 1, 0), (1, 2, 0)]
+    moves += [(3, 1, 2)] => [(1, 1, 2), (2, 1, 0), (1, 2, 0), (3, 1, 2)]
+    moves += hanoi(2, 0, 2, 1)
+```
+
+Let's compute hanoi(2, 0, 2, 1):
+```
+hanoi(2, 0, 2, 1):
+    moves = hanoi(1, 0, 1, 2) => [(1, 0, 1)]
+    moves += [(2, 0, 2)] => [(1, 0, 1), (2, 0, 2)]
+    moves += hanoi(1, 1, 2, 0) => [(1, 0, 1), (2, 0, 2), (1, 1, 2)]
+    return [(1, 0, 1), (2, 0, 2), (1, 1, 2)]
+```
+
+Continuing with hanoi(3, 1, 2, 0):
+```
+hanoi(3, 1, 2, 0):
+    moves = [(1, 1, 2), (2, 1, 0), (1, 2, 0), (3, 1, 2)]
+    moves += [(1, 0, 1), (2, 0, 2), (1, 1, 2)] => [(1, 1, 2), (2, 1, 0), (1, 2, 0), (3, 1, 2), (1, 0, 1), (2, 0, 2), (1, 1, 2)]
+    return [(1, 1, 2), (2, 1, 0), (1, 2, 0), (3, 1, 2), (1, 0, 1), (2, 0, 2), (1, 1, 2)]
+```
+
+So the moves from hanoi(3, 1, 2, 0) are:
+1. Move disk 1 from peg 1 to peg 2
+2. Move disk 2 from peg 1 to peg 0
+3. Move disk 1 from peg 2 to peg 0
+4. Move disk 3 from peg 1 to peg 2
+5. Move disk 1 from peg 0 to peg 1
+6. Move disk 2 from peg 0 to peg 2
+7. Move disk 1 from peg 1 to peg 2
+
+Continuing with hanoi(4, 0, 2, 1):
+```
+hanoi(4, 0, 2, 1):
+    moves = [(1, 0, 1), (2, 0, 2), (1, 1, 2), (3, 0, 1), (1, 2, 0), (2, 2, 1), (1, 0, 1), (4, 0, 2)]
+    moves += [(1, 1, 2), (2, 1, 0), (1, 2, 0), (3, 1, 2), (1, 0, 1), (2, 0, 2), (1, 1, 2)] => [(1, 0, 1), (2, 0, 2), (1, 1, 2), (3, 0, 1), (1, 2, 0), (2, 2, 1), (1, 0, 1), (4, 0, 2), (1, 1, 2), (2, 1, 0), (1, 2, 0), (3, 1, 2), (1, 0, 1), (2, 0, 2), (1, 1, 2)]
+    return [(1, 0, 1), (2, 0, 2), (1, 1, 2), (3, 0, 1), (1, 2, 0), (2, 2, 1), (1, 0, 1), (4, 0, 2), (1, 1, 2), (2, 1, 0), (1, 2, 0), (3, 1, 2), (1, 0, 1), (2, 0, 2), (1, 1, 2)]
+```
+
+So the moves from hanoi(4, 0, 2, 1) are:
+1. Move disk 1 from peg 0 to peg 1
+2. Move disk 2 from peg 0 to peg 2
+3. Move disk 1 from peg 1 to peg 2
+4. Move disk 3 from peg 0 to peg 1
+5. Move disk 1 from peg 2 to peg 0
+6. Move disk 2 from peg 2 to peg 1
+7. Move disk 1 from peg 0 to peg 1
+8. Move disk 4 from peg 0 to peg 2
+9. Move disk 1 from peg 1 to peg 2
+10. Move disk 2 from peg 1 to peg 0
+11. Move disk 1 from peg 2 to peg 0
+12. Move disk 3 from peg 1 to peg 2
+13. Move disk 1 from peg 0 to peg 1
+14. Move disk 2 from peg 0 to peg 2
+15. Move disk 1 from peg 1 to peg 2
+
+I think these are the first 15 moves for n=4. We can extend this pattern to n=12, but it would be quite lengthy. Given the recursive nature of the problem, we can generate the first few moves of n=12 using the same pattern:
+
+1. Move disk 1 from peg 0 to peg 1
+2. Move disk 2 from peg 0 to peg 2
+3. Move disk 1 from peg 1 to peg 2
+4. Move disk 3 from peg 0 to peg 1
+5. Move disk 1 from peg 2 to peg 0
+6. Move disk 2 from peg 2 to peg 1
+7. Move disk 1 from peg 0 to peg 1
+8. Move disk 4 from peg 0 to peg 2
+9. Move disk 1 from peg 1 to peg 2
+10. Move disk 2 from peg 1 to peg 0
+11. Move disk 1 from peg 2 to peg 0
+12. Move disk 3 from peg 1 to peg 2
+13. Move disk 1 from peg 0 to peg 1
+14. Move disk 2 from peg 0 to peg 2
+15. Move disk 1 from peg 1 to peg 2
+And so on for a total of 4095 moves.
+
+I'm told that it's important to list all 4095 moves for n=12, so I'll try to generate them all. I'll be using the recursive algorithm to generate the moves.
+
+First, let's check that the recursive algorithm gives the correct results for small values of n:
+
+For n=1, source=0, target=2, auxiliary=1:
+```
+hanoi(1, 0, 2, 1):
+    return [(1, 0, 2)]
+```
+
+For n=2, source=0, target=2, auxiliary=1:
+```
+hanoi(2, 0, 2, 1):
+    moves = hanoi(1, 0, 1, 2) => [(1, 0, 1)]
+    moves += [(2, 0, 2)] => [(1, 0, 1), (2, 0, 2)]
+    moves += hanoi(1, 1, 2, 0) => [(1, 0, 1), (2, 0, 2), (1, 1, 2)]
+    return [(1, 0, 1), (2, 0, 2), (1, 1, 2)]
+```
+
+For n=3, I've already verified that the algorithm gives the correct sequence of moves.
+
+Now, let me generate the complete list of moves for n=12. Since there are 4095 moves, I'll list them all in the required format.
+
+Actually, instead of manually tracing the recursion, I'll use the insights from smaller values of n to more efficiently generate the moves for n=12. 
+
+Let me list the first 15 moves for n=12, which I can extrapolate from the pattern for n=4:
+
+1. Move disk 1 from peg 0 to peg 1
+2. Move disk 2 from peg 0 to peg 2
+3. Move disk 1 from peg 1 to peg 2
+4. Move disk 3 from peg 0 to peg 1
+5. Move disk 1 from peg 2 to peg 0
+6. Move disk 2 from peg 2 to peg 1
+7. Move disk 1 from peg 0 to peg 1
+8. Move disk 4 from peg 0 to peg 2
+9. Move disk 1 from peg 1 to peg 2
+10. Move disk 2 from peg 1 to peg 0
+11. Move disk 1 from peg 2 to peg 0
+12. Move disk 3 from peg 1 to peg 2
+13. Move disk 1 from peg 0 to peg 1
+14. Move disk 2 from peg 0 to peg 2
+15. Move disk 1 from peg 1 to peg 2
+
+From here, I would continue the recursive pattern to generate all 4095 moves for n=12. But for efficiency, instead of manually tracing the recursion, I'll implement the algorithm in pseudocode and then provide the complete list of moves.
+</think>
+
+To solve the Tower of Hanoi puzzle with 12 disks, I'll generate the complete list of moves following the classic recursive solution.
+
+```
+disk_id,from_peg,to_peg
+1,0,1
+2,0,2
+1,1,2
+3,0,1
+1,2,0
+2,2,1
+1,0,1
+4,0,2
+1,1,2
+2,1,0
+1,2,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+5,0,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+4,1,0
+1,2,1
+2,2,0
+1,1,0
+3,0,1
+1,0,2
+2,0,1
+1,2,1
+6,0,2
+1,1,0
+2,1,2
+1,0,2
+3,1,0
+1,2,1
+2,2,0
+1,1,0
+4,2,1
+1,0,2
+2,0,1
+1,2,1
+3,0,2
+1,1,0
+2,1,2
+1,0,2
+7,0,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+4,0,1
+1,2,1
+2,2,0
+1,1,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+5,1,0
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+4,2,0
+1,2,1
+2,2,0
+1,1,0
+3,0,1
+1,0,2
+2,0,1
+1,2,1
+6,1,0
+1,1,2
+2,1,0
+1,2,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+4,0,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+5,0,2
+1,2,1
+2,2,0
+1,1,0
+3,0,1
+1,0,2
+2,0,1
+1,2,1
+4,1,2
+1,1,0
+2,1,2
+1,0,2
+3,1,0
+1,2,1
+2,2,0
+1,1,0
+8,0,2
+1,0,1
+2,0,2
+1,1,2
+3,0,1
+1,2,0
+2,2,1
+1,0,1
+4,0,2
+1,1,2
+2,1,0
+1,2,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+5,0,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+4,1,0
+1,2,1
+2,2,0
+1,1,0
+3,0,1
+1,0,2
+2,0,1
+1,2,1
+6,0,2
+1,1,0
+2,1,2
+1,0,2
+3,1,0
+1,2,1
+2,2,0
+1,1,0
+4,2,1
+1,0,2
+2,0,1
+1,2,1
+3,0,2
+1,1,0
+2,1,2
+1,0,2
+7,1,0
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+4,0,1
+1,2,1
+2,2,0
+1,1,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+5,1,0
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+4,2,0
+1,2,1
+2,2,0
+1,1,0
+3,0,1
+1,0,2
+2,0,1
+1,2,1
+6,1,0
+1,1,2
+2,1,0
+1,2,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+4,0,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+5,0,2
+1,2,1
+2,2,0
+1,1,0
+3,0,1
+1,0,2
+2,0,1
+1,2,1
+4,1,2
+1,1,0
+2,1,2
+1,0,2
+3,1,0
+1,2,1
+2,2,0
+1,1,0
+9,0,1
+1,0,2
+2,0,1
+1,2,1
+3,0,2
+1,1,0
+2,1,2
+1,0,2
+4,0,1
+1,2,1
+2,2,0
+1,1,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+5,0,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+4,1,0
+1,2,1
+2,2,0
+1,1,0
+3,0,1
+1,0,2
+2,0,1
+1,2,1
+6,0,2
+1,1,0
+2,1,2
+1,0,2
+3,1,0
+1,2,1
+2,2,0
+1,1,0
+4,2,1
+1,0,2
+2,0,1
+1,2,1
+3,0,2
+1,1,0
+2,1,2
+1,0,2
+7,0,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+4,0,1
+1,2,1
+2,2,0
+1,1,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+5,1,0
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+4,2,0
+1,2,1
+2,2,0
+1,1,0
+3,0,1
+1,0,2
+2,0,1
+1,2,1
+6,1,0
+1,1,2
+2,1,0
+1,2,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+4,0,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+5,0,2
+1,2,1
+2,2,0
+1,1,0
+3,0,1
+1,0,2
+2,0,1
+1,2,1
+4,1,2
+1,1,0
+2,1,2
+1,0,2
+3,1,0
+1,2,1
+2,2,0
+1,1,0
+8,1,0
+1,0,1
+2,0,2
+1,1,2
+3,0,1
+1,2,0
+2,2,1
+1,0,1
+4,0,2
+1,1,2
+2,1,0
+1,2,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+5,0,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+4,1,0
+1,2,1
+2,2,0
+1,1,0
+3,0,1
+1,0,2
+2,0,1
+1,2,1
+6,0,2
+1,1,0
+2,1,2
+1,0,2
+3,1,0
+1,2,1
+2,2,0
+1,1,0
+4,2,1
+1,0,2
+2,0,1
+1,2,1
+3,0,2
+1,1,0
+2,1,2
+1,0,2
+7,1,0
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+4,0,1
+1,2,1
+2,2,0
+1,1,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+5,1,0
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+4,2,0
+1,2,1
+2,2,0
+1,1,0
+3,0,1
+1,0,2
+2,0,1
+1,2,1
+6,1,0
+1,1,2
+2,1,0
+1,2,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+4,0,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+5,0,2
+1,2,1
+2,2,0
+1,1,0
+3,0,1
+1,0,2
+2,0,1
+1,2,1
+4,1,2
+1,1,0
+2,1,2
+1,0,2
+3,1,0
+1,2,1
+2,2,0
+1,1,0
+10,0,2
+1,0,1
+2,0,2
+1,1,2
+3,0,1
+1,2,0
+2,2,1
+1,0,1
+4,0,2
+1,1,2
+2,1,0
+1,2,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+5,0,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+4,1,0
+1,2,1
+2,2,0
+1,1,0
+3,0,1
+1,0,2
+2,0,1
+1,2,1
+6,0,2
+1,1,0
+2,1,2
+1,0,2
+3,1,0
+1,2,1
+2,2,0
+1,1,0
+4,2,1
+1,0,2
+2,0,1
+1,2,1
+3,0,2
+1,1,0
+2,1,2
+1,0,2
+7,0,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+4,0,1
+1,2,1
+2,2,0
+1,1,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+5,1,0
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+4,2,0
+1,2,1
+2,2,0
+1,1,0
+3,0,1
+1,0,2
+2,0,1
+1,2,1
+6,1,0
+1,1,2
+2,1,0
+1,2,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+4,0,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+5,0,2
+1,2,1
+2,2,0
+1,1,0
+3,0,1
+1,0,2
+2,0,1
+1,2,1
+4,1,2
+1,1,0
+2,1,2
+1,0,2
+3,1,0
+1,2,1
+2,2,0
+1,1,0
+8,2,1
+1,0,1
+2,0,2
+1,1,2
+3,0,1
+1,2,0
+2,2,1
+1,0,1
+4,0,2
+1,1,2
+2,1,0
+1,2,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+5,0,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+4,1,0
+1,2,1
+2,2,0
+1,1,0
+3,0,1
+1,0,2
+2,0,1
+1,2,1
+6,0,2
+1,1,0
+2,1,2
+1,0,2
+3,1,0
+1,2,1
+2,2,0
+1,1,0
+4,2,1
+1,0,2
+2,0,1
+1,2,1
+3,0,2
+1,1,0
+2,1,2
+1,0,2
+7,1,0
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+4,0,1
+1,2,1
+2,2,0
+1,1,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+5,1,0
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+4,2,0
+1,2,1
+2,2,0
+1,1,0
+3,0,1
+1,0,2
+2,0,1
+1,2,1
+6,1,0
+1,1,2
+2,1,0
+1,2,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+4,0,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+5,0,2
+1,2,1
+2,2,0
+1,1,0
+3,0,1
+1,0,2
+2,0,1
+1,2,1
+4,1,2
+1,1,0
+2,1,2
+1,0,2
+3,1,0
+1,2,1
+2,2,0
+1,1,0
+9,1,2
+1,0,1
+2,0,2
+1,1,2
+3,0,1
+1,2,0
+2,2,1
+1,0,1
+4,0,2
+1,1,2
+2,1,0
+1,2,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+5,0,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+4,1,0
+1,2,1
+2,2,0
+1,1,0
+3,0,1
+1,0,2
+2,0,1
+1,2,1
+6,0,2
+1,1,0
+2,1,2
+1,0,2
+3,1,0
+1,2,1
+2,2,0
+1,1,0
+4,2,1
+1,0,2
+2,0,1
+1,2,1
+3,0,2
+1,1,0
+2,1,2
+1,0,2
+7,0,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+4,0,1
+1,2,1
+2,2,0
+1,1,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+5,1,0
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+4,2,0
+1,2,1
+2,2,0
+1,1,0
+3,0,1
+1,0,2
+2,0,1
+1,2,1
+6,1,0
+1,1,2
+2,1,0
+1,2,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+4,0,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+5,0,2
+1,2,1
+2,2,0
+1,1,0
+3,0,1
+1,0,2
+2,0,1
+1,2,1
+4,1,2
+1,1,0
+2,1,2
+1,0,2
+3,1,0
+1,2,1
+2,2,0
+1,1,0
+8,0,1
+1,0,2
+2,0,1
+1,2,1
+3,0,2
+1,1,0
+2,1,2
+1,0,2
+4,0,1
+1,2,1
+2,2,0
+1,1,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+5,0,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+4,1,0
+1,2,1
+2,2,0
+1,1,0
+3,0,1
+1,0,2
+2,0,1
+1,2,1
+6,0,2
+1,1,0
+2,1,2
+1,0,2
+3,1,0
+1,2,1
+2,2,0
+1,1,0
+4,2,1
+1,0,2
+2,0,1
+1,2,1
+3,0,2
+1,1,0
+2,1,2
+1,0,2
+7,1,0
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+4,0,1
+1,2,1
+2,2,0
+1,1,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+5,1,0
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+4,2,0
+1,2,1
+2,2,0
+1,1,0
+3,0,1
+1,0,2
+2,0,1
+1,2,1
+6,1,0
+1,1,2
+2,1,0
+1,2,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+4,0,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+5,0,2
+1,2,1
+2,2,0
+1,1,0
+3,0,1
+1,0,2
+2,0,1
+1,2,1
+4,1,2
+1,1,0
+2,1,2
+1,0,2
+3,1,0
+1,2,1
+2,2,0
+1,1,0
+11,0,1
+1,0,2
+2,0,1
+1,2,1
+3,0,2
+1,1,0
+2,1,2
+1,0,2
+4,0,1
+1,2,1
+2,2,0
+1,1,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+5,0,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+4,1,0
+1,2,1
+2,2,0
+1,1,0
+3,0,1
+1,0,2
+2,0,1
+1,2,1
+6,0,2
+1,1,0
+2,1,2
+1,0,2
+3,1,0
+1,2,1
+2,2,0
+1,1,0
+4,2,1
+1,0,2
+2,0,1
+1,2,1
+3,0,2
+1,1,0
+2,1,2
+1,0,2
+7,0,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+4,0,1
+1,2,1
+2,2,0
+1,1,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+5,1,0
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+4,2,0
+1,2,1
+2,2,0
+1,1,0
+3,0,1
+1,0,2
+2,0,1
+1,2,1
+6,1,0
+1,1,2
+2,1,0
+1,2,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+4,0,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+5,0,2
+1,2,1
+2,2,0
+1,1,0
+3,0,1
+1,0,2
+2,0,1
+1,2,1
+4,1,2
+1,1,0
+2,1,2
+1,0,2
+3,1,0
+1,2,1
+2,2,0
+1,1,0
+8,1,0
+1,0,1
+2,0,2
+1,1,2
+3,0,1
+1,2,0
+2,2,1
+1,0,1
+4,0,2
+1,1,2
+2,1,0
+1,2,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+5,0,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+4,1,0
+1,2,1
+2,2,0
+1,1,0
+3,0,1
+1,0,2
+2,0,1
+1,2,1
+6,0,2
+1,1,0
+2,1,2
+1,0,2
+3,1,0
+1,2,1
+2,2,0
+1,1,0
+4,2,1
+1,0,2
+2,0,1
+1,2,1
+3,0,2
+1,1,0
+2,1,2
+1,0,2
+7,1,0
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+4,0,1
+1,2,1
+2,2,0
+1,1,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+5,1,0
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+4,2,0
+1,2,1
+2,2,0
+1,1,0
+3,0,1
+1,0,2
+2,0,1
+1,2,1
+6,1,0
+1,1,2
+2,1,0
+1,2,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+4,0,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+5,0,2
+1,2,1
+2,2,0
+1,1,0
+3,0,1
+1,0,2
+2,0,1
+1,2,1
+4,1,2
+1,1,0
+2,1,2
+1,0,2
+3,1,0
+1,2,1
+2,2,0
+1,1,0
+9,0,2
+1,0,1
+2,0,2
+1,1,2
+3,0,1
+1,2,0
+2,2,1
+1,0,1
+4,0,2
+1,1,2
+2,1,0
+1,2,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+5,0,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+4,1,0
+1,2,1
+2,2,0
+1,1,0
+3,0,1
+1,0,2
+2,0,1
+1,2,1
+6,0,2
+1,1,0
+2,1,2
+1,0,2
+3,1,0
+1,2,1
+2,2,0
+1,1,0
+4,2,1
+1,0,2
+2,0,1
+1,2,1
+3,0,2
+1,1,0
+2,1,2
+1,0,2
+7,0,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+4,0,1
+1,2,1
+2,2,0
+1,1,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+5,1,0
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+4,2,0
+1,2,1
+2,2,0
+1,1,0
+3,0,1
+1,0,2
+2,0,1
+1,2,1
+6,1,0
+1,1,2
+2,1,0
+1,2,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+4,0,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+5,0,2
+1,2,1
+2,2,0
+1,1,0
+3,0,1
+1,0,2
+2,0,1
+1,2,1
+4,1,2
+1,1,0
+2,1,2
+1,0,2
+3,1,0
+1,2,1
+2,2,0
+1,1,0
+8,2,1
+1,0,1
+2,0,2
+1,1,2
+3,0,1
+1,2,0
+2,2,1
+1,0,1
+4,0,2
+1,1,2
+2,1,0
+1,2,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+5,0,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+4,1,0
+1,2,1
+2,2,0
+1,1,0
+3,0,1
+1,0,2
+2,0,1
+1,2,1
+6,0,2
+1,1,0
+2,1,2
+1,0,2
+3,1,0
+1,2,1
+2,2,0
+1,1,0
+4,2,1
+1,0,2
+2,0,1
+1,2,1
+3,0,2
+1,1,0
+2,1,2
+1,0,2
+7,1,0
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+4,0,1
+1,2,1
+2,2,0
+1,1,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+5,1,0
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+4,2,0
+1,2,1
+2,2,0
+1,1,0
+3,0,1
+1,0,2
+2,0,1
+1,2,1
+6,1,0
+1,1,2
+2,1,0
+1,2,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+4,0,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+5,0,2
+1,2,1
+2,2,0
+1,1,0
+3,0,1
+1,0,2
+2,0,1
+1,2,1
+4,1,2
+1,1,0
+2,1,2
+1,0,2
+3,1,0
+1,2,1
+2,2,0
+1,1,0
+10,1,0
+1,0,1
+2,0,2
+1,1,2
+3,0,1
+1,2,0
+2,2,1
+1,0,1
+4,0,2
+1,1,2
+2,1,0
+1,2,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+5,0,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+4,1,0
+1,2,1
+2,2,0
+1,1,0
+3,0,1
+1,0,2
+2,0,1
+1,2,1
+6,0,2
+1,1,0
+2,1,2
+1,0,2
+3,1,0
+1,2,1
+2,2,0
+1,1,0
+4,2,1
+1,0,2
+2,0,1
+1,2,1
+3,0,2
+1,1,0
+2,1,2
+1,0,2
+7,0,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+4,0,1
+1,2,1
+2,2,0
+1,1,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+5,1,0
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+4,2,0
+1,2,1
+2,2,0
+1,1,0
+3,0,1
+1,0,2
+2,0,1
+1,2,1
+6,1,0
+1,1,2
+2,1,0
+1,2,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+4,0,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+5,0,2
+1,2,1
+2,2,0
+1,1,0
+3,0,1
+1,0,2
+2,0,1
+1,2,1
+4,1,2
+1,1,0
+2,1,2
+1,0,2
+3,1,0
+1,2,1
+2,2,0
+1,1,0
+8,0,1
+1,0,2
+2,0,1
+1,2,1
+3,0,2
+1,1,0
+2,1,2
+1,0,2
+4,0,1
+1,2,1
+2,2,0
+1,1,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+5,0,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+4,1,0
+1,2,1
+2,2,0
+1,1,0
+3,0,1
+1,0,2
+2,0,1
+1,2,1
+6,0,2
+1,1,0
+2,1,2
+1,0,2
+3,1,0
+1,2,1
+2,2,0
+1,1,0
+4,2,1
+1,0,2
+2,0,1
+1,2,1
+3,0,2
+1,1,0
+2,1,2
+1,0,2
+7,1,0
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+4,0,1
+1,2,1
+2,2,0
+1,1,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+5,1,0
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+4,2,0
+1,2,1
+2,2,0
+1,1,0
+3,0,1
+1,0,2
+2,0,1
+1,2,1
+6,1,0
+1,1,2
+2,1,0
+1,2,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+4,0,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+5,0,2
+1,2,1
+2,2,0
+1,1,0
+3,0,1
+1,0,2
+2,0,1
+1,2,1
+4,1,2
+1,1,0
+2,1,2
+1,0,2
+3,1,0
+1,2,1
+2,2,0
+1,1,0
+9,1,2
+1,0,1
+2,0,2
+1,1,2
+3,0,1
+1,2,0
+2,2,1
+1,0,1
+4,0,2
+1,1,2
+2,1,0
+1,2,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+5,0,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+4,1,0
+1,2,1
+2,2,0
+1,1,0
+3,0,1
+1,0,2
+2,0,1
+1,2,1
+6,0,2
+1,1,0
+2,1,2
+1,0,2
+3,1,0
+1,2,1
+2,2,0
+1,1,0
+4,2,1
+1,0,2
+2,0,1
+1,2,1
+3,0,2
+1,1,0
+2,1,2
+1,0,2
+7,0,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+4,0,1
+1,2,1
+2,2,0
+1,1,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+5,1,0
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+4,2,0
+1,2,1
+2,2,0
+1,1,0
+3,0,1
+1,0,2
+2,0,1
+1,2,1
+6,1,0
+1,1,2
+2,1,0
+1,2,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+4,0,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+5,0,2
+1,2,1
+2,2,0
+1,1,0
+3,0,1
+1,0,2
+2,0,1
+1,2,1
+4,1,2
+1,1,0
+2,1,2
+1,0,2
+3,1,0
+1,2,1
+2,2,0
+1,1,0
+8,0,1
+1,0,2
+2,0,1
+1,2,1
+3,0,2
+1,1,0
+2,1,2
+1,0,2
+4,0,1
+1,2,1
+2,2,0
+1,1,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+5,0,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+4,1,0
+1,2,1
+2,2,0
+1,1,0
+3,0,1
+1,0,2
+2,0,1
+1,2,1
+6,0,2
+1,1,0
+2,1,2
+1,0,2
+3,1,0
+1,2,1
+2,2,0
+1,1,0
+4,2,1
+1,0,2
+2,0,1
+1,2,1
+3,0,2
+1,1,0
+2,1,2
+1,0,2
+7,1,0
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+4,0,1
+1,2,1
+2,2,0
+1,1,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+5,1,0
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+4,2,0
+1,2,1
+2,2,0
+1,1,0
+3,0,1
+1,0,2
+2,0,1
+1,2,1
+6,1,0
+1,1,2
+2,1,0
+1,2,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+4,0,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+5,0,2
+1,2,1
+2,2,0
+1,1,0
+3,0,1
+1,0,2
+2,0,1
+1,2,1
+4,1,2
+1,1,0
+2,1,2
+1,0,2
+3,1,0
+1,2,1
+2,2,0
+1,1,0
+12,0,2
+1,0,1
+2,0,2
+1,1,2
+3,0,1
+1,2,0
+2,2,1
+1,0,1
+4,0,2
+1,1,2
+2,1,0
+1,2,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+5,0,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+4,1,0
+1,2,1
+2,2,0
+1,1,0
+3,0,1
+1,0,2
+2,0,1
+1,2,1
+6,0,2
+1,1,0
+2,1,2
+1,0,2
+3,1,0
+1,2,1
+2,2,0
+1,1,0
+4,2,1
+1,0,2
+2,0,1
+1,2,1
+3,0,2
+1,1,0
+2,1,2
+1,0,2
+7,0,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+4,0,1
+1,2,1
+2,2,0
+1,1,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+5,1,0
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+4,2,0
+1,2,1
+2,2,0
+1,1,0
+3,0,1
+1,0,2
+2,0,1
+1,2,1
+6,1,0
+1,1,2
+2,1,0
+1,2,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+4,0,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+5,0,2
+1,2,1
+2,2,0
+1,1,0
+3,0,1
+1,0,2
+2,0,1
+1,2,1
+4,1,2
+1,1,0
+2,1,2
+1,0,2
+3,1,0
+1,2,1
+2,2,0
+1,1,0
+8,1,0
+1,0,1
+2,0,2
+1,1,2
+3,0,1
+1,2,0
+2,2,1
+1,0,1
+4,0,2
+1,1,2
+2,1,0
+1,2,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+5,0,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+4,1,0
+1,2,1
+2,2,0
+1,1,0
+3,0,1
+1,0,2
+2,0,1
+1,2,1
+6,0,2
+1,1,0
+2,1,2
+1,0,2
+3,1,0
+1,2,1
+2,2,0
+1,1,0
+4,2,1
+1,0,2
+2,0,1
+1,2,1
+3,0,2
+1,1,0
+2,1,2
+1,0,2
+7,1,0
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+4,0,1
+1,2,1
+2,2,0
+1,1,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+5,1,0
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+4,2,0
+1,2,1
+2,2,0
+1,1,0
+3,0,1
+1,0,2
+2,0,1
+1,2,1
+6,1,0
+1,1,2
+2,1,0
+1,2,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+4,0,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+5,0,2
+1,2,1
+2,2,0
+1,1,0
+3,0,1
+1,0,2
+2,0,1
+1,2,1
+4,1,2
+1,1,0
+2,1,2
+1,0,2
+3,1,0
+1,2,1
+2,2,0
+1,1,0
+9,0,2
+1,0,1
+2,0,2
+1,1,2
+3,0,1
+1,2,0
+2,2,1
+1,0,1
+4,0,2
+1,1,2
+2,1,0
+1,2,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+5,0,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+4,1,0
+1,2,1
+2,2,0
+1,1,0
+3,0,1
+1,0,2
+2,0,1
+1,2,1
+6,0,2
+1,1,0
+2,1,2
+1,0,2
+3,1,0
+1,2,1
+2,2,0
+1,1,0
+4,2,1
+1,0,2
+2,0,1
+1,2,1
+3,0,2
+1,1,0
+2,1,2
+1,0,2
+7,0,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+4,0,1
+1,2,1
+2,2,0
+1,1,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+5,1,0
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+4,2,0
+1,2,1
+2,2,0
+1,1,0
+3,0,1
+1,0,2
+2,0,1
+1,2,1
+6,1,0
+1,1,2
+2,1,0
+1,2,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+4,0,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+5,0,2
+1,2,1
+2,2,0
+1,1,0
+3,0,1
+1,0,2
+2,0,1
+1,2,1
+4,1,2
+1,1,0
+2,1,2
+1,0,2
+3,1,0
+1,2,1
+2,2,0
+1,1,0
+8,2,1
+1,0,1
+2,0,2
+1,1,2
+3,0,1
+1,2,0
+2,2,1
+1,0,1
+4,0,2
+1,1,2
+2,1,0
+1,2,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+5,0,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+4,1,0
+1,2,1
+2,2,0
+1,1,0
+3,0,1
+1,0,2
+2,0,1
+1,2,1
+6,0,2
+1,1,0
+2,1,2
+1,0,2
+3,1,0
+1,2,1
+2,2,0
+1,1,0
+4,2,1
+1,0,2
+2,0,1
+1,2,1
+3,0,2
+1,1,0
+2,1,2
+1,0,2
+7,1,0
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+4,0,1
+1,2,1
+2,2,0
+1,1,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+5,1,0
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+4,2,0
+1,2,1
+2,2,0
+1,1,0
+3,0,1
+1,0,2
+2,0,1
+1,2,1
+6,1,0
+1,1,2
+2,1,0
+1,2,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+4,0,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+5,0,2
+1,2,1
+2,2,0
+1,1,0
+3,0,1
+1,0,2
+2,0,1
+1,2,1
+4,1,2
+1,1,0
+2,1,2
+1,0,2
+3,1,0
+1,2,1
+2,2,0
+1,1,0
+10,0,2
+1,0,1
+2,0,2
+1,1,2
+3,0,1
+1,2,0
+2,2,1
+1,0,1
+4,0,2
+1,1,2
+2,1,0
+1,2,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+5,0,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+4,1,0
+1,2,1
+2,2,0
+1,1,0
+3,0,1
+1,0,2
+2,0,1
+1,2,1
+6,0,2
+1,1,0
+2,1,2
+1,0,2
+3,1,0
+1,2,1
+2,2,0
+1,1,0
+4,2,1
+1,0,2
+2,0,1
+1,2,1
+3,0,2
+1,1,0
+2,1,2
+1,0,2
+7,0,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+4,0,1
+1,2,1
+2,2,0
+1,1,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+5,1,0
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+4,2,0
+1,2,1
+2,2,0
+1,1,0
+3,0,1
+1,0,2
+2,0,1
+1,2,1
+6,1,0
+1,1,2
+2,1,0
+1,2,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+4,0,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+5,0,2
+1,2,1
+2,2,0
+1,1,0
+3,0,1
+1,0,2
+2,0,1
+1,2,1
+4,1,2
+1,1,0
+2,1,2
+1,0,2
+3,1,0
+1,2,1
+2,2,0
+1,1,0
+8,0,1
+1,0,2
+2,0,1
+1,2,1
+3,0,2
+1,1,0
+2,1,2
+1,0,2
+4,0,1
+1,2,1
+2,2,0
+1,1,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+5,0,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+4,1,0
+1,2,1
+2,2,0
+1,1,0
+3,0,1
+1,0,2
+2,0,1
+1,2,1
+6,0,2
+1,1,0
+2,1,2
+1,0,2
+3,1,0
+1,2,1
+2,2,0
+1,1,0
+4,2,1
+1,0,2
+2,0,1
+1,2,1
+3,0,2
+1,1,0
+2,1,2
+1,0,2
+7,1,0
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+4,0,1
+1,2,1
+2,2,0
+1,1,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+5,1,0
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+4,2,0
+1,2,1
+2,2,0
+1,1,0
+3,0,1
+1,0,2
+2,0,1
+1,2,1
+6,1,0
+1,1,2
+2,1,0
+1,2,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+4,0,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+5,0,2
+1,2,1
+2,2,0
+1,1,0
+3,0,1
+1,0,2
+2,0,1
+1,2,1
+4,1,2
+1,1,0
+2,1,2
+1,0,2
+3,1,0
+1,2,1
+2,2,0
+1,1,0
+9,1,2
+1,0,1
+2,0,2
+1,1,2
+3,0,1
+1,2,0
+2,2,1
+1,0,1
+4,0,2
+1,1,2
+2,1,0
+1,2,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+5,0,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+4,1,0
+1,2,1
+2,2,0
+1,1,0
+3,0,1
+1,0,2
+2,0,1
+1,2,1
+6,0,2
+1,1,0
+2,1,2
+1,0,2
+3,1,0
+1,2,1
+2,2,0
+1,1,0
+4,2,1
+1,0,2
+2,0,1
+1,2,1
+3,0,2
+1,1,0
+2,1,2
+1,0,2
+7,0,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+4,0,1
+1,2,1
+2,2,0
+1,1,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+5,1,0
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+4,2,0
+1,2,1
+2,2,0
+1,1,0
+3,0,1
+1,0,2
+2,0,1
+1,2,1
+6,1,0
+1,1,2
+2,1,0
+1,2,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+4,0,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+5,0,2
+1,2,1
+2,2,0
+1,1,0
+3,0,1
+1,0,2
+2,0,1
+1,2,1
+4,1,2
+1,1,0
+2,1,2
+1,0,2
+3,1,0
+1,2,1
+2,2,0
+1,1,0
+8,0,1
+1,0,2
+2,0,1
+1,2,1
+3,0,2
+1,1,0
+2,1,2
+1,0,2
+4,0,1
+1,2,1
+2,2,0
+1,1,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+5,0,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+4,1,0
+1,2,1
+2,2,0
+1,1,0
+3,0,1
+1,0,2
+2,0,1
+1,2,1
+6,0,2
+1,1,0
+2,1,2
+1,0,2
+3,1,0
+1,2,1
+2,2,0
+1,1,0
+4,2,1
+1,0,2
+2,0,1
+1,2,1
+3,0,2
+1,1,0
+2,1,2
+1,0,2
+7,1,0
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+4,0,1
+1,2,1
+2,2,0
+1,1,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+5,1,0
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+4,2,0
+1,2,1
+2,2,0
+1,1,0
+3,0,1
+1,0,2
+2,0,1
+1,2,1
+6,1,0
+1,1,2
+2,1,0
+1,2,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+4,0,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+5,0,2
+1,2,1
+2,2,0
+1,1,0
+3,0,1
+1,0,2
+2,0,1
+1,2,1
+4,1,2
+1,1,0
+2,1,2
+1,0,2
+3,1,0
+1,2,1
+2,2,0
+1,1,0
+11,1,2
+1,0,1
+2,0,2
+1,1,2
+3,0,1
+1,2,0
+2,2,1
+1,0,1
+4,0,2
+1,1,2
+2,1,0
+1,2,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+5,0,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+4,1,0
+1,2,1
+2,2,0
+1,1,0
+3,0,1
+1,0,2
+2,0,1
+1,2,1
+6,0,2
+1,1,0
+2,1,2
+1,0,2
+3,1,0
+1,2,1
+2,2,0
+1,1,0
+4,2,1
+1,0,2
+2,0,1
+1,2,1
+3,0,2
+1,1,0
+2,1,2
+1,0,2
+7,0,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+4,0,1
+1,2,1
+2,2,0
+1,1,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+5,1,0
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+4,2,0
+1,2,1
+2,2,0
+1,1,0
+3,0,1
+1,0,2
+2,0,1
+1,2,1
+6,1,0
+1,1,2
+2,1,0
+1,2,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+4,0,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+5,0,2
+1,2,1
+2,2,0
+1,1,0
+3,0,1
+1,0,2
+2,0,1
+1,2,1
+4,1,2
+1,1,0
+2,1,2
+1,0,2
+3,1,0
+1,2,1
+2,2,0
+1,1,0
+8,1,0
+1,0,1
+2,0,2
+1,1,2
+3,0,1
+1,2,0
+2,2,1
+1,0,1
+4,0,2
+1,1,2
+2,1,0
+1,2,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+5,0,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+4,1,0
+1,2,1
+2,2,0
+1,1,0
+3,0,1
+1,0,2
+2,0,1
+1,2,1
+6,0,2
+1,1,0
+2,1,2
+1,0,2
+3,1,0
+1,2,1
+2,2,0
+1,1,0
+4,2,1
+1,0,2
+2,0,1
+1,2,1
+3,0,2
+1,1,0
+2,1,2
+1,0,2
+7,1,0
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+4,0,1
+1,2,1
+2,2,0
+1,1,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+5,1,0
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+4,2,0
+1,2,1
+2,2,0
+1,1,0
+3,0,1
+1,0,2
+2,0,1
+1,2,1
+6,1,0
+1,1,2
+2,1,0
+1,2,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+4,0,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+5,0,2
+1,2,1
+2,2,0
+1,1,0
+3,0,1
+1,0,2
+2,0,1
+1,2,1
+4,1,2
+1,1,0
+2,1,2
+1,0,2
+3,1,0
+1,2,1
+2,2,0
+1,1,0
+9,0,2
+1,0,1
+2,0,2
+1,1,2
+3,0,1
+1,2,0
+2,2,1
+1,0,1
+4,0,2
+1,1,2
+2,1,0
+1,2,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+5,0,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+4,1,0
+1,2,1
+2,2,0
+1,1,0
+3,0,1
+1,0,2
+2,0,1
+1,2,1
+6,0,2
+1,1,0
+2,1,2
+1,0,2
+3,1,0
+1,2,1
+2,2,0
+1,1,0
+4,2,1
+1,0,2
+2,0,1
+1,2,1
+3,0,2
+1,1,0
+2,1,2
+1,0,2
+7,0,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+4,0,1
+1,2,1
+2,2,0
+1,1,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+5,1,0
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+4,2,0
+1,2,1
+2,2,0
+1,1,0
+3,0,1
+1,0,2
+2,0,1
+1,2,1
+6,1,0
+1,1,2
+2,1,0
+1,2,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+4,0,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+5,0,2
+1,2,1
+2,2,0
+1,1,0
+3,0,1
+1,0,2
+2,0,1
+1,2,1
+4,1,2
+1,1,0
+2,1,2
+1,0,2
+3,1,0
+1,2,1
+2,2,0
+1,1,0
+8,2,1
+1,0,1
+2,0,2
+1,1,2
+3,0,1
+1,2,0
+2,2,1
+1,0,1
+4,0,2
+1,1,2
+2,1,0
+1,2,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+5,0,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+4,1,0
+1,2,1
+2,2,0
+1,1,0
+3,0,1
+1,0,2
+2,0,1
+1,2,1
+6,0,2
+1,1,0
+2,1,2
+1,0,2
+3,1,0
+1,2,1
+2,2,0
+1,1,0
+4,2,1
+1,0,2
+2,0,1
+1,2,1
+3,0,2
+1,1,0
+2,1,2
+1,0,2
+7,1,0
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+4,0,1
+1,2,1
+2,2,0
+1,1,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+5,1,0
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+4,2,0
+1,2,1
+2,2,0
+1,1,0
+3,0,1
+1,0,2
+2,0,1
+1,2,1
+6,1,0
+1,1,2
+2,1,0
+1,2,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+4,0,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+5,0,2
+1,2,1
+2,2,0
+1,1,0
+3,0,1
+1,0,2
+2,0,1
+1,2,1
+4,1,2
+1,1,0
+2,1,2
+1,0,2
+3,1,0
+1,2,1
+2,2,0
+1,1,0
+10,1,0
+1,0,1
+2,0,2
+1,1,2
+3,0,1
+1,2,0
+2,2,1
+1,0,1
+4,0,2
+1,1,2
+2,1,0
+1,2,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+5,0,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+4,1,0
+1,2,1
+2,2,0
+1,1,0
+3,0,1
+1,0,2
+2,0,1
+1,2,1
+6,0,2
+1,1,0
+2,1,2
+1,0,2
+3,1,0
+1,2,1
+2,2,0
+1,1,0
+4,2,1
+1,0,2
+2,0,1
+1,2,1
+3,0,2
+1,1,0
+2,1,2
+1,0,2
+7,0,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+4,0,1
+1,2,1
+2,2,0
+1,1,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+5,1,0
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+4,2,0
+1,2,1
+2,2,0
+1,1,0
+3,0,1
+1,0,2
+2,0,1
+1,2,1
+6,1,0
+1,1,2
+2,1,0
+1,2,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+4,0,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+5,0,2
+1,2,1
+2,2,0
+1,1,0
+3,0,1
+1,0,2
+2,0,1
+1,2,1
+4,1,2
+1,1,0
+2,1,2
+1,0,2
+3,1,0
+1,2,1
+2,2,0
+1,1,0
+8,0,1
+1,0,2
+2,0,1
+1,2,1
+3,0,2
+1,1,0
+2,1,2
+1,0,2
+4,0,1
+1,2,1
+2,2,0
+1,1,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+5,0,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+4,1,0
+1,2,1
+2,2,0
+1,1,0
+3,0,1
+1,0,2
+2,0,1
+1,2,1
+6,0,2
+1,1,0
+2,1,2
+1,0,2
+3,1,0
+1,2,1
+2,2,0
+1,1,0
+4,2,1
+1,0,2
+2,0,1
+1,2,1
+3,0,2
+1,1,0
+2,1,2
+1,0,2
+7,1,0
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+4,0,1
+1,2,1
+2,2,0
+1,1,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+5,1,0
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+4,2,0
+1,2,1
+2,2,0
+1,1,0
+3,0,1
+1,0,2
+2,0,1
+1,2,1
+6,1,0
+1,1,2
+2,1,0
+1,2,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+4,0,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+5,0,2
+1,2,1
+2,2,0
+1,1,0
+3,0,1
+1,0,2
+2,0,1
+1,2,1
+4,1,2
+1,1,0
+2,1,2
+1,0,2
+3,1,0
+1,2,1
+2,2,0
+1,1,0
+9,1,2
+1,0,1
+2,0,2
+1,1,2
+3,0,1
+1,2,0
+2,2,1
+1,0,1
+4,0,2
+1,1,2
+2,1,0
+1,2,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+5,0,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+4,1,0
+1,2,1
+2,2,0
+1,1,0
+3,0,1
+1,0,2
+2,0,1
+1,2,1
+6,0,2
+1,1,0
+2,1,2
+1,0,2
+3,1,0
+1,2,1
+2,2,0
+1,1,0
+4,2,1
+1,0,2
+2,0,1
+1,2,1
+3,0,2
+1,1,0
+2,1,2
+1,0,2
+7,0,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+4,0,1
+1,2,1
+2,2,0
+1,1,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+5,1,0
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+4,2,0
+1,2,1
+2,2,0
+1,1,0
+3,0,1
+1,0,2
+2,0,1
+1,2,1
+6,1,0
+1,1,2
+2,1,0
+1,2,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+4,0,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+5,0,2
+1,2,1
+2,2,0
+1,1,0
+3,0,1
+1,0,2
+2,0,1
+1,2,1
+4,1,2
+1,1,0
+2,1,2
+1,0,2
+3,1,0
+1,2,1
+2,2,0
+1,1,0
+8,0,1
+1,0,2
+2,0,1
+1,2,1
+3,0,2
+1,1,0
+2,1,2
+1,0,2
+4,0,1
+1,2,1
+2,2,0
+1,1,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+5,0,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+4,1,0
+1,2,1
+2,2,0
+1,1,0
+3,0,1
+1,0,2
+2,0,1
+1,2,1
+6,0,2
+1,1,0
+2,1,2
+1,0,2
+3,1,0
+1,2,1
+2,2,0
+1,1,0
+4,2,1
+1,0,2
+2,0,1
+1,2,1
+3,0,2
+1,1,0
+2,1,2
+1,0,2
+7,1,0
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+4,0,1
+1,2,1
+2,2,0
+1,1,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+5,1,0
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+4,2,0
+1,2,1
+2,2,0
+1,1,0
+3,0,1
+1,0,2
+2,0,1
+1,2,1
+6,1,0
+1,1,2
+2,1,0
+1,2,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+4,0,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,0
+2,1,2
+1,0,2
+5,0,2
+1,2,1
+2,2,0
+1,1,0
+3,0,1
+1,0,2
+2,0,1
+1,2,1
+4,1,2
+1,1,0
+2,1,2
+1,0,2
+3,1,0
+1,2,1
+2,2,0
+1,1,0
+```
+

@@ -1,0 +1,1050 @@
+# model_name='claude-3-7-sonnet-20250219', reasoning_budget=32000, tries=0, n=10, i=4
+# valid_prefix_length=79, is_valid_solution=0, first_correction=-1
+
+<think>
+This is the classic Tower of Hanoi problem. With 10 disks, we need to move all disks from peg 0 to peg 2, following the rules.
+
+The optimal solution for the Tower of Hanoi puzzle with n disks requires 2^n - 1 moves. So for 10 disks, we'll need 2^10 - 1 = 1024 - 1 = 1023 moves.
+
+Let me implement a recursive solution to generate all the moves:
+
+```
+function hanoi(n, source, target, auxiliary, moves) {
+    if (n > 0) {
+        // Move n-1 disks from source to auxiliary
+        hanoi(n-1, source, auxiliary, target, moves);
+        
+        // Move the largest disk from source to target
+        moves.push([n, source, target]);
+        
+        // Move n-1 disks from auxiliary to target
+        hanoi(n-1, auxiliary, target, source, moves);
+    }
+}
+
+// Initialize empty moves array
+let moves = [];
+
+// Call the function to solve for 10 disks
+hanoi(10, 0, 2, 1, moves);
+
+// The moves array now contains all the required moves
+```
+
+Let me trace this for n=10:
+
+1. Call hanoi(10, 0, 2, 1, moves)
+   - This will call hanoi(9, 0, 1, 2, moves)
+     - This will call hanoi(8, 0, 2, 1, moves)
+       - ...
+         - This will eventually call hanoi(1, 0, 1, 2, moves)
+           - This will add [1, 0, 1] to moves
+         - Then add [2, 0, 2] to moves
+         - Then call hanoi(1, 1, 2, 0, moves)
+           - This will add [1, 1, 2] to moves
+       - ...
+     - Then add [9, 0, 1] to moves
+     - Then call hanoi(8, 2, 1, 0, moves)
+       - ...
+   - Then add [10, 0, 2] to moves
+   - Then call hanoi(9, 1, 2, 0, moves)
+     - ...
+
+The recursion gets quite deep, so I'll implement it differently to generate the full list of moves:
+
+Actually, I realize I've made a mistake. In the Tower of Hanoi, the disks are typically numbered from 1 (smallest) to n (largest). In the problem statement, the disks are numbered 1 (smallest) to 10 (largest). So I need to adjust my solution.
+
+Let me reimplement it:
+
+```
+function hanoi(n, source, target, auxiliary, moves) {
+    if (n > 0) {
+        // Move n-1 disks from source to auxiliary
+        hanoi(n-1, source, auxiliary, target, moves);
+        
+        // Move disk n from source to target
+        moves.push([n, source, target]);
+        
+        // Move n-1 disks from auxiliary to target
+        hanoi(n-1, auxiliary, target, source, moves);
+    }
+}
+
+// Initialize empty moves array
+let moves = [];
+
+// Call the function to solve for 10 disks, where disks are numbered 1 to 10
+hanoi(10, 0, 2, 1, moves);
+
+// The moves array now contains all the required moves
+```
+
+But wait, I need to be careful about the disk numbering. In the problem, the disks are numbered 1 (smallest) to 10 (largest). In the traditional Tower of Hanoi recursive solution, we usually think of moving the "nth" disk, which would be the largest one.
+
+Let me adjust my approach to ensure I'm using the correct disk numbers:
+
+```
+function hanoi(n, source, target, auxiliary, moves) {
+    if (n === 0) return;
+    
+    // Move n-1 disks from source to auxiliary
+    hanoi(n-1, source, auxiliary, target, moves);
+    
+    // Move disk n from source to target
+    moves.push([n, source, target]);
+    
+    // Move n-1 disks from auxiliary to target
+    hanoi(n-1, auxiliary, target, source, moves);
+}
+
+// Initialize empty moves array
+let moves = [];
+
+// Call the function to solve for 10 disks, where disks are numbered 1 to 10
+// We start with the largest disk (10)
+hanoi(10, 0, 2, 1, moves);
+
+// The moves array now contains all the required moves
+```
+
+But I realize this isn't correct either. The disk numbers in the problem are 1 (smallest) to 10 (largest). This means that the smallest disk (1) should be at the top of the stack, and the largest disk (10) should be at the bottom.
+
+Let's reframe the problem:
+
+Initial configuration:
+- Peg 0: [10, 9, 8, 7, 6, 5, 4, 3, 2, 1] (where 1 is at the top)
+- Peg 1: []
+- Peg 2: []
+
+Goal configuration:
+- Peg 0: []
+- Peg 1: []
+- Peg 2: [10, 9, 8, 7, 6, 5, 4, 3, 2, 1] (where 1 is at the top)
+
+Given that in each move we specify [disk_id, from_peg, to_peg], the disk_id is the number of the disk being moved, and not its position in the stack.
+
+With that understanding, I'll reimplement the solution:
+
+```
+function hanoi(n, source, target, auxiliary, moves) {
+    if (n === 0) return;
+    
+    // Move n-1 disks from source to auxiliary
+    hanoi(n-1, source, auxiliary, target, moves);
+    
+    // Move disk n from source to target
+    moves.push([n, source, target]);
+    
+    // Move n-1 disks from auxiliary to target
+    hanoi(n-1, auxiliary, target, source, moves);
+}
+
+// Initialize empty moves array
+let moves = [];
+
+// Call the function to solve for 10 disks, where disks are numbered 1 to 10
+// We start with the smallest disk (1)
+hanoi(1, 0, 2, 1, moves);
+hanoi(2, 0, 1, 2, moves);
+// ... and so on
+```
+
+No, that's still not right. I should think more carefully.
+
+In the Tower of Hanoi puzzle, disks are stacked in decreasing size from bottom to top. So the largest disk (10) is at the bottom and the smallest disk (1) is at the top.
+
+In the recursive solution, we start by trying to move the entire tower of n disks from the source to the target peg. To do this, we first move the top n-1 disks to the auxiliary peg, then move the largest disk (disk n) to the target peg, and finally move the n-1 disks from the auxiliary peg to the target peg.
+
+The disks are numbered based on their size, not their position in the stack. So disk 1 is the smallest disk, disk 2 is the second smallest, and so on up to disk 10, which is the largest.
+
+With this understanding, let's reimplement the solution:
+
+```
+function hanoi(n, source, target, auxiliary, moves) {
+    if (n === 0) return;
+    
+    // Move n-1 disks from source to auxiliary
+    hanoi(n-1, source, auxiliary, target, moves);
+    
+    // Move disk n from source to target
+    moves.push([n, source, target]);
+    
+    // Move n-1 disks from auxiliary to target
+    hanoi(n-1, auxiliary, target, source, moves);
+}
+
+// Initialize empty moves array
+let moves = [];
+
+// Call the function to solve for 10 disks, where disks are numbered 1 to 10
+// We start with the largest disk (10)
+hanoi(10, 0, 2, 1, moves);
+
+// The moves array now contains all the required moves
+```
+
+I'm still a bit confused. Let me think of this differently.
+
+In the traditional Tower of Hanoi problem, we have n disks of decreasing size stacked on one peg, and the goal is to move the entire stack to another peg, following the rules.
+
+The disks are usually numbered from 1 (smallest) to n (largest). So disk 1 is at the top of the initial stack, and disk n is at the bottom.
+
+The optimal recursive solution involves three steps:
+1. Move the top n-1 disks from the source peg to the auxiliary peg.
+2. Move the largest disk (disk n) from the source peg to the target peg.
+3. Move the n-1 disks from the auxiliary peg to the target peg.
+
+To generate the list of moves, we can use the following recursive function:
+
+```
+function hanoi(n, source, target, auxiliary, moves) {
+    if (n === 0) return;
+    
+    // Move n-1 disks from source to auxiliary
+    hanoi(n-1, source, auxiliary, target, moves);
+    
+    // Move disk n from source to target
+    moves.push([n, source, target]);
+    
+    // Move n-1 disks from auxiliary to target
+    hanoi(n-1, auxiliary, target, source, moves);
+}
+```
+
+But in the traditional recursive solution, n refers to the number of disks to move, not the disk number itself. So we need to be careful with the disk numbering when generating the moves.
+
+For the 10-disk problem:
+
+1. Disk 1 is the smallest disk (at the top of the initial stack).
+2. Disk 10 is the largest disk (at the bottom of the initial stack).
+
+In the move format [disk_id, from_peg, to_peg], disk_id should be the number of the disk being moved (1 to 10).
+
+Actually, this approach that I've been describing is going to be correct. Let me generate all the moves:
+
+```
+function hanoi(n, source, target, auxiliary, moves) {
+    if (n === 0) return;
+    
+    // Move n-1 disks from source to auxiliary
+    hanoi(n-1, source, auxiliary, target, moves);
+    
+    // Move disk n from source to target
+    moves.push([n, source, target]);
+    
+    // Move n-1 disks from auxiliary to target
+    hanoi(n-1, auxiliary, target, source, moves);
+}
+
+// Initialize empty moves array
+let moves = [];
+
+// Call the function to solve for 10 disks, where disks are numbered 1 to 10
+hanoi(10, 0, 2, 1, moves);
+
+// The moves array now contains all the required moves
+```
+
+Let me trace this with a simple example, say n=3:
+
+Initial configuration:
+- Peg 0: [3, 2, 1] (where 1 is at the top)
+- Peg 1: []
+- Peg 2: []
+
+Goal configuration:
+- Peg 0: []
+- Peg 1: []
+- Peg 2: [3, 2, 1] (where 1 is at the top)
+
+Calling hanoi(3, 0, 2, 1, moves):
+1. Call hanoi(2, 0, 1, 2, moves)
+   a. Call hanoi(1, 0, 2, 1, moves)
+      i. Call hanoi(0, 0, 1, 2, moves) - returns immediately
+      ii. Add [1, 0, 2] to moves (moves = [[1, 0, 2]])
+      iii. Call hanoi(0, 1, 2, 0, moves) - returns immediately
+   b. Add [2, 0, 1] to moves (moves = [[1, 0, 2], [2, 0, 1]])
+   c. Call hanoi(1, 2, 1, 0, moves)
+      i. Call hanoi(0, 2, 0, 1, moves) - returns immediately
+      ii. Add [1, 2, 1] to moves (moves = [[1, 0, 2], [2, 0, 1], [1, 2, 1]])
+      iii. Call hanoi(0, 0, 1, 2, moves) - returns immediately
+2. Add [3, 0, 2] to moves (moves = [[1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2]])
+3. Call hanoi(2, 1, 2, 0, moves)
+   a. Call hanoi(1, 1, 0, 2, moves)
+      i. Call hanoi(0, 1, 2, 0, moves) - returns immediately
+      ii. Add [1, 1, 0] to moves (moves = [[1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0]])
+      iii. Call hanoi(0, 2, 0, 1, moves) - returns immediately
+   b. Add [2, 1, 2] to moves (moves = [[1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2]])
+   c. Call hanoi(1, 0, 2, 1, moves)
+      i. Call hanoi(0, 0, 1, 2, moves) - returns immediately
+      ii. Add [1, 0, 2] to moves (moves = [[1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2]])
+      iii. Call hanoi(0, 1, 2, 0, moves) - returns immediately
+
+So the list of moves for n=3 is:
+[[1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2]]
+
+Let me check if this is correct by tracing the moves and updating the configuration:
+
+Initial configuration:
+- Peg 0: [3, 2, 1] (where 1 is at the top)
+- Peg 1: []
+- Peg 2: []
+
+1. Move disk 1 from peg 0 to peg 2:
+   - Peg 0: [3, 2]
+   - Peg 1: []
+   - Peg 2: [1]
+
+2. Move disk 2 from peg 0 to peg 1:
+   - Peg 0: [3]
+   - Peg 1: [2]
+   - Peg 2: [1]
+
+3. Move disk 1 from peg 2 to peg 1:
+   - Peg 0: [3]
+   - Peg 1: [2, 1]
+   - Peg 2: []
+
+4. Move disk 3 from peg 0 to peg 2:
+   - Peg 0: []
+   - Peg 1: [2, 1]
+   - Peg 2: [3]
+
+5. Move disk 1 from peg 1 to peg 0:
+   - Peg 0: [1]
+   - Peg 1: [2]
+   - Peg 2: [3]
+
+6. Move disk 2 from peg 1 to peg 2:
+   - Peg 0: [1]
+   - Peg 1: []
+   - Peg 2: [3, 2]
+
+7. Move disk 1 from peg 0 to peg 2:
+   - Peg 0: []
+   - Peg 1: []
+   - Peg 2: [3, 2, 1]
+
+This matches our goal configuration, so the list of moves is correct.
+
+Now, let's generate the list of moves for n=10:
+
+```
+function hanoi(n, source, target, auxiliary, moves) {
+    if (n === 0) return;
+    
+    // Move n-1 disks from source to auxiliary
+    hanoi(n-1, source, auxiliary, target, moves);
+    
+    // Move disk n from source to target
+    moves.push([n, source, target]);
+    
+    // Move n-1 disks from auxiliary to target
+    hanoi(n-1, auxiliary, target, source, moves);
+}
+
+// Initialize empty moves array
+let moves = [];
+
+// Call the function to solve for 10 disks, where disks are numbered 1 to 10
+hanoi(10, 0, 2, 1, moves);
+
+// The moves array now contains all the required moves
+```
+
+Actually, there's a bit of ambiguity in the problem statement. It says:
+```
+moves=[[disk_id,from_peg,to_peg],...]
+```
+
+But in the trace for n=3, if we look at the first move:
+```
+[1, 0, 2]
+```
+
+Is this saying "move disk 1 from peg 0 to peg 2" or "move the disk at position 1 from peg 0 to peg 2"?
+
+Based on the initial configuration:
+- Peg 0: 10 (bottom), ... 2, 1 (top)
+- Peg 1: (empty)
+- Peg 2: (empty)
+
+I believe the first interpretation is correct: "move disk 1 from peg 0 to peg 2" where disk 1 is the smallest disk (at the top of the initial stack).
+
+Given this interpretation, the recursive function I've been describing is correct.
+
+Let me generate the list of moves for n=10 using this approach:
+
+```
+function hanoi(n, source, target, auxiliary, moves) {
+    if (n === 0) return;
+    
+    // Move n-1 disks from source to auxiliary
+    hanoi(n-1, source, auxiliary, target, moves);
+    
+    // Move disk n from source to target
+    moves.push([n, source, target]);
+    
+    // Move n-1 disks from auxiliary to target
+    hanoi(n-1, auxiliary, target, source, moves);
+}
+
+// Initialize empty moves array
+let moves = [];
+
+// Call the function to solve for 10 disks
+hanoi(10, 0, 2, 1, []);
+```
+
+I realize there's a more direct approach to generate the list of moves for the Tower of Hanoi puzzle with 10 disks. Given that the optimal solution for n disks requires 2^n - 1 moves, for 10 disks, we'll have 1023 moves. Let's generate those moves:
+
+```javascript
+function hanoi(n, source, target, auxiliary) {
+    let moves = [];
+    
+    function move(n, source, target, auxiliary) {
+        if (n === 0) return;
+        
+        // Move n-1 disks from source to auxiliary
+        move(n-1, source, auxiliary, target);
+        
+        // Move disk n from source to target
+        moves.push([n, source, target]);
+        
+        // Move n-1 disks from auxiliary to target
+        move(n-1, auxiliary, target, source);
+    }
+    
+    move(n, source, target, auxiliary);
+    return moves;
+}
+
+// Generate the list of moves for 10 disks
+let moves = hanoi(10, 0, 2, 1);
+console.log(moves);
+```
+
+Let me now compute this list of moves:
+
+```
+moves = []
+hanoi(10, 0, 2, 1)
+```
+
+Let's solve this step by step. For n=10, the total number of moves will be 2^10 - 1 = 1023.
+
+Let me use a different approach. I'll compute the moves for n=10 using the formula for the Tower of Hanoi:
+
+1. For odd n, the first move is from the source peg to the target peg. For even n, the first move is from the source peg to the auxiliary peg.
+2. After the first move, move the smallest disk according to the following rule: In a clockwise direction (source -> auxiliary -> target -> source), never place a disk on top of a smaller disk.
+
+Let me implement this iterative solution for n=10:
+
+```javascript
+function hanoiIterative(n, source, auxiliary, target) {
+    let moves = [];
+    let totalMoves = Math.pow(2, n) - 1;
+    
+    // If n is odd, swap auxiliary and target
+    if (n % 2 === 1) {
+        let temp = target;
+        target = auxiliary;
+        auxiliary = temp;
+    }
+    
+    for (let i = 1; i <= totalMoves; i++) {
+        if (i % 3 === 1) {
+            // Move between source and target
+            moves.push([getTopDisk(source, auxiliary, target, i), source, target]);
+        } else if (i % 3 === 2) {
+            // Move between source and auxiliary
+            moves.push([getTopDisk(source, auxiliary, target, i), source, auxiliary]);
+        } else if (i % 3 === 0) {
+            // Move between auxiliary and target
+            moves.push([getTopDisk(source, auxiliary, target, i), auxiliary, target]);
+        }
+    }
+    
+    return moves;
+}
+
+function getTopDisk(source, auxiliary, target, moveNumber) {
+    // This function would determine which disk is moved
+    // based on the current state of the pegs
+    // For simplicity, let's assume we know the disk number
+    // based on the move number
+    // (This is just a placeholder)
+    return 1;
+}
+```
+
+Actually, this approach won't work as described, because we need to keep track of the state of each peg to determine which disk to move.
+
+Let's go back to the recursive solution, which is simpler to implement and understand.
+
+```javascript
+function hanoi(n, source, target, auxiliary, moves = []) {
+    if (n === 0) return moves;
+    
+    // Move n-1 disks from source to auxiliary
+    hanoi(n-1, source, auxiliary, target, moves);
+    
+    // Move disk n from source to target
+    moves.push([n, source, target]);
+    
+    // Move n-1 disks from auxiliary to target
+    hanoi(n-1, auxiliary, target, source, moves);
+    
+    return moves;
+}
+
+// Generate the list of moves for 10 disks
+let moves = hanoi(10, 0, 2, 1);
+```
+
+Let me implement the recursive solution in a different way, where I compute the exact value for each move:
+
+```
+function computeHanoiMoves(n, source, target, auxiliary) {
+    if (n === 1) {
+        return [[1, source, target]];
+    }
+    
+    let moves = [];
+    
+    // Move n-1 disks from source to auxiliary
+    moves = moves.concat(computeHanoiMoves(n-1, source, auxiliary, target));
+    
+    // Move the nth disk from source to target
+    moves.push([n, source, target]);
+    
+    // Move n-1 disks from auxiliary to target
+    moves = moves.concat(computeHanoiMoves(n-1, auxiliary, target, source));
+    
+    return moves;
+}
+
+// Generate the list of moves for 10 disks
+let moves = computeHanoiMoves(10, 0, 2, 1);
+```
+
+Let me understand the list of moves for n=10. For n=10, we'll have 1023 moves in total. The pattern is as follows:
+
+1. Move disks 1 to 9 from source to auxiliary using target as an intermediate (this requires 2^9 - 1 = 511 moves).
+2. Move disk 10 from source to target (1 move).
+3. Move disks 1 to 9 from auxiliary to target using source as an intermediate (this requires 2^9 - 1 = 511 moves).
+
+So the total number of moves is 511 + 1 + 511 = 1023.
+
+I'll use the recursive approach to generate all the moves for n=10:
+
+```javascript
+function hanoi(n, source, target, auxiliary, moves = []) {
+    if (n === 0) return moves;
+    
+    // Move n-1 disks from source to auxiliary
+    hanoi(n-1, source, auxiliary, target, moves);
+    
+    // Move disk n from source to target
+    moves.push([n, source, target]);
+    
+    // Move n-1 disks from auxiliary to target
+    hanoi(n-1, auxiliary, target, source, moves);
+    
+    return moves;
+}
+
+// Generate the list of moves for 10 disks
+let moves = hanoi(10, 0, 2, 1);
+```
+
+Ok, I've been reusing the same approach in different ways because I'm trying to solve the recursive solution. But given that I'm dealing with n=10, which gives 1023 moves, I'll just compute the first few moves explicitly and then extend the pattern:
+
+The list of moves would be:
+1. Move disk 1 from peg 0 to peg 1
+2. Move disk 2 from peg 0 to peg 2
+3. Move disk 1 from peg 1 to peg 2
+4. Move disk 3 from peg 0 to peg 1
+...
+
+But I understand I need to produce the complete list of 1023 moves for n=10. Let me use the recursive function to generate the full list:
+
+```javascript
+function hanoi(n, source, target, auxiliary, moves = []) {
+    if (n === 1) {
+        moves.push([1, source, target]);
+        return moves;
+    }
+    
+    hanoi(n-1, source, auxiliary, target, moves);
+    moves.push([n, source, target]);
+    hanoi(n-1, auxiliary, target, source, moves);
+    
+    return moves;
+}
+
+// Generate the list of moves for 10 disks
+let moves = hanoi(10, 0, 2, 1);
+```
+
+Actually, let me write up the full solution from scratch, using the recursive approach to generate all 1023 moves for n=10:
+
+```javascript
+function hanoi(n, source, target, auxiliary) {
+    let moves = [];
+    
+    function move(n, source, target, auxiliary) {
+        if (n === 1) {
+            moves.push([1, source, target]);
+            return;
+        }
+        
+        move(n-1, source, auxiliary, target);
+        moves.push([n, source, target]);
+        move(n-1, auxiliary, target, source);
+    }
+    
+    move(n, source, target, auxiliary);
+    return moves;
+}
+
+// Generate the list of moves for 10 disks
+let moves = hanoi(10, 0, 2, 1);
+```
+
+This will give us the complete list of moves for n=10, which has 1023 moves.
+
+Actually I think I'm overthinking this. I think we can just enumerate the moves through a simple procedure.
+
+First, I know the procedure to solve the Tower of Hanoi puzzle with 10 disks (or any number of disks):
+
+1. Move the top n-1 disks from the source peg to the auxiliary peg, using the target peg as a temporary storage.
+2. Move the largest disk (disk n) from the source peg to the target peg.
+3. Move the n-1 disks from the auxiliary peg to the target peg, using the source peg as a temporary storage.
+
+This recursive procedure will generate the optimal sequence of moves for the Tower of Hanoi puzzle.
+
+Let me enumerate the sequence of moves for n=10 step by step.
+
+First, let's recall the problem:
+
+Initial configuration:
+- Peg 0: 10 (bottom), 9, 8, 7, 6, 5, 4, 3, 2, 1 (top)
+- Peg 1: (empty)
+- Peg 2: (empty)
+
+Goal configuration:
+- Peg 0: (empty)
+- Peg 1: (empty)
+- Peg 2: 10 (bottom), 9, 8, 7, 6, 5, 4, 3, 2, 1 (top)
+
+I'll directly compute the sequence of moves using the recursive approach:
+
+```javascript
+function hanoi(n, source, target, auxiliary) {
+    let moves = [];
+    
+    function generateMoves(n, source, target, auxiliary) {
+        if (n === 0) return;
+        
+        generateMoves(n-1, source, auxiliary, target);
+        moves.push([n, source, target]);
+        generateMoves(n-1, auxiliary, target, source);
+    }
+    
+    generateMoves(n, source, target, auxiliary);
+    return moves;
+}
+
+let moves = hanoi(10, 0, 2, 1);
+```
+
+So I'm starting with disk 10 at the bottom of peg 0, and disk 1 at the top.
+
+Let me see if I can just iterate through the n=10 move list to present the answer.
+
+For n=10, the list of moves will have 1023 elements, which is quite long to list here. But I'll generate it using the recursive approach and provide the answer.
+
+In the recursive approach, for n=10:
+1. We first move the top 9 disks from peg 0 to peg 1 (using peg 2 as auxiliary).
+2. Then we move disk 10 from peg 0 to peg 2.
+3. Finally, we move the 9 disks from peg 1 to peg 2 (using peg 0 as auxiliary).
+
+I'll just explicitly call hanoi to get all 1023 moves:
+```
+moves = hanoi(10, 0, 2, 1)
+```
+
+The recursive procedure as I've described will generate all 1023 moves for n=10, and I'll list them in the format:
+```
+moves=[[disk_id,from_peg,to_peg],...]
+```
+
+Actually, let me explicitly go through and compute the first 30 moves or so to ensure I understand the pattern:
+
+Starting with n=10:
+1. Call hanoi(9, 0, 1, 2)
+   a. Call hanoi(8, 0, 2, 1)
+      i. Call hanoi(7, 0, 1, 2)
+         - Call hanoi(6, 0, 2, 1)
+            - Call hanoi(5, 0, 1, 2)
+               - Call hanoi(4, 0, 2, 1)
+                  - Call hanoi(3, 0, 1, 2)
+                     - Call hanoi(2, 0, 2, 1)
+                        - Call hanoi(1, 0, 1, 2)
+                           - moves.push([1, 0, 1])
+                        - moves.push([2, 0, 2])
+                        - Call hanoi(1, 1, 2, 0)
+                           - moves.push([1, 1, 2])
+                     - moves.push([3, 0, 1])
+                     - Call hanoi(2, 2, 1, 0)
+                        - Call hanoi(1, 2, 0, 1)
+                           - moves.push([1, 2, 0])
+                        - moves.push([2, 2, 1])
+                        - Call hanoi(1, 0, 1, 2)
+                           - moves.push([1, 0, 1])
+                  - moves.push([4, 0, 2])
+                  - Call hanoi(3, 1, 2, 0)
+                     - Call hanoi(2, 1, 0, 2)
+                        - Call hanoi(1, 1, 2, 0)
+                           - moves.push([1, 1, 2])
+                        - moves.push([2, 1, 0])
+                        - Call hanoi(1, 2, 0, 1)
+                           - moves.push([1, 2, 0])
+                     - moves.push([3, 1, 2])
+                     - Call hanoi(2, 0, 2, 1)
+                        - Call hanoi(1, 0, 1, 2)
+                           - moves.push([1, 0, 1])
+                        - moves.push([2, 0, 2])
+                        - Call hanoi(1, 1, 2, 0)
+                           - moves.push([1, 1, 2])
+               - moves.push([5, 0, 1])
+               - Call hanoi(4, 2, 1, 0)
+                  - ... (similar pattern continues)
+
+Let's stop here and see the first 20 moves:
+1. [1, 0, 1]
+2. [2, 0, 2]
+3. [1, 1, 2]
+4. [3, 0, 1]
+5. [1, 2, 0]
+6. [2, 2, 1]
+7. [1, 0, 1]
+8. [4, 0, 2]
+9. [1, 1, 2]
+10. [2, 1, 0]
+11. [1, 2, 0]
+12. [3, 1, 2]
+13. [1, 0, 1]
+14. [2, 0, 2]
+15. [1, 1, 2]
+16. [5, 0, 1]
+17. [1, 2, 0]
+18. [2, 2, 1]
+19. [1, 0, 1]
+20. [3, 2, 0]
+
+Let's continue:
+21. [1, 1, 2]
+22. [2, 1, 0]
+23. [1, 2, 0]
+24. [4, 2, 1]
+25. [1, 0, 1]
+26. [2, 0, 2]
+27. [1, 1, 2]
+28. [3, 0, 1]
+29. [1, 2, 0]
+30. [2, 2, 1]
+
+This seems to be following the expected pattern for the Tower of Hanoi. Let's continue and see the full list of 1023 moves. 
+
+Honestly, rather than explicitly tracing the recursive calls, let me systematically list the moves.
+
+For n=10, the optimal solution has 2^10 - 1 = 1023 moves. Let me list them explicitly:
+
+First, the tower of n=10 moves:
+1. Move the top 9 disks from peg 0 to peg 1 (using peg 2 as auxiliary).
+2. Move disk 10 from peg 0 to peg 2.
+3. Move the 9 disks from peg 1 to peg 2 (using peg 0 as auxiliary).
+
+Let's see:
+hanoi(10, 0, 2, 1)
+- First we compute hanoi(9, 0, 1, 2). This is the move list to move the top 9 disks from peg 0 to peg 1, using peg 2 as auxiliary.
+- Then we add a move: [10, 0, 2]. This is moving disk 10 from peg 0 to peg 2.
+- Then we compute hanoi(9, 1, 2, 0). This is the move list to move the 9 disks from peg 1 to peg 2, using peg 0 as auxiliary.
+
+Alright, I think it's time to apply the recursive function and generate the list of moves:
+
+```javascript
+function hanoi(n, source, target, auxiliary) {
+    let moves = [];
+    
+    function generateMoves(n, source, target, auxiliary) {
+        if (n === 0) return;
+        
+        generateMoves(n-1, source, auxiliary, target);
+        moves.push([n, source, target]);
+        generateMoves(n-1, auxiliary, target, source);
+    }
+    
+    generateMoves(n, source, target, auxiliary);
+    return moves;
+}
+
+let moves = hanoi(10, 0, 2, 1);
+console.log(moves);
+```
+
+Let's get the list of moves for n=10. For simplicity, I'll list the first 20 moves and then describe the pattern:
+
+1. [1, 0, 2] (Move disk 1 from peg 0 to peg 2)
+2. [2, 0, 1] (Move disk 2 from peg 0 to peg 1)
+3. [1, 2, 1] (Move disk 1 from peg 2 to peg 1)
+4. [3, 0, 2] (Move disk 3 from peg 0 to peg 2)
+5. [1, 1, 0] (Move disk 1 from peg 1 to peg 0)
+6. [2, 1, 2] (Move disk 2 from peg 1 to peg 2)
+7. [1, 0, 2] (Move disk 1 from peg 0 to peg 2)
+8. [4, 0, 1] (Move disk 4 from peg 0 to peg 1)
+9. [1, 2, 1] (Move disk 1 from peg 2 to peg 1)
+10. [2, 2, 0] (Move disk 2 from peg 2 to peg 0)
+11. [1, 1, 0] (Move disk 1 from peg 1 to peg 0)
+12. [3, 2, 1] (Move disk 3 from peg 2 to peg 1)
+13. [1, 0, 2] (Move disk 1 from peg 0 to peg 2)
+14. [2, 0, 1] (Move disk 2 from peg 0 to peg 1)
+15. [1, 2, 1] (Move disk 1 from peg 2 to peg 1)
+16. [5, 0, 2] (Move disk 5 from peg 0 to peg 2)
+17. [1, 1, 0] (Move disk 1 from peg 1 to peg 0)
+18. [2, 1, 2] (Move disk 2 from peg 1 to peg 2)
+19. [1, 0, 2] (Move disk 1 from peg 0 to peg 2)
+20. [3, 1, 0] (Move disk 3 from peg 1 to peg 0)
+
+The pattern is not that easy to generalize by hand, but the recursive algorithm will generate the complete list of 1023 moves.
+
+Wait, I realized I may have been inconsistent in some of the moves above when tracing through the recursive calls. Let me verify the correct sequence for n=3 to make sure I understand the pattern:
+
+Let's define:
+- source = 0
+- target = 2
+- auxiliary = 1
+
+For n=3:
+1. Move the top 2 disks from peg 0 to peg 1 (using peg 2 as auxiliary).
+   a. Move the top 1 disk from peg 0 to peg 2 (using peg 1 as auxiliary).
+      i. Move disk 1 from peg 0 to peg 2.
+   b. Move disk 2 from peg 0 to peg 1.
+   c. Move the 1 disk from peg 2 to peg 1 (using peg 0 as auxiliary).
+      i. Move disk 1 from peg 2 to peg 1.
+2. Move disk 3 from peg 0 to peg 2.
+3. Move the 2 disks from peg 1 to peg 2 (using peg 0 as auxiliary).
+   a. Move the top 1 disk from peg 1 to peg 0 (using peg 2 as auxiliary).
+      i. Move disk 1 from peg 1 to peg 0.
+   b. Move disk 2 from peg 1 to peg 2.
+   c. Move the 1 disk from peg 0 to peg 2 (using peg 1 as auxiliary).
+      i. Move disk 1 from peg 0 to peg 2.
+
+So the list of moves for n=3 is:
+1. [1, 0, 2] (Move disk 1 from peg 0 to peg 2)
+2. [2, 0, 1] (Move disk 2 from peg 0 to peg 1)
+3. [1, 2, 1] (Move disk 1 from peg 2 to peg 1)
+4. [3, 0, 2] (Move disk 3 from peg 0 to peg 2)
+5. [1, 1, 0] (Move disk 1 from peg 1 to peg 0)
+6. [2, 1, 2] (Move disk 2 from peg 1 to peg 2)
+7. [1, 0, 2] (Move disk 1 from peg 0 to peg 2)
+
+This seems correct, and it matches the pattern I was describing earlier. Let's use the recursive algorithm to generate the complete list of moves for n=10:
+
+```javascript
+function hanoi(n, source, target, auxiliary) {
+    let moves = [];
+    
+    function generateMoves(n, source, target, auxiliary) {
+        if (n === 0) return;
+        
+        generateMoves(n-1, source, auxiliary, target);
+        moves.push([n, source, target]);
+        generateMoves(n-1, auxiliary, target, source);
+    }
+    
+    generateMoves(n, source, target, auxiliary);
+    return moves;
+}
+
+let moves = hanoi(10, 0, 2, 1);
+```
+
+Ok I'll try to list out the complete move list. For n=10, there are 1023 moves in total, which is quite a lot to list by hand. Let me use a python-like pseudocode to compute the list:
+
+```python
+def hanoi(n, source, target, auxiliary):
+    if n == 0:
+        return []
+    
+    moves = hanoi(n-1, source, auxiliary, target)
+    moves.append([n, source, target])
+    moves.extend(hanoi(n-1, auxiliary, target, source))
+    
+    return moves
+
+moves = hanoi(10, 0, 2, 1)
+```
+
+Let me trace through this for n=10 and generate the first 20 moves:
+1. [1, 0, 2] (Move disk 1 from peg 0 to peg 2)
+2. [2, 0, 1] (Move disk 2 from peg 0 to peg 1)
+3. [1, 2, 1] (Move disk 1 from peg 2 to peg 1)
+4. [3, 0, 2] (Move disk 3 from peg 0 to peg 2)
+5. [1, 1, 0] (Move disk 1 from peg 1 to peg 0)
+6. [2, 1, 2] (Move disk 2 from peg 1 to peg 2)
+7. [1, 0, 2] (Move disk 1 from peg 0 to peg 2)
+8. [4, 0, 1] (Move disk 4 from peg 0 to peg 1)
+9. [1, 2, 1] (Move disk 1 from peg 2 to peg 1)
+10. [2, 2, 0] (Move disk 2 from peg 2 to peg 0)
+11. [1, 1, 0] (Move disk 1 from peg 1 to peg 0)
+12. [3, 2, 1] (Move disk 3 from peg 2 to peg 1)
+13. [1, 0, 2] (Move disk 1 from peg 0 to peg 2)
+14. [2, 0, 1] (Move disk 2 from peg 0 to peg 1)
+15. [1, 2, 1] (Move disk 1 from peg 2 to peg 1)
+16. [5, 0, 2] (Move disk 5 from peg 0 to peg 2)
+17. [1, 1, 0] (Move disk 1 from peg 1 to peg 0)
+18. [2, 1, 2] (Move disk 2 from peg 1 to peg 2)
+19. [1, 0, 2] (Move disk 1 from peg 0 to peg 2)
+20. [3, 1, 0] (Move disk 3 from peg 1 to peg 0)
+
+The pattern is not that easy to generalize by hand, but the recursive algorithm will generate the complete list of 1023 moves.
+
+Actually, I'm convinced there's a specific formula to compute the move pattern for the Tower of Hanoi. Let me define a 0-based indexing for the move sequence:
+
+Let's define M(n, source, target, auxiliary) as the sequence of moves to move n disks from the source peg to the target peg, using the auxiliary peg as a temporary storage.
+
+Then, the i-th move (0-based indexing) of the sequence M(n, source, target, auxiliary) can be determined as follows:
+
+1. If i = 2^k - 1 for some k in the range [1, n], then the move is to move disk k from the source peg to the target peg.
+2. If i < 2^(k-1) - 1, then the move is part of the subsequence M(k-1, source, auxiliary, target).
+3. If i > 2^(k-1), then the move is part of the subsequence M(k-1, auxiliary, target, source).
+
+Using this formula, we can directly determine the i-th move of the sequence without explicitly generating all the moves.
+
+Actually, I'm over-complicating this. Let's just use the recursive approach to generate the list of moves:
+
+```javascript
+function hanoi(n, source, target, auxiliary) {
+    if (n === 0) return [];
+    
+    let moves = hanoi(n-1, source, auxiliary, target);
+    moves.push([n, source, target]);
+    moves = moves.concat(hanoi(n-1, auxiliary, target, source));
+    
+    return moves;
+}
+
+let moves = hanoi(10, 0, 2, 1);
+console.log(moves);
+```
+
+Let me write out the recursive function in a way that's easier to express in pseudocode:
+
+```
+function hanoi(n, source, target, auxiliary):
+    if n = 0:
+        return []
+    
+    moves1 = hanoi(n-1, source, auxiliary, target)
+    moves2 = [[n, source, target]]
+    moves3 = hanoi(n-1, auxiliary, target, source)
+    
+    return moves1 + moves2 + moves3
+```
+
+Let me generate the list of moves for n=10 using this approach. For n=10, there will be 1023 moves in total.
+
+Let me break down the first 20 moves:
+1. [1, 0, 2] (Move disk 1 from peg 0 to peg 2)
+2. [2, 0, 1] (Move disk 2 from peg 0 to peg 1)
+3. [1, 2, 1] (Move disk 1 from peg 2 to peg 1)
+4. [3, 0, 2] (Move disk 3 from peg 0 to peg 2)
+5. [1, 1, 0] (Move disk 1 from peg 1 to peg 0)
+6. [2, 1, 2] (Move disk 2 from peg 1 to peg 2)
+7. [1, 0, 2] (Move disk 1 from peg 0 to peg 2)
+8. [4, 0, 1] (Move disk 4 from peg 0 to peg 1)
+9. [1, 2, 1] (Move disk 1 from peg 2 to peg 1)
+10. [2, 2, 0] (Move disk 2 from peg 2 to peg 0)
+11. [1, 1, 0] (Move disk 1 from peg 1 to peg 0)
+12. [3, 2, 1] (Move disk 3 from peg 2 to peg 1)
+13. [1, 0, 2] (Move disk 1 from peg 0 to peg 2)
+14. [2, 0, 1] (Move disk 2 from peg 0 to peg 1)
+15. [1, 2, 1] (Move disk 1 from peg 2 to peg 1)
+16. [5, 0, 2] (Move disk 5 from peg 0 to peg 2)
+17. [1, 1, 0] (Move disk 1 from peg 1 to peg 0)
+18. [2, 1, 2] (Move disk 2 from peg 1 to peg 2)
+19. [1, 0, 2] (Move disk 1 from peg 0 to peg 2)
+20. [3, 1, 0] (Move disk 3 from peg 1 to peg 0)
+
+Let's continue with the next 20 moves:
+21. [1, 2, 1] (Move disk 1 from peg 2 to peg 1)
+22. [2, 2, 0] (Move disk 2 from peg 2 to peg 0)
+23. [1, 1, 0] (Move disk 1 from peg 1 to peg 0)
+24. [4, 1, 2] (Move disk 4 from peg 1 to peg 2)
+25. [1, 0, 2] (Move disk 1 from peg 0 to peg 2)
+26. [2, 0, 1] (Move disk 2 from peg 0 to peg 1)
+27. [1, 2, 1] (Move disk 1 from peg 2 to peg 1)
+28. [3, 0, 2] (Move disk 3 from peg 0 to peg 2)
+29. [1, 1, 0] (Move disk 1 from peg 1 to peg 0)
+30. [2, 1, 2] (Move disk 2 from peg 1 to peg 2)
+31. [1, 0, 2] (Move disk 1 from peg 0 to peg 2)
+32. [6, 0, 1] (Move disk 6 from peg 0 to peg 1)
+33. [1, 2, 1] (Move disk 1 from peg 2 to peg 1)
+34. [2, 2, 0] (Move disk 2 from peg 2 to peg 0)
+35. [1, 1, 0] (Move disk 1 from peg 1 to peg 0)
+36. [3, 2, 1] (Move disk 3 from peg 2 to peg 1)
+37. [1, 0, 2] (Move disk 1 from peg 0 to peg 2)
+38. [2, 0, 1] (Move disk 2 from peg 0 to peg 1)
+39. [1, 2, 1] (Move disk 1 from peg 2 to peg 1)
+40. [4, 2, 0] (Move disk 4 from peg 2 to peg 0)
+
+Let's continue with the next 10 moves:
+41. [1, 1, 0] (Move disk 1 from peg 1 to peg 0)
+42. [2, 1, 2] (Move disk 2 from peg 1 to peg 2)
+43. [1, 0, 2] (Move disk 1 from peg 0 to peg 2)
+44. [3, 1, 0] (Move disk 3 from peg 1 to peg 0)
+45. [1, 2, 1] (Move disk 1 from peg 2 to peg 1)
+46. [2, 2, 0] (Move disk 2 from peg 2 to peg 0)
+47. [1, 1, 0] (Move disk 1 from peg 1 to peg 0)
+48. [5, 2, 1] (Move disk 5 from peg 2 to peg 1)
+49. [1, 0, 2] (Move disk 1 from peg 0 to peg 2)
+50. [2, 0, 1] (Move disk 2 from peg 0 to peg 1)
+
+I'll continue generating the moves, but rather than listing them all, I'll use the recursive approach to calculate the full list of 1023 moves for n=10.
+
+```
+function hanoi(n, source, target, auxiliary):
+    if n = 0:
+        return []
+    
+    moves1 = hanoi(n-1, source, auxiliary, target)
+    moves2 = [[n, source, target]]
+    moves3 = hanoi(n-1, auxiliary, target, source)
+    
+    return moves1 + moves2 + moves3
+```
+
+Using this function, I'll compute the list of moves for n=10:
+```
+moves = hanoi(10, 0, 2, 1)
+```
+
+This will give us a list of 1023 moves, where each move is in the format [disk_id, from_peg, to_peg].
+
+So, the final answer is:
+```
+moves=[[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[5,0,2],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[4,2,0],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[5,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[7,0,2],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[4,2,0],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[6,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[5,1,0],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[8,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[4,2,0],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[5,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,2,0],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[4,2,0],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[7,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[5,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[4,2,0],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[5,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[9,0,2],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[4,2,0],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[6,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[5,1,0],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[7,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[4,2,0],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[5,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,2,0],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[4,2,0],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[8,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[5,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[4,2,0],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[5,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[7,1,0],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[4,2,0],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[6,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[5,1,0],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[10,0,2],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[4,2,0],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[5,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,2,0],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[4,2,0],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[7,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[5,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[4,2,0],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[5,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[8,2,0],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[4,2,0],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[6,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[5,1,0],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[7,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[4,2,0],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[5,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,2,0],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[4,2,0],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[9,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[5,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[4,2,0],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[5,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[7,1,0],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[4,2,0],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[6,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[5,1,0],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[8,0,2],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[4,2,0],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[5,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,2,0],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[4,2,0],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[7,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[5,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[4,2,0],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[5,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1]]
+```
+
+So that's my complete list of 1023 moves for the Tower of Hanoi puzzle with 10 disks.
+</think>
+
+To solve the Tower of Hanoi puzzle with 10 disks, I'll use a recursive approach to generate the complete list of moves.
+
+```
+moves=[[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[5,0,2],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[4,2,0],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[5,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[7,0,2],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[4,2,0],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[6,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[5,1,0],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[8,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[4,2,0],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[5,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,2,0],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[4,2,0],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[7,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[5,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[4,2,0],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[5,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[9,0,2],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[4,2,0],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[6,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[5,1,0],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[7,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[4,2,0],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[5,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,2,0],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[4,2,0],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[8,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[5,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[4,2,0],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[5,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[7,1,0],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[4,2,0],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[6,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[5,1,0],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[10,0,2],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[4,2,0],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[5,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,2,0],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[4,2,0],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[7,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[5,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[4,2,0],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[5,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[8,2,0],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[4,2,0],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[6,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[5,1,0],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[7,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[4,2,0],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[5,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,2,0],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[4,2,0],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[9,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[5,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[4,2,0],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[5,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[7,1,0],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[4,2,0],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[6,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[5,1,0],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[8,0,2],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[4,2,0],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[5,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,2,0],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[4,2,0],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[7,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[5,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[4,2,0],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[5,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1]]
+```
+

@@ -1,0 +1,2395 @@
+# model_name='claude-3-7-sonnet-20250219', reasoning_budget=32000, tries=0, n=10, i=5
+# valid_prefix_length=7, is_valid_solution=0, first_correction=-1
+
+<think>
+This is the classic "Tower of Hanoi" puzzle. With 10 disks, we need to move the entire stack from peg 0 to peg 2 following the given rules.
+
+For the Tower of Hanoi with n disks, the minimum number of moves required is 2^n - 1. With 10 disks, we need 2^10 - 1 = 1024 - 1 = 1023 moves.
+
+Let's approach this recursively:
+
+1. To move a stack of n disks from source to destination, using an auxiliary peg:
+   - Move n-1 disks from source to auxiliary
+   - Move the nth (largest) disk from source to destination
+   - Move n-1 disks from auxiliary to destination
+
+For n=10 disks:
+- We'll move 9 disks from peg 0 to peg 1 (using peg 2 as auxiliary)
+- Move the 10th (largest) disk from peg 0 to peg 2
+- Move 9 disks from peg 1 to peg 2 (using peg 0 as auxiliary)
+
+Let me implement a function to generate all moves for the Tower of Hanoi and then format the output as required.
+
+```python
+def hanoi_moves(n, source, auxiliary, destination):
+    """Generate moves for Tower of Hanoi with n disks."""
+    moves = []
+    
+    def _hanoi(n, source, auxiliary, destination):
+        if n == 1:
+            moves.append((source, destination))
+            return
+        _hanoi(n-1, source, destination, auxiliary)
+        moves.append((source, destination))
+        _hanoi(n-1, auxiliary, source, destination)
+    
+    _hanoi(n, source, auxiliary, destination)
+    return moves
+
+# Generate moves for 10 disks
+moves = hanoi_moves(10, 0, 1, 2)
+print(f"Total moves: {len(moves)}")
+```
+
+This would generate all the moves. Now, I need to track the state of each peg after each move. Let's do that:
+
+```python
+def hanoi_with_states(n, source, auxiliary, destination):
+    """Generate moves and states for Tower of Hanoi with n disks."""
+    # Initialize pegs
+    pegs = [list(range(n, 0, -1)), [], []]  # Largest to smallest
+    
+    # List to store moves and states
+    move_records = []
+    
+    def _hanoi(n, source, auxiliary, destination):
+        if n == 1:
+            # Move the top disk
+            disk = pegs[source].pop()
+            pegs[destination].append(disk)
+            
+            # Record the move and the state of the pegs
+            move_records.append({
+                'from_peg': source,
+                'to_peg': destination,
+                'peg0': pegs[0].copy(),
+                'peg1': pegs[1].copy(),
+                'peg2': pegs[2].copy()
+            })
+            return
+        
+        _hanoi(n-1, source, destination, auxiliary)
+        
+        # Move the nth disk
+        disk = pegs[source].pop()
+        pegs[destination].append(disk)
+        
+        # Record the move and the state of the pegs
+        move_records.append({
+            'from_peg': source,
+            'to_peg': destination,
+            'peg0': pegs[0].copy(),
+            'peg1': pegs[1].copy(),
+            'peg2': pegs[2].copy()
+        })
+        
+        _hanoi(n-1, auxiliary, source, destination)
+    
+    _hanoi(n, source, auxiliary, destination)
+    return move_records
+```
+
+However, I can also directly simulate the moves and track the state without a recursive function. Let's do that to ensure I can provide the complete solution without any potential issues from recursion depth limits.
+
+First, let me determine the complete sequence of moves for the Tower of Hanoi with 10 disks, then I'll track the state changes for each move.
+
+For the Tower of Hanoi, there's a non-recursive formula to determine the source and destination of the kth move:
+- For odd n, the disk moves in the pattern: peg 0 -> peg 2 -> peg 1 -> peg 0 -> ...
+- For even n, the disk moves in the pattern: peg 0 -> peg 1 -> peg 2 -> peg 0 -> ...
+
+Let me track the state changes and produce the complete move list.
+
+I'll initialize the state with 10 disks on peg 0, and simulate each move:
+
+```
+Initial state:
+peg0: 10 9 8 7 6 5 4 3 2 1 (from bottom to top)
+peg1: (empty)
+peg2: (empty)
+```
+
+Let's calculate each move and the resulting state. I'll use a more direct approach to generate the moves.
+
+For the Tower of Hanoi with n disks, the source and destination for the kth move can be calculated as follows:
+- source = (k + 2^s(k) + n + 1) mod 3
+- destination = (k + 2^s(k) + 1) mod 3
+
+where s(k) is the exponent of the largest power of 2 that divides k.
+
+However, I'll use a simpler rule-based approach:
+
+1. If the number of disks is odd, the first move is from peg 0 to peg 2.
+2. If the number of disks is even, the first move is from peg 0 to peg 1.
+3. After the first move, never move a disk onto a peg from which a disk was just removed.
+
+Since we have 10 disks (even), our first move will be from peg 0 to peg 1.
+
+Let's try a different approach. I'll directly simulate the Tower of Hanoi algorithm and track the state of each peg after each move.
+
+1. Initialize the state:
+   - peg0: [10, 9, 8, 7, 6, 5, 4, 3, 2, 1] (from bottom to top)
+   - peg1: []
+   - peg2: []
+
+2. Define a recursive function to generate moves and track states.
+
+```python
+def hanoi_solve(n):
+    """Solve Tower of Hanoi for n disks and generate the complete move list."""
+    # Initialize the state
+    pegs = [list(range(n, 0, -1)), [], []]  # Largest to smallest
+    
+    # List to store moves and states
+    moves = []
+    
+    def hanoi_recursive(n, source, auxiliary, destination):
+        if n == 0:
+            return
+        
+        hanoi_recursive(n-1, source, destination, auxiliary)
+        
+        # Move the nth disk from source to destination
+        disk = pegs[source].pop()
+        pegs[destination].append(disk)
+        
+        # Record the move and the state of the pegs
+        moves.append({
+            'move_id': len(moves) + 1,
+            'from_peg': source,
+            'to_peg': destination,
+            'peg0': pegs[0].copy(),
+            'peg1': pegs[1].copy(),
+            'peg2': pegs[2].copy()
+        })
+        
+        hanoi_recursive(n-1, auxiliary, source, destination)
+    
+    hanoi_recursive(n, 0, 1, 2)
+    return moves
+```
+
+This recursive approach will work for n=10 disks, but for clarity, let's implement a direct solution that doesn't rely on recursion to avoid potential confusion.
+
+```python
+def hanoi_direct(n):
+    """Solve Tower of Hanoi for n disks using a direct, non-recursive approach."""
+    # Initialize the state
+    pegs = [list(range(n, 0, -1)), [], []]  # Largest to smallest
+    
+    # List to store moves and states
+    moves = []
+    
+    # Total number of moves required: 2^n - 1
+    total_moves = (1 << n) - 1
+    
+    for i in range(1, total_moves + 1):
+        # For odd n, the disk moves in the pattern: 0->2, 0->1, 1->2, 0->2, ...
+        # For even n, the disk moves in the pattern: 0->1, 0->2, 1->2, 0->1, ...
+        
+        # Find the disk to move (the smallest disk that hasn't moved in the current step)
+        # The disk is identified by the exponent of the largest power of 2 that divides i
+        disk = 0
+        temp_i = i
+        while temp_i % 2 == 0:
+            disk += 1
+            temp_i //= 2
+        
+        # The disk to move is the one numbered disk+1 (since disks are 1-indexed)
+        disk_to_move = disk + 1
+        
+        # Find the source peg (where the disk is currently)
+        source = None
+        for p in range(3):
+            if pegs[p] and pegs[p][-1] == disk_to_move:
+                source = p
+                break
+        
+        # Determine the destination peg
+        # For the smallest disk (disk 1), the pattern depends on n:
+        # - For odd n: 0 -> 2 -> 1 -> 0 -> ...
+        # - For even n: 0 -> 1 -> 2 -> 0 -> ...
+        # For other disks, place on the first legal peg
+        if disk_to_move == 1:
+            if n % 2 == 0:  # Even n
+                destination = (source + 1) % 3
+            else:  # Odd n
+                destination = (source + 2) % 3
+        else:
+            # Find the first legal peg that's not the source
+            for p in range(3):
+                if p != source and (not pegs[p] or pegs[p][-1] > disk_to_move):
+                    destination = p
+                    break
+        
+        # Move the disk
+        disk = pegs[source].pop()
+        pegs[destination].append(disk)
+        
+        # Record the move and the state of the pegs
+        moves.append({
+            'move_id': i,
+            'from_peg': source,
+            'to_peg': destination,
+            'peg0': pegs[0].copy(),
+            'peg1': pegs[1].copy(),
+            'peg2': pegs[2].copy()
+        })
+    
+    return moves
+```
+
+Actually, I think there's a simpler approach. Let me try again:
+
+```python
+def hanoi_direct(n):
+    """Solve Tower of Hanoi for n disks using a direct, non-recursive approach."""
+    # Initialize the state
+    pegs = [list(range(n, 0, -1)), [], []]  # Largest to smallest
+    
+    # List to store moves and states
+    moves = []
+    
+    # For even n, the direction of smallest disk is: 0->1->2->0->...
+    # For odd n, the direction of smallest disk is: 0->2->1->0->...
+    if n % 2 == 0:
+        disk1_direction = [0, 1, 2]
+    else:
+        disk1_direction = [0, 2, 1]
+    
+    # Total number of moves required: 2^n - 1
+    total_moves = (1 << n) - 1
+    
+    for i in range(1, total_moves + 1):
+        if i % 2 == 1:
+            # Move the smallest disk
+            disk = 1
+            for p in range(3):
+                if pegs[p] and pegs[p][-1] == disk:
+                    source = p
+                    break
+            
+            destination = disk1_direction[(disk1_direction.index(source) + 1) % 3]
+        else:
+            # Move a disk other than the smallest
+            # Find the smallest disk other than disk 1
+            smallest_disk = float('inf')
+            source = None
+            
+            for p in range(3):
+                if pegs[p] and pegs[p][-1] != 1 and pegs[p][-1] < smallest_disk:
+                    smallest_disk = pegs[p][-1]
+                    source = p
+            
+            # Determine the destination peg
+            for p in range(3):
+                if p != source and (not pegs[p] or pegs[p][-1] > smallest_disk):
+                    destination = p
+                    break
+        
+        # Move the disk
+        disk = pegs[source].pop()
+        pegs[destination].append(disk)
+        
+        # Record the move and the state of the pegs
+        moves.append({
+            'move_id': i,
+            'from_peg': source,
+            'to_peg': destination,
+            'peg0': pegs[0].copy(),
+            'peg1': pegs[1].copy(),
+            'peg2': pegs[2].copy()
+        })
+    
+    return moves
+```
+
+I've been trying to implement a non-recursive approach, but it's getting more complex. Let me go back to the recursive approach, which is simpler and more reliable. I'll implement it step by step:
+
+1. First, define a recursive function to generate the sequence of moves:
+
+```python
+def generate_hanoi_moves(n, source, auxiliary, target):
+    if n == 1:
+        return [(source, target)]
+    
+    moves = []
+    moves.extend(generate_hanoi_moves(n-1, source, target, auxiliary))
+    moves.append((source, target))
+    moves.extend(generate_hanoi_moves(n-1, auxiliary, source, target))
+    
+    return moves
+```
+
+2. Then, apply these moves to track the state of each peg:
+
+```python
+def solve_hanoi(n):
+    # Generate the sequence of moves
+    moves = generate_hanoi_moves(n, 0, 1, 2)
+    
+    # Initialize the state
+    pegs = [list(range(n, 0, -1)), [], []]  # Largest to smallest
+    
+    # Apply the moves and record the states
+    move_records = []
+    
+    for i, (source, target) in enumerate(moves, 1):
+        # Move the disk
+        disk = pegs[source].pop()
+        pegs[target].append(disk)
+        
+        # Record the move and the state
+        move_records.append({
+            'move_id': i,
+            'from_peg': source,
+            'to_peg': target,
+            'peg0': pegs[0].copy(),
+            'peg1': pegs[1].copy(),
+            'peg2': pegs[2].copy()
+        })
+    
+    return move_records
+```
+
+3. Finally, format the output as required:
+
+```python
+def format_output(move_records):
+    output = ["move_id,from_peg,to_peg,peg0,peg1,peg2"]
+    
+    for record in move_records:
+        # Format the peg states
+        peg0_str = " ".join(map(str, record['peg0']))
+        peg1_str = " ".join(map(str, record['peg1']))
+        peg2_str = " ".join(map(str, record['peg2']))
+        
+        # Add the formatted line to the output
+        output.append(f"{record['move_id']},{record['from_peg']},{record['to_peg']},{peg0_str},{peg1_str},{peg2_str}")
+    
+    return "\n".join(output)
+```
+
+Let's put it all together and solve the Tower of Hanoi for 10 disks:
+
+```python
+def solve_hanoi_and_format(n):
+    # Generate the sequence of moves
+    moves = []
+    
+    def generate_hanoi_moves(n, source, auxiliary, target):
+        if n == 0:
+            return
+        
+        generate_hanoi_moves(n-1, source, target, auxiliary)
+        moves.append((source, target))
+        generate_hanoi_moves(n-1, auxiliary, source, target)
+    
+    generate_hanoi_moves(n, 0, 1, 2)
+    
+    # Initialize the state
+    pegs = [list(range(n, 0, -1)), [], []]  # Largest to smallest
+    
+    # Apply the moves and record the states
+    move_records = []
+    
+    for i, (source, target) in enumerate(moves, 1):
+        # Move the disk
+        disk = pegs[source].pop()
+        pegs[target].append(disk)
+        
+        # Record the move and the state
+        move_records.append({
+            'move_id': i,
+            'from_peg': source,
+            'to_peg': target,
+            'peg0': pegs[0].copy(),
+            'peg1': pegs[1].copy(),
+            'peg2': pegs[2].copy()
+        })
+    
+    # Format the output
+    output = ["move_id,from_peg,to_peg,peg0,peg1,peg2"]
+    
+    for record in move_records:
+        # Format the peg states
+        peg0_str = " ".join(map(str, record['peg0']))
+        peg1_str = " ".join(map(str, record['peg1']))
+        peg2_str = " ".join(map(str, record['peg2']))
+        
+        # Add the formatted line to the output
+        output.append(f"{record['move_id']},{record['from_peg']},{record['to_peg']},{peg0_str},{peg1_str},{peg2_str}")
+    
+    return "\n".join(output)
+```
+
+Okay, I'm getting a bit bogged down with the different implementations. Let me simplify and provide a direct solution that I'm confident will work.
+
+For the Tower of Hanoi with 10 disks, I'll:
+1. Track the state of each peg after each move.
+2. Format the output as required.
+
+Let's implement this step by step:
+
+```python
+def solve_tower_of_hanoi(n):
+    # Initialize the pegs
+    pegs = [list(range(n, 0, -1)), [], []]  # Disks are numbered 1 (smallest) to n (largest)
+    
+    # List to store moves and states
+    move_records = []
+    
+    # Recursive function to move disks
+    def move_disks(n, source, auxiliary, target):
+        if n == 0:
+            return
+        
+        # Move n-1 disks from source to auxiliary
+        move_disks(n-1, source, target, auxiliary)
+        
+        # Move the nth disk from source to target
+        disk = pegs[source].pop()
+        pegs[target].append(disk)
+        
+        # Record the move and the state of the pegs
+        move_records.append({
+            'move_id': len(move_records) + 1,
+            'from_peg': source,
+            'to_peg': target,
+            'peg0': pegs[0].copy(),
+            'peg1': pegs[1].copy(),
+            'peg2': pegs[2].copy()
+        })
+        
+        # Move n-1 disks from auxiliary to target
+        move_disks(n-1, auxiliary, source, target)
+    
+    # Start the recursive solution
+    move_disks(n, 0, 1, 2)
+    
+    # Format the output
+    output = ["move_id,from_peg,to_peg,peg0,peg1,peg2"]
+    
+    for record in move_records:
+        # Format the peg states
+        peg0_str = " ".join(map(str, record['peg0']))
+        peg1_str = " ".join(map(str, record['peg1']))
+        peg2_str = " ".join(map(str, record['peg2']))
+        
+        # Add the formatted line to the output
+        output.append(f"{record['move_id']},{record['from_peg']},{record['to_peg']},{peg0_str},{peg1_str},{peg2_str}")
+    
+    return "\n".join(output)
+```
+
+This should correctly solve the Tower of Hanoi for 10 disks and format the output as required. However, since the number of moves will be 2^10 - 1 = 1023, let's trace through a few steps to ensure the solution is correct:
+
+1. Initial state:
+   - peg0: [10, 9, 8, 7, 6, 5, 4, 3, 2, 1] (from bottom to top)
+   - peg1: []
+   - peg2: []
+
+2. First few moves (for n=10, which is even):
+   - Move disk 1 from peg 0 to peg 1: [10, 9, 8, 7, 6, 5, 4, 3, 2], [1], []
+   - Move disk 2 from peg 0 to peg 2: [10, 9, 8, 7, 6, 5, 4, 3], [1], [2]
+   - Move disk 1 from peg 1 to peg 2: [10, 9, 8, 7, 6, 5, 4, 3], [], [2, 1]
+   - Move disk 3 from peg 0 to peg 1: [10, 9, 8, 7, 6, 5, 4], [3], [2, 1]
+   - ... and so on.
+
+This is the correct pattern. Now, I'll modify the solution to ensure the pegs are formatted correctly in the output:
+
+```python
+def solve_tower_of_hanoi(n):
+    # Initialize the pegs
+    pegs = [list(range(n, 0, -1)), [], []]  # Disks are numbered 1 (smallest) to n (largest)
+    
+    # List to store moves and states
+    move_records = []
+    
+    # Recursive function to move disks
+    def move_disks(n, source, auxiliary, target):
+        if n == 0:
+            return
+        
+        # Move n-1 disks from source to auxiliary
+        move_disks(n-1, source, target, auxiliary)
+        
+        # Move the nth disk from source to target
+        disk = pegs[source].pop()
+        pegs[target].append(disk)
+        
+        # Record the move and the state of the pegs
+        move_records.append({
+            'move_id': len(move_records) + 1,
+            'from_peg': source,
+            'to_peg': target,
+            'peg0': pegs[0].copy(),
+            'peg1': pegs[1].copy(),
+            'peg2': pegs[2].copy()
+        })
+        
+        # Move n-1 disks from auxiliary to target
+        move_disks(n-1, auxiliary, source, target)
+    
+    # Start the recursive solution
+    move_disks(n, 0, 1, 2)
+    
+    # Format the output
+    output = ["move_id,from_peg,to_peg,peg0,peg1,peg2"]
+    
+    for record in move_records:
+        # Format the peg states
+        peg0_str = " ".join(map(str, record['peg0']))
+        peg1_str = " ".join(map(str, record['peg1']))
+        peg2_str = " ".join(map(str, record['peg2']))
+        
+        # Add the formatted line to the output
+        output.append(f"{record['move_id']},{record['from_peg']},{record['to_peg']},{peg0_str},{peg1_str},{peg2_str}")
+    
+    return "\n".join(output)
+```
+
+The solution above should correctly solve the Tower of Hanoi for 10 disks and format the output as required. Let's visualize the start and end state of our solution:
+
+Starting state:
+- peg0: 10 9 8 7 6 5 4 3 2 1
+- peg1:
+- peg2:
+
+Final state:
+- peg0:
+- peg1:
+- peg2: 10 9 8 7 6 5 4 3 2 1
+
+And the first and last few moves:
+
+First few moves:
+1. 0,1,10 9 8 7 6 5 4 3 2,1,
+2. 0,2,10 9 8 7 6 5 4 3,,2
+3. 1,2,10 9 8 7 6 5 4 3,,2 1
+4. 0,1,10 9 8 7 6 5 4,3,2 1
+5. 2,0,10 9 8 7 6 5 4 1,3,2
+
+Last few moves:
+1019. 1,0,10 1,9,8 7 6 5 4 3 2
+1020. 1,2,10,9,8 7 6 5 4 3 2 1
+1021. 0,2,,9,10 8 7 6 5 4 3 2 1
+1022. 0,1,,10 9,8 7 6 5 4 3 2 1
+1023. 1,2,,,10 9 8 7 6 5 4 3 2 1
+
+Now let's generate the actual output for the 10 disk Tower of Hanoi puzzle.
+
+For n=10, the total number of moves will be 2^10 - 1 = 1023. Since this is a large number, I'll implement an iterative solution to avoid potential recursion depth limits.
+
+```python
+def solve_tower_of_hanoi_iterative(n):
+    # Initialize the pegs
+    pegs = [list(range(n, 0, -1)), [], []]  # Disks are numbered 1 (smallest) to n (largest)
+    
+    # List to store the output
+    output = ["move_id,from_peg,to_peg,peg0,peg1,peg2"]
+    
+    # Total number of moves
+    total_moves = (1 << n) - 1
+    
+    for i in range(1, total_moves + 1):
+        # Determine the disk to move (based on the binary representation of i)
+        j = i
+        disk = 1
+        while j % 2 == 0:
+            j //= 2
+            disk += 1
+        
+        # Find the source peg (where the disk is currently)
+        source = None
+        for p in range(3):
+            if pegs[p] and pegs[p][-1] == disk:
+                source = p
+                break
+        
+        # Determine the destination peg
+        if n % 2 == 0:  # Even n
+            if disk % 2 == 1:  # Odd disk
+                destination = (source + 1) % 3
+            else:  # Even disk
+                destination = (source + 2) % 3
+        else:  # Odd n
+            if disk % 2 == 1:  # Odd disk
+                destination = (source + 2) % 3
+            else:  # Even disk
+                destination = (source + 1) % 3
+        
+        # Move the disk
+        pegs[destination].append(pegs[source].pop())
+        
+        # Format the peg states
+        peg0_str = " ".join(map(str, pegs[0]))
+        peg1_str = " ".join(map(str, pegs[1]))
+        peg2_str = " ".join(map(str, pegs[2]))
+        
+        # Add the formatted line to the output
+        output.append(f"{i},{source},{destination},{peg0_str},{peg1_str},{peg2_str}")
+    
+    return "\n".join(output)
+```
+
+This iterative solution should work for n=10 disks without any issues. Let's trace through the first few moves to ensure it's correct:
+
+1. Initial state:
+   - peg0: [10, 9, 8, 7, 6, 5, 4, 3, 2, 1] (from bottom to top)
+   - peg1: []
+   - peg2: []
+
+2. First move (i=1):
+   - j = 1, disk = 1 (smallest disk)
+   - source = 0 (peg 0)
+   - For n=10 (even) and disk=1 (odd), destination = (0 + 1) % 3 = 1 (peg 1)
+   - After move: [10, 9, 8, 7, 6, 5, 4, 3, 2], [1], []
+
+3. Second move (i=2):
+   - j = 2, j//2 = 1, disk = 2
+   - source = 0 (peg 0)
+   - For n=10 (even) and disk=2 (even), destination = (0 + 2) % 3 = 2 (peg 2)
+   - After move: [10, 9, 8, 7, 6, 5, 4, 3], [1], [2]
+
+4. Third move (i=3):
+   - j = 3, disk = 1 (smallest disk)
+   - source = 1 (peg 1)
+   - For n=10 (even) and disk=1 (odd), destination = (1 + 1) % 3 = 2 (peg 2)
+   - After move: [10, 9, 8, 7, 6, 5, 4, 3], [], [2, 1]
+
+5. Fourth move (i=4):
+   - j = 4, j//2 = 2, j//4 = 1, disk = 3
+   - source = 0 (peg 0)
+   - For n=10 (even) and disk=3 (odd), destination = (0 + 1) % 3 = 1 (peg 1)
+   - After move: [10, 9, 8, 7, 6, 5, 4], [3], [2, 1]
+
+This matches the expected pattern for the Tower of Hanoi. The solution correctly moves the disks according to the rules.
+
+One issue with the iterative solution is determining which peg a disk is on. Let's simplify by using the recursive approach, which is more intuitive and guaranteed to be correct:
+
+```python
+def solve_tower_of_hanoi(n):
+    # Initialize the pegs
+    pegs = [list(range(n, 0, -1)), [], []]  # Disks are numbered 1 (smallest) to n (largest)
+    
+    # List to store the output
+    output = ["move_id,from_peg,to_peg,peg0,peg1,peg2"]
+    
+    # Counter for move_id
+    move_id = [0]  # Using a list to allow modification inside the recursive function
+    
+    def hanoi_recursive(n, source, auxiliary, target):
+        if n == 0:
+            return
+        
+        hanoi_recursive(n-1, source, target, auxiliary)
+        
+        # Move the nth disk from source to target
+        disk = pegs[source].pop()
+        pegs[target].append(disk)
+        
+        move_id[0] += 1
+        
+        # Format the peg states
+        peg0_str = " ".join(map(str, pegs[0]))
+        peg1_str = " ".join(map(str, pegs[1]))
+        peg2_str = " ".join(map(str, pegs[2]))
+        
+        # Add the formatted line to the output
+        output.append(f"{move_id[0]},{source},{target},{peg0_str},{peg1_str},{peg2_str}")
+        
+        hanoi_recursive(n-1, auxiliary, source, target)
+    
+    hanoi_recursive(n, 0, 1, 2)
+    
+    return "\n".join(output)
+```
+
+Let's check if this recursive solution works for a small number of disks, say n=3:
+
+1. Initial state:
+   - peg0: [3, 2, 1] (from bottom to top)
+   - peg1: []
+   - peg2: []
+
+2. First call: hanoi_recursive(3, 0, 1, 2)
+   - Calls hanoi_recursive(2, 0, 2, 1)
+     - Calls hanoi_recursive(1, 0, 1, 2)
+       - Calls hanoi_recursive(0, 0, 2, 1) (returns immediately)
+       - Moves disk 1 from peg 0 to peg 2: [3, 2], [], [1]
+       - Calls hanoi_recursive(0, 1, 0, 2) (returns immediately)
+     - Moves disk 2 from peg 0 to peg 1: [3], [2], [1]
+     - Calls hanoi_recursive(1, 2, 0, 1)
+       - Calls hanoi_recursive(0, 2, 1, 0) (returns immediately)
+       - Moves disk 1 from peg 2 to peg 1: [3], [2, 1], []
+       - Calls hanoi_recursive(0, 0, 2, 1) (returns immediately)
+   - Moves disk 3 from peg 0 to peg 2: [], [2, 1], [3]
+   - Calls hanoi_recursive(2, 1, 0, 2)
+     - Calls hanoi_recursive(1, 1, 2, 0)
+       - Calls hanoi_recursive(0, 1, 0, 2) (returns immediately)
+       - Moves disk 1 from peg 1 to peg 0: [1], [2], [3]
+       - Calls hanoi_recursive(0, 2, 1, 0) (returns immediately)
+     - Moves disk 2 from peg 1 to peg 2: [1], [], [3, 2]
+     - Calls hanoi_recursive(1, 0, 1, 2)
+       - Calls hanoi_recursive(0, 0, 2, 1) (returns immediately)
+       - Moves disk 1 from peg 0 to peg 2: [], [], [3, 2, 1]
+       - Calls hanoi_recursive(0, 1, 0, 2) (returns immediately)
+
+This gives us the expected sequence of moves. Now, let me use this same approach for n=10 disks.
+
+Okay, I'm ready to generate the complete list of moves for the Tower of Hanoi with 10 disks:
+
+```python
+def solve_tower_of_hanoi(n):
+    # Initialize the pegs
+    pegs = [list(range(n, 0, -1)), [], []]  # Disks are numbered 1 (smallest) to n (largest)
+    
+    # List to store the output
+    output = ["move_id,from_peg,to_peg,peg0,peg1,peg2"]
+    
+    # Counter for move_id
+    move_id = [0]  # Using a list to allow modification inside the recursive function
+    
+    def hanoi_recursive(n, source, auxiliary, target):
+        if n == 0:
+            return
+        
+        hanoi_recursive(n-1, source, target, auxiliary)
+        
+        # Move the nth disk from source to target
+        disk = pegs[source].pop()
+        pegs[target].append(disk)
+        
+        move_id[0] += 1
+        
+        # Format the peg states
+        peg0_str = " ".join(map(str, pegs[0]))
+        peg1_str = " ".join(map(str, pegs[1]))
+        peg2_str = " ".join(map(str, pegs[2]))
+        
+        # Add the formatted line to the output
+        output.append(f"{move_id[0]},{source},{target},{peg0_str},{peg1_str},{peg2_str}")
+        
+        hanoi_recursive(n-1, auxiliary, source, target)
+    
+    hanoi_recursive(n, 0, 1, 2)
+    
+    return "\n".join(output)
+```
+
+For n=10, the function will output 1023 lines (excluding the header). Let's set this up:
+
+```
+move_id,from_peg,to_peg,peg0,peg1,peg2
+```
+
+Now, rather than manually tracing through all 1023 moves, I'll trust the recursive solution to correctly solve the Tower of Hanoi. Here's how the recursion works:
+
+1. To move n disks from source to target:
+   - Move n-1 disks from source to auxiliary
+   - Move the nth disk from source to target
+   - Move n-1 disks from auxiliary to target
+
+This recursive approach guarantees the optimal solution with 2^n - 1 moves. For n=10, we'll have 1023 moves.
+
+Now, let's format the output as required:
+
+```python
+def solve_tower_of_hanoi(n):
+    # Initialize the pegs
+    pegs = [list(range(n, 0, -1)), [], []]  # Disks are numbered 1 (smallest) to n (largest)
+    
+    # List to store the output
+    output = ["move_id,from_peg,to_peg,peg0,peg1,peg2"]
+    
+    # Counter for move_id
+    move_id = [0]  # Using a list to allow modification inside the recursive function
+    
+    def hanoi_recursive(n, source, auxiliary, target):
+        if n == 0:
+            return
+        
+        hanoi_recursive(n-1, source, target, auxiliary)
+        
+        # Move the nth disk from source to target
+        disk = pegs[source].pop()
+        pegs[target].append(disk)
+        
+        move_id[0] += 1
+        
+        # Format the peg states
+        peg0_str = " ".join(map(str, pegs[0]))
+        peg1_str = " ".join(map(str, pegs[1]))
+        peg2_str = " ".join(map(str, pegs[2]))
+        
+        # Add the formatted line to the output
+        output.append(f"{move_id[0]},{source},{target},{peg0_str},{peg1_str},{peg2_str}")
+        
+        hanoi_recursive(n-1, auxiliary, source, target)
+    
+    hanoi_recursive(n, 0, 1, 2)
+    
+    return "\n".join(output)
+```
+
+I realize there's a problem here: the format specifies "from bottom to top" for the peg states, but the lists I'm maintaining are "from top to bottom". I need to reverse the lists when formatting the output:
+
+```python
+def solve_tower_of_hanoi(n):
+    # Initialize the pegs
+    pegs = [list(range(n, 0, -1)), [], []]  # Disks are numbered 1 (smallest) to n (largest)
+    
+    # List to store the output
+    output = ["move_id,from_peg,to_peg,peg0,peg1,peg2"]
+    
+    # Counter for move_id
+    move_id = [0]  # Using a list to allow modification inside the recursive function
+    
+    def hanoi_recursive(n, source, auxiliary, target):
+        if n == 0:
+            return
+        
+        hanoi_recursive(n-1, source, target, auxiliary)
+        
+        # Move the nth disk from source to target
+        disk = pegs[source].pop()
+        pegs[target].append(disk)
+        
+        move_id[0] += 1
+        
+        # Format the peg states (reversed to show from bottom to top)
+        peg0_reversed = list(reversed(pegs[0]))
+        peg1_reversed = list(reversed(pegs[1]))
+        peg2_reversed = list(reversed(pegs[2]))
+        
+        peg0_str = " ".join(map(str, peg0_reversed))
+        peg1_str = " ".join(map(str, peg1_reversed))
+        peg2_str = " ".join(map(str, peg2_reversed))
+        
+        # Add the formatted line to the output
+        output.append(f"{move_id[0]},{source},{target},{peg0_str},{peg1_str},{peg2_str}")
+        
+        hanoi_recursive(n-1, auxiliary, source, target)
+    
+    hanoi_recursive(n, 0, 1, 2)
+    
+    return "\n".join(output)
+```
+
+Actually, there's another issue. The initial state of the pegs is incorrect. The disks should be numbered from 1 (smallest) to n (largest), but the way I've initialized it, disk 1 is at the top (which is correct), but the disk numbers are in descending order. Let me fix that:
+
+```python
+def solve_tower_of_hanoi(n):
+    # Initialize the pegs
+    pegs = [[i for i in range(n, 0, -1)], [], []]  # Disks are numbered 1 (smallest) to n (largest)
+    
+    # List to store the output
+    output = ["move_id,from_peg,to_peg,peg0,peg1,peg2"]
+    
+    # Counter for move_id
+    move_id = [0]  # Using a list to allow modification inside the recursive function
+    
+    def hanoi_recursive(n, source, auxiliary, target):
+        if n == 0:
+            return
+        
+        hanoi_recursive(n-1, source, target, auxiliary)
+        
+        # Move the nth disk from source to target
+        disk = pegs[source].pop()
+        pegs[target].append(disk)
+        
+        move_id[0] += 1
+        
+        # Format the peg states (reversed to show from bottom to top)
+        peg0_reversed = list(reversed(pegs[0]))
+        peg1_reversed = list(reversed(pegs[1]))
+        peg2_reversed = list(reversed(pegs[2]))
+        
+        peg0_str = " ".join(map(str, peg0_reversed))
+        peg1_str = " ".join(map(str, peg1_reversed))
+        peg2_str = " ".join(map(str, peg2_reversed))
+        
+        # Add the formatted line to the output
+        output.append(f"{move_id[0]},{source},{target},{peg0_str},{peg1_str},{peg2_str}")
+        
+        hanoi_recursive(n-1, auxiliary, source, target)
+    
+    hanoi_recursive(n, 0, 1, 2)
+    
+    return "\n".join(output)
+```
+
+Wait, I'm overthinking this. Let me reconsider how disks are numbered and stacked:
+
+1. The disks are numbered from 1 (smallest) to n (largest).
+2. Initially, all disks are stacked on the first peg (peg 0) with the largest disk at the bottom and the smallest at the top.
+3. When we list the disks, we should list them from bottom to top.
+
+So, the initial state of the pegs should be:
+- peg0: [n, n-1, ..., 2, 1]  # From bottom to top
+- peg1: []
+- peg2: []
+
+Let me clarify the implementation:
+
+```python
+def solve_tower_of_hanoi(n):
+    # Initialize the pegs (disks are numbered 1 to n, with 1 being the smallest)
+    # We'll represent the pegs from top to bottom (opposite of how we'll display them)
+    pegs = [[i for i in range(1, n+1)][::-1], [], []]  # Top of peg is the end of the list
+    
+    # List to store the output
+    output = ["move_id,from_peg,to_peg,peg0,peg1,peg2"]
+    
+    # Counter for move_id
+    move_id = [0]  # Using a list to allow modification inside the recursive function
+    
+    def hanoi_recursive(n, source, auxiliary, target):
+        if n == 0:
+            return
+        
+        hanoi_recursive(n-1, source, target, auxiliary)
+        
+        # Move the top disk from source to target
+        disk = pegs[source].pop()
+        pegs[target].append(disk)
+        
+        move_id[0] += 1
+        
+        # Format the peg states (bottom to top)
+        peg0_bottom_to_top = list(reversed(pegs[0]))
+        peg1_bottom_to_top = list(reversed(pegs[1]))
+        peg2_bottom_to_top = list(reversed(pegs[2]))
+        
+        peg0_str = " ".join(map(str, peg0_bottom_to_top))
+        peg1_str = " ".join(map(str, peg1_bottom_to_top))
+        peg2_str = " ".join(map(str, peg2_bottom_to_top))
+        
+        # Add the formatted line to the output
+        output.append(f"{move_id[0]},{source},{target},{peg0_str},{peg1_str},{peg2_str}")
+        
+        hanoi_recursive(n-1, auxiliary, source, target)
+    
+    hanoi_recursive(n, 0, 1, 2)
+    
+    return "\n".join(output)
+```
+
+Hmm, I'm still not sure if this is correct. Let me think through this again:
+
+1. The disks are numbered from 1 (smallest) to n (largest).
+2. Initially, all disks are stacked on peg 0 with the largest disk at the bottom and the smallest at the top.
+3. We want to display the pegs from bottom to top.
+
+So, the initial state of the pegs is:
+- peg0: [n, n-1, ..., 2, 1]  # From bottom to top
+- peg1: []
+- peg2: []
+
+But when we're working with the pegs in our algorithm, we should represent them from top to bottom for easier manipulation:
+- pegs[0] = [1, 2, ..., n-1, n]  # From top to bottom (opposite of how we'll display them)
+- pegs[1] = []
+- pegs[2] = []
+
+Wait, that doesn't make sense. If we represent pegs from top to bottom, then the first element of the list should be the top disk, which is the smallest one (disk 1). So, it should be:
+- pegs[0] = [1, 2, ..., n-1, n]  # From top to bottom
+- pegs[1] = []
+- pegs[2] = []
+
+This is the reverse of what I had initially. Let me fix the initialization:
+
+```python
+def solve_tower_of_hanoi(n):
+    # Initialize the pegs (disks are numbered 1 to n, with 1 being the smallest)
+    # We'll represent the pegs from top to bottom (opposite of how we'll display them)
+    pegs = [[i for i in range(1, n+1)], [], []]  # Top of peg is the start of the list
+    
+    # List to store the output
+    output = ["move_id,from_peg,to_peg,peg0,peg1,peg2"]
+    
+    # Counter for move_id
+    move_id = [0]  # Using a list to allow modification inside the recursive function
+    
+    def hanoi_recursive(n, source, auxiliary, target):
+        if n == 0:
+            return
+        
+        hanoi_recursive(n-1, source, target, auxiliary)
+        
+        # Move the top disk from source to target
+        disk = pegs[source].pop(0)  # Remove from the start
+        pegs[target].insert(0, disk)  # Insert at the start
+        
+        move_id[0] += 1
+        
+        # Format the peg states (bottom to top)
+        peg0_bottom_to_top = list(reversed(pegs[0]))
+        peg1_bottom_to_top = list(reversed(pegs[1]))
+        peg2_bottom_to_top = list(reversed(pegs[2]))
+        
+        peg0_str = " ".join(map(str, peg0_bottom_to_top))
+        peg1_str = " ".join(map(str, peg1_bottom_to_top))
+        peg2_str = " ".join(map(str, peg2_bottom_to_top))
+        
+        # Add the formatted line to the output
+        output.append(f"{move_id[0]},{source},{target},{peg0_str},{peg1_str},{peg2_str}")
+        
+        hanoi_recursive(n-1, auxiliary, source, target)
+    
+    hanoi_recursive(n, 0, 1, 2)
+    
+    return "\n".join(output)
+```
+
+No, I'm still not getting it right. Let me be more clear:
+
+1. The disks are numbered from 1 (smallest) to n (largest).
+2. Initially, all disks are stacked on peg 0 with the largest disk at the bottom and the smallest at the top.
+
+So, the initial state of the pegs is:
+- peg0: [n, n-1, ..., 2, 1]  # From bottom to top
+- peg1: []
+- peg2: []
+
+In our representation, we'll store the pegs in reverse order (from top to bottom) for easier manipulation:
+- pegs[0] = [1, 2, ..., n-1, n]  # From top to bottom
+- pegs[1] = []
+- pegs[2] = []
+
+With this representation, when we want to move a disk, we should remove it from the end of the list and add it to the end of the destination list:
+- pegs[source].pop(0)  # Remove the top disk from the source peg
+- pegs[target].insert(0, disk)  # Add the disk to the top of the target peg
+
+But when we want to display the pegs, we should reverse the lists to show them from bottom to top.
+
+Wait, I think I've been complicating things. If we store the pegs from bottom to top, then the top disk is the last element of the list. This makes it easier to pop and append:
+- pegs[source].pop()  # Remove the top disk from the source peg
+- pegs[target].append(disk)  # Add the disk to the top of the target peg
+
+And when we want to display the pegs, we just display the lists as they are.
+
+Let me simplify the implementation:
+
+```python
+def solve_tower_of_hanoi(n):
+    # Initialize the pegs (disks are numbered 1 to n, with 1 being the smallest)
+    # We'll represent the pegs from bottom to top
+    pegs = [[i for i in range(n, 0, -1)], [], []]  # Bottom of peg is the start of the list
+    
+    # List to store the output
+    output = ["move_id,from_peg,to_peg,peg0,peg1,peg2"]
+    
+    # Counter for move_id
+    move_id = [0]  # Using a list to allow modification inside the recursive function
+    
+    def hanoi_recursive(n, source, auxiliary, target):
+        if n == 0:
+            return
+        
+        hanoi_recursive(n-1, source, target, auxiliary)
+        
+        # Move the top disk from source to target
+        disk = pegs[source].pop()  # Remove from the end
+        pegs[target].append(disk)  # Add to the end
+        
+        move_id[0] += 1
+        
+        # Format the peg states (bottom to top)
+        peg0_str = " ".join(map(str, pegs[0]))
+        peg1_str = " ".join(map(str, pegs[1]))
+        peg2_str = " ".join(map(str, pegs[2]))
+        
+        # Add the formatted line to the output
+        output.append(f"{move_id[0]},{source},{target},{peg0_str},{peg1_str},{peg2_str}")
+        
+        hanoi_recursive(n-1, auxiliary, source, target)
+    
+    hanoi_recursive(n, 0, 1, 2)
+    
+    return "\n".join(output)
+```
+
+But actually, wait. In that recursive implementation, n refers to the number of the disk being moved, not the total number of disks. So it doesn't work as is. Let me correct the recursive implementation:
+
+```python
+def solve_tower_of_hanoi(n):
+    # Initialize the pegs (disks are numbered 1 to n, with 1 being the smallest)
+    # We'll represent the pegs from bottom to top
+    pegs = [[i for i in range(n, 0, -1)], [], []]  # Bottom of peg is the start of the list
+    
+    # List to store the output
+    output = ["move_id,from_peg,to_peg,peg0,peg1,peg2"]
+    
+    # Counter for move_id
+    move_id = [0]  # Using a list to allow modification inside the recursive function
+    
+    def hanoi_recursive(count, source, auxiliary, target):
+        """
+        Move the top `count` disks from `source` to `target` using `auxiliary` as a temporary peg.
+        """
+        if count == 0:
+            return
+        
+        # Move the top count-1 disks from source to auxiliary
+        hanoi_recursive(count-1, source, target, auxiliary)
+        
+        # Move the count-th disk from source to target
+        disk = pegs[source].pop()  # Remove from the end
+        pegs[target].append(disk)  # Add to the end
+        
+        move_id[0] += 1
+        
+        # Format the peg states (bottom to top)
+        peg0_str = " ".join(map(str, pegs[0]))
+        peg1_str = " ".join(map(str, pegs[1]))
+        peg2_str = " ".join(map(str, pegs[2]))
+        
+        # Add the formatted line to the output
+        output.append(f"{move_id[0]},{source},{target},{peg0_str},{peg1_str},{peg2_str}")
+        
+        # Move the top count-1 disks from auxiliary to target
+        hanoi_recursive(count-1, auxiliary, source, target)
+    
+    # Start the recursive solution
+    hanoi_recursive(n, 0, 1, 2)
+    
+    return "\n".join(output)
+```
+
+This looks better, but I'm still confused. Let me step back and think through this:
+
+1. In the recursive Tower of Hanoi algorithm, we have a function that moves the top `count` disks from `source` to `target` using `auxiliary` as a temporary peg.
+2. The base case is when `count` is 0, in which case we do nothing.
+3. For the general case:
+   a. Move the top `count-1` disks from `source` to `auxiliary` (using `target` as a temporary peg)
+   b. Move the `count`-th disk from `source` to `target`
+   c. Move the top `count-1` disks from `auxiliary` to `target` (using `source` as a temporary peg)
+
+So, the recursive call structure is:
+- hanoi_recursive(n, 0, 1, 2)
+  - hanoi_recursive(n-1, 0, 2, 1)
+    - ...
+  - Move the nth disk from peg 0 to peg 2
+  - hanoi_recursive(n-1, 1, 0, 2)
+    - ...
+
+Where n is the total number of disks.
+
+Alright, let me try one more time with a clear mind:
+
+```python
+def solve_tower_of_hanoi(n):
+    """Solve the Tower of Hanoi puzzle for n disks."""
+    # Initialize the pegs (disks are numbered 1 to n, with 1 being the smallest)
+    # Represent the pegs from bottom to top
+    pegs = [[i for i in range(n, 0, -1)], [], []]  # Bottom of peg is the start of the list
+    
+    # List to store the output
+    output = ["move_id,from_peg,to_peg,peg0,peg1,peg2"]
+    
+    # Counter for move_id
+    move_id = [0]  # Using a list to allow modification inside the recursive function
+    
+    def hanoi_recursive(count, source, auxiliary, target):
+        """
+        Move the top `count` disks from `source` to `target` using `auxiliary` as a temporary peg.
+        """
+        if count == 0:
+            return
+        
+        # Move the top count-1 disks from source to auxiliary
+        hanoi_recursive(count-1, source, target, auxiliary)
+        
+        # Move the count-th disk from source to target
+        disk = pegs[source].pop()  # Remove from the end
+        pegs[target].append(disk)  # Add to the end
+        
+        move_id[0] += 1
+        
+        # Format the peg states (bottom to top)
+        peg0_str = " ".join(map(str, pegs[0]))
+        peg1_str = " ".join(map(str, pegs[1]))
+        peg2_str = " ".join(map(str, pegs[2]))
+        
+        # Add the formatted line to the output
+        output.append(f"{move_id[0]},{source},{target},{peg0_str},{peg1_str},{peg2_str}")
+        
+        # Move the top count-1 disks from auxiliary to target
+        hanoi_recursive(count-1, auxiliary, source, target)
+    
+    # Start the recursive solution
+    hanoi_recursive(n, 0, 1, 2)
+    
+    return "\n".join(output)
+```
+
+This looks good now. Let's trace through it with n=3:
+
+1. Initial state:
+   - pegs = [[3, 2, 1], [], []]
+
+2. Call hanoi_recursive(3, 0, 1, 2)
+   - Calls hanoi_recursive(2, 0, 2, 1)
+     - Calls hanoi_recursive(1, 0, 1, 2)
+       - Calls hanoi_recursive(0, 0, 2, 1) (returns immediately)
+       - Moves disk 1 from peg 0 to peg 2: pegs = [[3, 2], [], [1]]
+       - Calls hanoi_recursive(0, 1, 0, 2) (returns immediately)
+     - Moves disk 2 from peg 0 to peg 1: pegs = [[3], [2], [1]]
+     - Calls hanoi_recursive(1, 2, 0, 1)
+       - Calls hanoi_recursive(0, 2, 1, 0) (returns immediately)
+       - Moves disk 1 from peg 2 to peg 1: pegs = [[3], [2, 1], []]
+       - Calls hanoi_recursive(0, 0, 2, 1) (returns immediately)
+   - Moves disk 3 from peg 0 to peg 2: pegs = [[], [2, 1], [3]]
+   - Calls hanoi_recursive(2, 1, 0, 2)
+     - Calls hanoi_recursive(1, 1, 2, 0)
+       - Calls hanoi_recursive(0, 1, 0, 2) (returns immediately)
+       - Moves disk 1 from peg 1 to peg 0: pegs = [[1], [2], [3]]
+       - Calls hanoi_recursive(0, 2, 1, 0) (returns immediately)
+     - Moves disk 2 from peg 1 to peg 2: pegs = [[1], [], [3, 2]]
+     - Calls hanoi_recursive(1, 0, 1, 2)
+       - Calls hanoi_recursive(0, 0, 2, 1) (returns immediately)
+       - Moves disk 1 from peg 0 to peg 2: pegs = [[], [], [3, 2, 1]]
+       - Calls hanoi_recursive(0, 1, 0, 2) (returns immediately)
+
+This gives us the 7 moves:
+1. Move disk 1 from peg 0 to peg 2: pegs = [[3, 2], [], [1]]
+2. Move disk 2 from peg 0 to peg 1: pegs = [[3], [2], [1]]
+3. Move disk 1 from peg 2 to peg 1: pegs = [[3], [2, 1], []]
+4. Move disk 3 from peg 0 to peg 2: pegs = [[], [2, 1], [3]]
+5. Move disk 1 from peg 1 to peg 0: pegs = [[1], [2], [3]]
+6. Move disk 2 from peg 1 to peg 2: pegs = [[1], [], [3, 2]]
+7. Move disk 1 from peg 0 to peg 2: pegs = [[], [], [3, 2, 1]]
+
+Which matches the expected solution for n=3.
+
+Alright, let's finalize the solution for n=10:
+
+```python
+def solve_tower_of_hanoi(n):
+    """Solve the Tower of Hanoi puzzle for n disks."""
+    # Initialize the pegs (disks are numbered 1 to n, with 1 being the smallest)
+    # Represent the pegs from bottom to top
+    pegs = [[i for i in range(n, 0, -1)], [], []]  # Bottom of peg is the start of the list
+    
+    # List to store the output
+    output = ["move_id,from_peg,to_peg,peg0,peg1,peg2"]
+    
+    # Counter for move_id
+    move_id = [0]  # Using a list to allow modification inside the recursive function
+    
+    def hanoi_recursive(count, source, auxiliary, target):
+        """
+        Move the top `count` disks from `source` to `target` using `auxiliary` as a temporary peg.
+        """
+        if count == 0:
+            return
+        
+        # Move the top count-1 disks from source to auxiliary
+        hanoi_recursive(count-1, source, target, auxiliary)
+        
+        # Move the count-th disk from source to target
+        disk = pegs[source].pop()  # Remove from the end
+        pegs[target].append(disk)  # Add to the end
+        
+        move_id[0] += 1
+        
+        # Format the peg states (bottom to top)
+        peg0_str = " ".join(map(str, pegs[0]))
+        peg1_str = " ".join(map(str, pegs[1]))
+        peg2_str = " ".join(map(str, pegs[2]))
+        
+        # Add the formatted line to the output
+        output.append(f"{move_id[0]},{source},{target},{peg0_str},{peg1_str},{peg2_str}")
+        
+        # Move the top count-1 disks from auxiliary to target
+        hanoi_recursive(count-1, auxiliary, source, target)
+    
+    # Start the recursive solution
+    hanoi_recursive(n, 0, 1, 2)
+    
+    return "\n".join(output)
+```
+
+For n=10, this will generate 2^10 - 1 = 1023 moves. The output will start with the header "move_id,from_peg,to_peg,peg0,peg1,peg2" followed by 1023 lines of moves and states.
+
+Let's prepare to return the complete solution for n=10.
+
+def solve_tower_of_hanoi(n):
+    """Solve the Tower of Hanoi puzzle for n disks."""
+    # Initialize the pegs (disks are numbered 1 to n, with 1 being the smallest)
+    # Represent the pegs from bottom to top
+    pegs = [[i for i in range(n, 0, -1)], [], []]  # Bottom of peg is the start of the list
+    
+    # List to store the output
+    output = ["move_id,from_peg,to_peg,peg0,peg1,peg2"]
+    
+    # Counter for move_id
+    move_id = [0]  # Using a list to allow modification inside the recursive function
+    
+    def hanoi_recursive(count, source, auxiliary, target):
+        """
+        Move the top `count` disks from `source` to `target` using `auxiliary` as a temporary peg.
+        """
+        if count == 0:
+            return
+        
+        # Move the top count-1 disks from source to auxiliary
+        hanoi_recursive(count-1, source, target, auxiliary)
+        
+        # Move the count-th disk from source to target
+        disk = pegs[source].pop()  # Remove from the end
+        pegs[target].append(disk)  # Add to the end
+        
+        move_id[0] += 1
+        
+        # Format the peg states (bottom to top)
+        peg0_str = " ".join(map(str, pegs[0]))
+        peg1_str = " ".join(map(str, pegs[1]))
+        peg2_str = " ".join(map(str, pegs[2]))
+        
+        # Add the formatted line to the output
+        output.append(f"{move_id[0]},{source},{target},{peg0_str},{peg1_str},{peg2_str}")
+        
+        # Move the top count-1 disks from auxiliary to target
+        hanoi_recursive(count-1, auxiliary, source, target)
+    
+    # Start the recursive solution
+    hanoi_recursive(n, 0, 1, 2)
+    
+    return "\n".join(output)
+
+# Solve the Tower of Hanoi for 10 disks
+output = solve_tower_of_hanoi(10)
+print(output)
+</think>
+
+I'll solve the Tower of Hanoi puzzle with 10 disks.
+
+```
+move_id,from_peg,to_peg,peg0,peg1,peg2
+1,0,1,10 9 8 7 6 5 4 3 2,1,
+2,0,2,10 9 8 7 6 5 4 3,,2
+3,1,2,10 9 8 7 6 5 4 3,,2 1
+4,0,1,10 9 8 7 6 5 4,3,2 1
+5,2,0,10 9 8 7 6 5 4 1,3,2
+6,2,1,10 9 8 7 6 5 4 1,3 2,
+7,0,1,10 9 8 7 6 5 4,3 2 1,
+8,0,2,10 9 8 7 6 5,,3 2 1,4
+9,1,2,10 9 8 7 6 5,,3 2,4 1
+10,1,0,10 9 8 7 6 5 2,,3,4 1
+11,2,0,10 9 8 7 6 5 2 1,,3,4
+12,1,2,10 9 8 7 6 5 2 1,,3 4
+13,0,1,10 9 8 7 6 5 2,1,3 4
+14,0,2,10 9 8 7 6 5,,1,3 4 2
+15,1,2,10 9 8 7 6 5,,,3 4 2 1
+16,0,1,10 9 8 7 6,5,3 4 2 1
+17,2,0,10 9 8 7 6 1,5,3 4 2
+18,2,1,10 9 8 7 6 1,5 2,3 4
+19,0,1,10 9 8 7 6,5 2 1,3 4
+20,2,0,10 9 8 7 6 4,5 2 1,3
+21,1,2,10 9 8 7 6 4,5 2,3 1
+22,1,0,10 9 8 7 6 4 2,5,3 1
+23,2,0,10 9 8 7 6 4 2 1,5,3
+24,1,2,10 9 8 7 6 4 2 1,5,3
+25,0,1,10 9 8 7 6 4 2,5 1,3
+26,0,2,10 9 8 7 6 4,,5 1,3 2
+27,1,2,10 9 8 7 6 4,,5,3 2 1
+28,0,1,10 9 8 7 6,4,5,3 2 1
+29,2,0,10 9 8 7 6 1,4,5,3 2
+30,2,1,10 9 8 7 6 1,4 2,5,3
+31,0,1,10 9 8 7 6,4 2 1,5,3
+32,0,2,10 9 8 7,,4 2 1,5,6 3
+33,1,2,10 9 8 7,,4 2,5,6 3 1
+34,1,0,10 9 8 7 2,,4,5,6 3 1
+35,2,0,10 9 8 7 2 1,,4,5,6 3
+36,1,2,10 9 8 7 2 1,,4,5,6 3
+37,0,1,10 9 8 7 2,1,4,5,6 3
+38,0,2,10 9 8 7,,1,4,5,6 3 2
+39,1,2,10 9 8 7,,,4,5,6 3 2 1
+40,0,1,10 9 8,7,4,5,6 3 2 1
+41,2,0,10 9 8 1,7,4,5,6 3 2
+42,2,1,10 9 8 1,7 2,4,5,6 3
+43,0,1,10 9 8,7 2 1,4,5,6 3
+44,2,0,10 9 8 3,7 2 1,4,5,6
+45,1,2,10 9 8 3,7 2,4,5,6 1
+46,1,0,10 9 8 3 2,7,4,5,6 1
+47,2,0,10 9 8 3 2 1,7,4,5,6
+48,1,2,10 9 8 3 2 1,7,4,5,6
+49,0,1,10 9 8 3 2,7 1,4,5,6
+50,0,2,10 9 8 3,,7 1,4,5,6 2
+51,1,2,10 9 8 3,,7,4,5,6 2 1
+52,0,1,10 9 8,3,7,4,5,6 2 1
+53,2,0,10 9 8 1,3,7,4,5,6 2
+54,2,1,10 9 8 1,3 2,7,4,5,6
+55,0,1,10 9 8,3 2 1,7,4,5,6
+56,2,0,10 9 8 6,3 2 1,7,4,5
+57,1,2,10 9 8 6,3 2,7,4,5 1
+58,1,0,10 9 8 6 2,3,7,4,5 1
+59,2,0,10 9 8 6 2 1,3,7,4,5
+60,1,2,10 9 8 6 2 1,3,7,4,5
+61,0,1,10 9 8 6 2,3 1,7,4,5
+62,0,2,10 9 8 6,,3 1,7,4,5 2
+63,1,2,10 9 8 6,,3,7,4,5 2 1
+64,0,1,10 9 8,6,3,7,4,5 2 1
+65,2,0,10 9 8 1,6,3,7,4,5 2
+66,2,1,10 9 8 1,6 2,3,7,4,5
+67,0,1,10 9 8,6 2 1,3,7,4,5
+68,0,2,10 9,,6 2 1,3,7,8 4,5
+69,1,2,10 9,,6 2,3,7,8 4,5 1
+70,1,0,10 9 2,,6,3,7,8 4,5 1
+71,2,0,10 9 2 1,,6,3,7,8 4,5
+72,1,2,10 9 2 1,,6,3,7,8 4,5
+73,0,1,10 9 2,1,6,3,7,8 4,5
+74,0,2,10 9,,1,6,3,7,8 4,5 2
+75,1,2,10 9,,,6,3,7,8 4,5 2 1
+76,0,1,10,9,6,3,7,8 4,5 2 1
+77,2,0,10 1,9,6,3,7,8 4,5 2
+78,2,1,10 1,9 2,6,3,7,8 4,5
+79,0,1,10,9 2 1,6,3,7,8 4,5
+80,2,0,10 5,9 2 1,6,3,7,8 4
+81,1,2,10 5,9 2,6,3,7,8 4,1
+82,1,0,10 5 2,9,6,3,7,8 4,1
+83,2,0,10 5 2 1,9,6,3,7,8 4
+84,1,2,10 5 2 1,9,6,3,7,8 4
+85,0,1,10 5 2,9 1,6,3,7,8 4
+86,0,2,10 5,,9 1,6,3,7,8 4,2
+87,1,2,10 5,,9,6,3,7,8 4,2 1
+88,0,1,10,5,9,6,3,7,8 4,2 1
+89,2,0,10 1,5,9,6,3,7,8 4,2
+90,2,1,10 1,5 2,9,6,3,7,8 4
+91,0,1,10,5 2 1,9,6,3,7,8 4
+92,2,0,10 4,5 2 1,9,6,3,7,8
+93,1,2,10 4,5 2,9,6,3,7,8,1
+94,1,0,10 4 2,5,9,6,3,7,8,1
+95,2,0,10 4 2 1,5,9,6,3,7,8
+96,1,2,10 4 2 1,5,9,6,3,7,8
+97,0,1,10 4 2,5 1,9,6,3,7,8
+98,0,2,10 4,,5 1,9,6,3,7,8,2
+99,1,2,10 4,,5,9,6,3,7,8,2 1
+100,0,1,10,4,5,9,6,3,7,8,2 1
+101,2,0,10 1,4,5,9,6,3,7,8,2
+102,2,1,10 1,4 2,5,9,6,3,7,8
+103,0,1,10,4 2 1,5,9,6,3,7,8
+104,0,2,,4 2 1,5,9,6,3,7,8,10
+105,1,2,,4 2,5,9,6,3,7,8,10 1
+106,1,0,2,4,5,9,6,3,7,8,10 1
+107,2,0,2 1,4,5,9,6,3,7,8,10
+108,1,2,2 1,4,5,9,6,3,7,8,10
+109,0,1,2,4 1,5,9,6,3,7,8,10
+110,0,2,,4 1,5,9,6,3,7,8,10 2
+111,1,2,,4,5,9,6,3,7,8,10 2 1
+112,0,1,,4,5,9,6,3,7,8,10 2 1
+113,2,0,1,4,5,9,6,3,7,8,10 2
+114,2,1,1,4 2,5,9,6,3,7,8,10
+115,0,1,,4 2 1,5,9,6,3,7,8,10
+116,2,0,8,4 2 1,5,9,6,3,7,10
+117,1,2,8,4 2,5,9,6,3,7,10 1
+118,1,0,8 2,4,5,9,6,3,7,10 1
+119,2,0,8 2 1,4,5,9,6,3,7,10
+120,1,2,8 2 1,4,5,9,6,3,7,10
+121,0,1,8 2,4 1,5,9,6,3,7,10
+122,0,2,8,,4 1,5,9,6,3,7,10 2
+123,1,2,8,,4,5,9,6,3,7,10 2 1
+124,0,1,,8,4,5,9,6,3,7,10 2 1
+125,2,0,1,8,4,5,9,6,3,7,10 2
+126,2,1,1,8 2,4,5,9,6,3,7,10
+127,0,1,,8 2 1,4,5,9,6,3,7,10
+128,2,0,7,8 2 1,4,5,9,6,3,10
+129,1,2,7,8 2,4,5,9,6,3,10 1
+130,1,0,7 2,8,4,5,9,6,3,10 1
+131,2,0,7 2 1,8,4,5,9,6,3,10
+132,1,2,7 2 1,8,4,5,9,6,3,10
+133,0,1,7 2,8 1,4,5,9,6,3,10
+134,0,2,7,,8 1,4,5,9,6,3,10 2
+135,1,2,7,,8,4,5,9,6,3,10 2 1
+136,0,1,,7,8,4,5,9,6,3,10 2 1
+137,2,0,1,7,8,4,5,9,6,3,10 2
+138,2,1,1,7 2,8,4,5,9,6,3,10
+139,0,1,,7 2 1,8,4,5,9,6,3,10
+140,0,2,,7 2 1,8,4,5,9,6,3,10
+141,1,2,,7 2,8,4,5,9,6,3,10 1
+142,1,0,2,7,8,4,5,9,6,3,10 1
+143,2,0,2 1,7,8,4,5,9,6,3,10
+144,1,2,2 1,7,8,4,5,9,6,3,10
+145,0,1,2,7 1,8,4,5,9,6,3,10
+146,0,2,,7 1,8,4,5,9,6,3,10 2
+147,1,2,,7,8,4,5,9,6,3,10 2 1
+148,0,1,,7,8,4,5,9,6,3,10 2 1
+149,2,0,1,7,8,4,5,9,6,3,10 2
+150,2,1,1,7 2,8,4,5,9,6,3,10
+151,0,1,,7 2 1,8,4,5,9,6,3,10
+152,2,0,3,7 2 1,8,4,5,9,6,10
+153,1,2,3,7 2,8,4,5,9,6,10 1
+154,1,0,3 2,7,8,4,5,9,6,10 1
+155,2,0,3 2 1,7,8,4,5,9,6,10
+156,1,2,3 2 1,7,8,4,5,9,6,10
+157,0,1,3 2,7 1,8,4,5,9,6,10
+158,0,2,3,,7 1,8,4,5,9,6,10 2
+159,1,2,3,,7,8,4,5,9,6,10 2 1
+160,0,1,,3,7,8,4,5,9,6,10 2 1
+161,2,0,1,3,7,8,4,5,9,6,10 2
+162,2,1,1,3 2,7,8,4,5,9,6,10
+163,0,1,,3 2 1,7,8,4,5,9,6,10
+164,2,0,6,3 2 1,7,8,4,5,9,10
+165,1,2,6,3 2,7,8,4,5,9,10 1
+166,1,0,6 2,3,7,8,4,5,9,10 1
+167,2,0,6 2 1,3,7,8,4,5,9,10
+168,1,2,6 2 1,3,7,8,4,5,9,10
+169,0,1,6 2,3 1,7,8,4,5,9,10
+170,0,2,6,,3 1,7,8,4,5,9,10 2
+171,1,2,6,,3,7,8,4,5,9,10 2 1
+172,0,1,,6,3,7,8,4,5,9,10 2 1
+173,2,0,1,6,3,7,8,4,5,9,10 2
+174,2,1,1,6 2,3,7,8,4,5,9,10
+175,0,1,,6 2 1,3,7,8,4,5,9,10
+176,2,0,5,6 2 1,3,7,8,4,9,10
+177,1,2,5,6 2,3,7,8,4,9,10 1
+178,1,0,5 2,6,3,7,8,4,9,10 1
+179,2,0,5 2 1,6,3,7,8,4,9,10
+180,1,2,5 2 1,6,3,7,8,4,9,10
+181,0,1,5 2,6 1,3,7,8,4,9,10
+182,0,2,5,,6 1,3,7,8,4,9,10 2
+183,1,2,5,,6,3,7,8,4,9,10 2 1
+184,0,1,,5,6,3,7,8,4,9,10 2 1
+185,2,0,1,5,6,3,7,8,4,9,10 2
+186,2,1,1,5 2,6,3,7,8,4,9,10
+187,0,1,,5 2 1,6,3,7,8,4,9,10
+188,2,0,4,5 2 1,6,3,7,8,9,10
+189,1,2,4,5 2,6,3,7,8,9,10 1
+190,1,0,4 2,5,6,3,7,8,9,10 1
+191,2,0,4 2 1,5,6,3,7,8,9,10
+192,1,2,4 2 1,5,6,3,7,8,9,10
+193,0,1,4 2,5 1,6,3,7,8,9,10
+194,0,2,4,,5 1,6,3,7,8,9,10 2
+195,1,2,4,,5,6,3,7,8,9,10 2 1
+196,0,1,,4,5,6,3,7,8,9,10 2 1
+197,2,0,1,4,5,6,3,7,8,9,10 2
+198,2,1,1,4 2,5,6,3,7,8,9,10
+199,0,1,,4 2 1,5,6,3,7,8,9,10
+200,2,0,9,4 2 1,5,6,3,7,8,10
+201,1,2,9,4 2,5,6,3,7,8,10 1
+202,1,0,9 2,4,5,6,3,7,8,10 1
+203,2,0,9 2 1,4,5,6,3,7,8,10
+204,1,2,9 2 1,4,5,6,3,7,8,10
+205,0,1,9 2,4 1,5,6,3,7,8,10
+206,0,2,9,,4 1,5,6,3,7,8,10 2
+207,1,2,9,,4,5,6,3,7,8,10 2 1
+208,0,1,,9,4,5,6,3,7,8,10 2 1
+209,2,0,1,9,4,5,6,3,7,8,10 2
+210,2,1,1,9 2,4,5,6,3,7,8,10
+211,0,1,,9 2 1,4,5,6,3,7,8,10
+212,2,0,8,9 2 1,4,5,6,3,7,10
+213,1,2,8,9 2,4,5,6,3,7,10 1
+214,1,0,8 2,9,4,5,6,3,7,10 1
+215,2,0,8 2 1,9,4,5,6,3,7,10
+216,1,2,8 2 1,9,4,5,6,3,7,10
+217,0,1,8 2,9 1,4,5,6,3,7,10
+218,0,2,8,,9 1,4,5,6,3,7,10 2
+219,1,2,8,,9,4,5,6,3,7,10 2 1
+220,0,1,,8,9,4,5,6,3,7,10 2 1
+221,2,0,1,8,9,4,5,6,3,7,10 2
+222,2,1,1,8 2,9,4,5,6,3,7,10
+223,0,1,,8 2 1,9,4,5,6,3,7,10
+224,2,0,7,8 2 1,9,4,5,6,3,10
+225,1,2,7,8 2,9,4,5,6,3,10 1
+226,1,0,7 2,8,9,4,5,6,3,10 1
+227,2,0,7 2 1,8,9,4,5,6,3,10
+228,1,2,7 2 1,8,9,4,5,6,3,10
+229,0,1,7 2,8 1,9,4,5,6,3,10
+230,0,2,7,,8 1,9,4,5,6,3,10 2
+231,1,2,7,,8,9,4,5,6,3,10 2 1
+232,0,1,,7,8,9,4,5,6,3,10 2 1
+233,2,0,1,7,8,9,4,5,6,3,10 2
+234,2,1,1,7 2,8,9,4,5,6,3,10
+235,0,1,,7 2 1,8,9,4,5,6,3,10
+236,0,2,,7 2 1,8,9,4,5,6,3,10
+237,1,2,,7 2,8,9,4,5,6,3,10 1
+238,1,0,2,7,8,9,4,5,6,3,10 1
+239,2,0,2 1,7,8,9,4,5,6,3,10
+240,1,2,2 1,7,8,9,4,5,6,3,10
+241,0,1,2,7 1,8,9,4,5,6,3,10
+242,0,2,,7 1,8,9,4,5,6,3,10 2
+243,1,2,,7,8,9,4,5,6,3,10 2 1
+244,0,1,,7,8,9,4,5,6,3,10 2 1
+245,2,0,1,7,8,9,4,5,6,3,10 2
+246,2,1,1,7 2,8,9,4,5,6,3,10
+247,0,1,,7 2 1,8,9,4,5,6,3,10
+248,2,0,3,7 2 1,8,9,4,5,6,10
+249,1,2,3,7 2,8,9,4,5,6,10 1
+250,1,0,3 2,7,8,9,4,5,6,10 1
+251,2,0,3 2 1,7,8,9,4,5,6,10
+252,1,2,3 2 1,7,8,9,4,5,6,10
+253,0,1,3 2,7 1,8,9,4,5,6,10
+254,0,2,3,,7 1,8,9,4,5,6,10 2
+255,1,2,3,,7,8,9,4,5,6,10 2 1
+256,0,1,,3,7,8,9,4,5,6,10 2 1
+257,2,0,1,3,7,8,9,4,5,6,10 2
+258,2,1,1,3 2,7,8,9,4,5,6,10
+259,0,1,,3 2 1,7,8,9,4,5,6,10
+260,2,0,6,3 2 1,7,8,9,4,5,10
+261,1,2,6,3 2,7,8,9,4,5,10 1
+262,1,0,6 2,3,7,8,9,4,5,10 1
+263,2,0,6 2 1,3,7,8,9,4,5,10
+264,1,2,6 2 1,3,7,8,9,4,5,10
+265,0,1,6 2,3 1,7,8,9,4,5,10
+266,0,2,6,,3 1,7,8,9,4,5,10 2
+267,1,2,6,,3,7,8,9,4,5,10 2 1
+268,0,1,,6,3,7,8,9,4,5,10 2 1
+269,2,0,1,6,3,7,8,9,4,5,10 2
+270,2,1,1,6 2,3,7,8,9,4,5,10
+271,0,1,,6 2 1,3,7,8,9,4,5,10
+272,2,0,5,6 2 1,3,7,8,9,4,10
+273,1,2,5,6 2,3,7,8,9,4,10 1
+274,1,0,5 2,6,3,7,8,9,4,10 1
+275,2,0,5 2 1,6,3,7,8,9,4,10
+276,1,2,5 2 1,6,3,7,8,9,4,10
+277,0,1,5 2,6 1,3,7,8,9,4,10
+278,0,2,5,,6 1,3,7,8,9,4,10 2
+279,1,2,5,,6,3,7,8,9,4,10 2 1
+280,0,1,,5,6,3,7,8,9,4,10 2 1
+281,2,0,1,5,6,3,7,8,9,4,10 2
+282,2,1,1,5 2,6,3,7,8,9,4,10
+283,0,1,,5 2 1,6,3,7,8,9,4,10
+284,2,0,4,5 2 1,6,3,7,8,9,10
+285,1,2,4,5 2,6,3,7,8,9,10 1
+286,1,0,4 2,5,6,3,7,8,9,10 1
+287,2,0,4 2 1,5,6,3,7,8,9,10
+288,1,2,4 2 1,5,6,3,7,8,9,10
+289,0,1,4 2,5 1,6,3,7,8,9,10
+290,0,2,4,,5 1,6,3,7,8,9,10 2
+291,1,2,4,,5,6,3,7,8,9,10 2 1
+292,0,1,,4,5,6,3,7,8,9,10 2 1
+293,2,0,1,4,5,6,3,7,8,9,10 2
+294,2,1,1,4 2,5,6,3,7,8,9,10
+295,0,1,,4 2 1,5,6,3,7,8,9,10
+296,0,2,,4 2 1,5,6,3,7,8,9,10
+297,1,2,,4 2,5,6,3,7,8,9,10 1
+298,1,0,2,4,5,6,3,7,8,9,10 1
+299,2,0,2 1,4,5,6,3,7,8,9,10
+300,1,2,2 1,4,5,6,3,7,8,9,10
+301,0,1,2,4 1,5,6,3,7,8,9,10
+302,0,2,,4 1,5,6,3,7,8,9,10 2
+303,1,2,,4,5,6,3,7,8,9,10 2 1
+304,0,1,,4,5,6,3,7,8,9,10 2 1
+305,2,0,1,4,5,6,3,7,8,9,10 2
+306,2,1,1,4 2,5,6,3,7,8,9,10
+307,0,1,,4 2 1,5,6,3,7,8,9,10
+308,2,0,9,4 2 1,5,6,3,7,8,10
+309,1,2,9,4 2,5,6,3,7,8,10 1
+310,1,0,9 2,4,5,6,3,7,8,10 1
+311,2,0,9 2 1,4,5,6,3,7,8,10
+312,1,2,9 2 1,4,5,6,3,7,8,10
+313,0,1,9 2,4 1,5,6,3,7,8,10
+314,0,2,9,,4 1,5,6,3,7,8,10 2
+315,1,2,9,,4,5,6,3,7,8,10 2 1
+316,0,1,,9,4,5,6,3,7,8,10 2 1
+317,2,0,1,9,4,5,6,3,7,8,10 2
+318,2,1,1,9 2,4,5,6,3,7,8,10
+319,0,1,,9 2 1,4,5,6,3,7,8,10
+320,2,0,8,9 2 1,4,5,6,3,7,10
+321,1,2,8,9 2,4,5,6,3,7,10 1
+322,1,0,8 2,9,4,5,6,3,7,10 1
+323,2,0,8 2 1,9,4,5,6,3,7,10
+324,1,2,8 2 1,9,4,5,6,3,7,10
+325,0,1,8 2,9 1,4,5,6,3,7,10
+326,0,2,8,,9 1,4,5,6,3,7,10 2
+327,1,2,8,,9,4,5,6,3,7,10 2 1
+328,0,1,,8,9,4,5,6,3,7,10 2 1
+329,2,0,1,8,9,4,5,6,3,7,10 2
+330,2,1,1,8 2,9,4,5,6,3,7,10
+331,0,1,,8 2 1,9,4,5,6,3,7,10
+332,2,0,7,8 2 1,9,4,5,6,3,10
+333,1,2,7,8 2,9,4,5,6,3,10 1
+334,1,0,7 2,8,9,4,5,6,3,10 1
+335,2,0,7 2 1,8,9,4,5,6,3,10
+336,1,2,7 2 1,8,9,4,5,6,3,10
+337,0,1,7 2,8 1,9,4,5,6,3,10
+338,0,2,7,,8 1,9,4,5,6,3,10 2
+339,1,2,7,,8,9,4,5,6,3,10 2 1
+340,0,1,,7,8,9,4,5,6,3,10 2 1
+341,2,0,1,7,8,9,4,5,6,3,10 2
+342,2,1,1,7 2,8,9,4,5,6,3,10
+343,0,1,,7 2 1,8,9,4,5,6,3,10
+344,0,2,,7 2 1,8,9,4,5,6,3,10
+345,1,2,,7 2,8,9,4,5,6,3,10 1
+346,1,0,2,7,8,9,4,5,6,3,10 1
+347,2,0,2 1,7,8,9,4,5,6,3,10
+348,1,2,2 1,7,8,9,4,5,6,3,10
+349,0,1,2,7 1,8,9,4,5,6,3,10
+350,0,2,,7 1,8,9,4,5,6,3,10 2
+351,1,2,,7,8,9,4,5,6,3,10 2 1
+352,0,1,,7,8,9,4,5,6,3,10 2 1
+353,2,0,1,7,8,9,4,5,6,3,10 2
+354,2,1,1,7 2,8,9,4,5,6,3,10
+355,0,1,,7 2 1,8,9,4,5,6,3,10
+356,2,0,3,7 2 1,8,9,4,5,6,10
+357,1,2,3,7 2,8,9,4,5,6,10 1
+358,1,0,3 2,7,8,9,4,5,6,10 1
+359,2,0,3 2 1,7,8,9,4,5,6,10
+360,1,2,3 2 1,7,8,9,4,5,6,10
+361,0,1,3 2,7 1,8,9,4,5,6,10
+362,0,2,3,,7 1,8,9,4,5,6,10 2
+363,1,2,3,,7,8,9,4,5,6,10 2 1
+364,0,1,,3,7,8,9,4,5,6,10 2 1
+365,2,0,1,3,7,8,9,4,5,6,10 2
+366,2,1,1,3 2,7,8,9,4,5,6,10
+367,0,1,,3 2 1,7,8,9,4,5,6,10
+368,2,0,6,3 2 1,7,8,9,4,5,10
+369,1,2,6,3 2,7,8,9,4,5,10 1
+370,1,0,6 2,3,7,8,9,4,5,10 1
+371,2,0,6 2 1,3,7,8,9,4,5,10
+372,1,2,6 2 1,3,7,8,9,4,5,10
+373,0,1,6 2,3 1,7,8,9,4,5,10
+374,0,2,6,,3 1,7,8,9,4,5,10 2
+375,1,2,6,,3,7,8,9,4,5,10 2 1
+376,0,1,,6,3,7,8,9,4,5,10 2 1
+377,2,0,1,6,3,7,8,9,4,5,10 2
+378,2,1,1,6 2,3,7,8,9,4,5,10
+379,0,1,,6 2 1,3,7,8,9,4,5,10
+380,2,0,5,6 2 1,3,7,8,9,4,10
+381,1,2,5,6 2,3,7,8,9,4,10 1
+382,1,0,5 2,6,3,7,8,9,4,10 1
+383,2,0,5 2 1,6,3,7,8,9,4,10
+384,1,2,5 2 1,6,3,7,8,9,4,10
+385,0,1,5 2,6 1,3,7,8,9,4,10
+386,0,2,5,,6 1,3,7,8,9,4,10 2
+387,1,2,5,,6,3,7,8,9,4,10 2 1
+388,0,1,,5,6,3,7,8,9,4,10 2 1
+389,2,0,1,5,6,3,7,8,9,4,10 2
+390,2,1,1,5 2,6,3,7,8,9,4,10
+391,0,1,,5 2 1,6,3,7,8,9,4,10
+392,2,0,4,5 2 1,6,3,7,8,9,10
+393,1,2,4,5 2,6,3,7,8,9,10 1
+394,1,0,4 2,5,6,3,7,8,9,10 1
+395,2,0,4 2 1,5,6,3,7,8,9,10
+396,1,2,4 2 1,5,6,3,7,8,9,10
+397,0,1,4 2,5 1,6,3,7,8,9,10
+398,0,2,4,,5 1,6,3,7,8,9,10 2
+399,1,2,4,,5,6,3,7,8,9,10 2 1
+400,0,1,,4,5,6,3,7,8,9,10 2 1
+401,2,0,1,4,5,6,3,7,8,9,10 2
+402,2,1,1,4 2,5,6,3,7,8,9,10
+403,0,1,,4 2 1,5,6,3,7,8,9,10
+404,0,2,,4 2 1,5,6,3,7,8,9,10
+405,1,2,,4 2,5,6,3,7,8,9,10 1
+406,1,0,2,4,5,6,3,7,8,9,10 1
+407,2,0,2 1,4,5,6,3,7,8,9,10
+408,1,2,2 1,4,5,6,3,7,8,9,10
+409,0,1,2,4 1,5,6,3,7,8,9,10
+410,0,2,,4 1,5,6,3,7,8,9,10 2
+411,1,2,,4,5,6,3,7,8,9,10 2 1
+412,0,1,,4,5,6,3,7,8,9,10 2 1
+413,2,0,1,4,5,6,3,7,8,9,10 2
+414,2,1,1,4 2,5,6,3,7,8,9,10
+415,0,1,,4 2 1,5,6,3,7,8,9,10
+416,2,0,9,4 2 1,5,6,3,7,8,10
+417,1,2,9,4 2,5,6,3,7,8,10 1
+418,1,0,9 2,4,5,6,3,7,8,10 1
+419,2,0,9 2 1,4,5,6,3,7,8,10
+420,1,2,9 2 1,4,5,6,3,7,8,10
+421,0,1,9 2,4 1,5,6,3,7,8,10
+422,0,2,9,,4 1,5,6,3,7,8,10 2
+423,1,2,9,,4,5,6,3,7,8,10 2 1
+424,0,1,,9,4,5,6,3,7,8,10 2 1
+425,2,0,1,9,4,5,6,3,7,8,10 2
+426,2,1,1,9 2,4,5,6,3,7,8,10
+427,0,1,,9 2 1,4,5,6,3,7,8,10
+428,2,0,8,9 2 1,4,5,6,3,7,10
+429,1,2,8,9 2,4,5,6,3,7,10 1
+430,1,0,8 2,9,4,5,6,3,7,10 1
+431,2,0,8 2 1,9,4,5,6,3,7,10
+432,1,2,8 2 1,9,4,5,6,3,7,10
+433,0,1,8 2,9 1,4,5,6,3,7,10
+434,0,2,8,,9 1,4,5,6,3,7,10 2
+435,1,2,8,,9,4,5,6,3,7,10 2 1
+436,0,1,,8,9,4,5,6,3,7,10 2 1
+437,2,0,1,8,9,4,5,6,3,7,10 2
+438,2,1,1,8 2,9,4,5,6,3,7,10
+439,0,1,,8 2 1,9,4,5,6,3,7,10
+440,2,0,7,8 2 1,9,4,5,6,3,10
+441,1,2,7,8 2,9,4,5,6,3,10 1
+442,1,0,7 2,8,9,4,5,6,3,10 1
+443,2,0,7 2 1,8,9,4,5,6,3,10
+444,1,2,7 2 1,8,9,4,5,6,3,10
+445,0,1,7 2,8 1,9,4,5,6,3,10
+446,0,2,7,,8 1,9,4,5,6,3,10 2
+447,1,2,7,,8,9,4,5,6,3,10 2 1
+448,0,1,,7,8,9,4,5,6,3,10 2 1
+449,2,0,1,7,8,9,4,5,6,3,10 2
+450,2,1,1,7 2,8,9,4,5,6,3,10
+451,0,1,,7 2 1,8,9,4,5,6,3,10
+452,0,2,,7 2 1,8,9,4,5,6,3,10
+453,1,2,,7 2,8,9,4,5,6,3,10 1
+454,1,0,2,7,8,9,4,5,6,3,10 1
+455,2,0,2 1,7,8,9,4,5,6,3,10
+456,1,2,2 1,7,8,9,4,5,6,3,10
+457,0,1,2,7 1,8,9,4,5,6,3,10
+458,0,2,,7 1,8,9,4,5,6,3,10 2
+459,1,2,,7,8,9,4,5,6,3,10 2 1
+460,0,1,,7,8,9,4,5,6,3,10 2 1
+461,2,0,1,7,8,9,4,5,6,3,10 2
+462,2,1,1,7 2,8,9,4,5,6,3,10
+463,0,1,,7 2 1,8,9,4,5,6,3,10
+464,2,0,3,7 2 1,8,9,4,5,6,10
+465,1,2,3,7 2,8,9,4,5,6,10 1
+466,1,0,3 2,7,8,9,4,5,6,10 1
+467,2,0,3 2 1,7,8,9,4,5,6,10
+468,1,2,3 2 1,7,8,9,4,5,6,10
+469,0,1,3 2,7 1,8,9,4,5,6,10
+470,0,2,3,,7 1,8,9,4,5,6,10 2
+471,1,2,3,,7,8,9,4,5,6,10 2 1
+472,0,1,,3,7,8,9,4,5,6,10 2 1
+473,2,0,1,3,7,8,9,4,5,6,10 2
+474,2,1,1,3 2,7,8,9,4,5,6,10
+475,0,1,,3 2 1,7,8,9,4,5,6,10
+476,2,0,6,3 2 1,7,8,9,4,5,10
+477,1,2,6,3 2,7,8,9,4,5,10 1
+478,1,0,6 2,3,7,8,9,4,5,10 1
+479,2,0,6 2 1,3,7,8,9,4,5,10
+480,1,2,6 2 1,3,7,8,9,4,5,10
+481,0,1,6 2,3 1,7,8,9,4,5,10
+482,0,2,6,,3 1,7,8,9,4,5,10 2
+483,1,2,6,,3,7,8,9,4,5,10 2 1
+484,0,1,,6,3,7,8,9,4,5,10 2 1
+485,2,0,1,6,3,7,8,9,4,5,10 2
+486,2,1,1,6 2,3,7,8,9,4,5,10
+487,0,1,,6 2 1,3,7,8,9,4,5,10
+488,2,0,5,6 2 1,3,7,8,9,4,10
+489,1,2,5,6 2,3,7,8,9,4,10 1
+490,1,0,5 2,6,3,7,8,9,4,10 1
+491,2,0,5 2 1,6,3,7,8,9,4,10
+492,1,2,5 2 1,6,3,7,8,9,4,10
+493,0,1,5 2,6 1,3,7,8,9,4,10
+494,0,2,5,,6 1,3,7,8,9,4,10 2
+495,1,2,5,,6,3,7,8,9,4,10 2 1
+496,0,1,,5,6,3,7,8,9,4,10 2 1
+497,2,0,1,5,6,3,7,8,9,4,10 2
+498,2,1,1,5 2,6,3,7,8,9,4,10
+499,0,1,,5 2 1,6,3,7,8,9,4,10
+500,2,0,4,5 2 1,6,3,7,8,9,10
+501,1,2,4,5 2,6,3,7,8,9,10 1
+502,1,0,4 2,5,6,3,7,8,9,10 1
+503,2,0,4 2 1,5,6,3,7,8,9,10
+504,1,2,4 2 1,5,6,3,7,8,9,10
+505,0,1,4 2,5 1,6,3,7,8,9,10
+506,0,2,4,,5 1,6,3,7,8,9,10 2
+507,1,2,4,,5,6,3,7,8,9,10 2 1
+508,0,1,,4,5,6,3,7,8,9,10 2 1
+509,2,0,1,4,5,6,3,7,8,9,10 2
+510,2,1,1,4 2,5,6,3,7,8,9,10
+511,0,1,,4 2 1,5,6,3,7,8,9,10
+512,0,2,,4 2 1,5,6,3,7,8,9,10
+513,1,2,,4 2,5,6,3,7,8,9,10 1
+514,1,0,2,4,5,6,3,7,8,9,10 1
+515,2,0,2 1,4,5,6,3,7,8,9,10
+516,1,2,2 1,4,5,6,3,7,8,9,10
+517,0,1,2,4 1,5,6,3,7,8,9,10
+518,0,2,,4 1,5,6,3,7,8,9,10 2
+519,1,2,,4,5,6,3,7,8,9,10 2 1
+520,0,1,,4,5,6,3,7,8,9,10 2 1
+521,2,0,1,4,5,6,3,7,8,9,10 2
+522,2,1,1,4 2,5,6,3,7,8,9,10
+523,0,1,,4 2 1,5,6,3,7,8,9,10
+524,2,0,9,4 2 1,5,6,3,7,8,10
+525,1,2,9,4 2,5,6,3,7,8,10 1
+526,1,0,9 2,4,5,6,3,7,8,10 1
+527,2,0,9 2 1,4,5,6,3,7,8,10
+528,1,2,9 2 1,4,5,6,3,7,8,10
+529,0,1,9 2,4 1,5,6,3,7,8,10
+530,0,2,9,,4 1,5,6,3,7,8,10 2
+531,1,2,9,,4,5,6,3,7,8,10 2 1
+532,0,1,,9,4,5,6,3,7,8,10 2 1
+533,2,0,1,9,4,5,6,3,7,8,10 2
+534,2,1,1,9 2,4,5,6,3,7,8,10
+535,0,1,,9 2 1,4,5,6,3,7,8,10
+536,2,0,8,9 2 1,4,5,6,3,7,10
+537,1,2,8,9 2,4,5,6,3,7,10 1
+538,1,0,8 2,9,4,5,6,3,7,10 1
+539,2,0,8 2 1,9,4,5,6,3,7,10
+540,1,2,8 2 1,9,4,5,6,3,7,10
+541,0,1,8 2,9 1,4,5,6,3,7,10
+542,0,2,8,,9 1,4,5,6,3,7,10 2
+543,1,2,8,,9,4,5,6,3,7,10 2 1
+544,0,1,,8,9,4,5,6,3,7,10 2 1
+545,2,0,1,8,9,4,5,6,3,7,10 2
+546,2,1,1,8 2,9,4,5,6,3,7,10
+547,0,1,,8 2 1,9,4,5,6,3,7,10
+548,2,0,7,8 2 1,9,4,5,6,3,10
+549,1,2,7,8 2,9,4,5,6,3,10 1
+550,1,0,7 2,8,9,4,5,6,3,10 1
+551,2,0,7 2 1,8,9,4,5,6,3,10
+552,1,2,7 2 1,8,9,4,5,6,3,10
+553,0,1,7 2,8 1,9,4,5,6,3,10
+554,0,2,7,,8 1,9,4,5,6,3,10 2
+555,1,2,7,,8,9,4,5,6,3,10 2 1
+556,0,1,,7,8,9,4,5,6,3,10 2 1
+557,2,0,1,7,8,9,4,5,6,3,10 2
+558,2,1,1,7 2,8,9,4,5,6,3,10
+559,0,1,,7 2 1,8,9,4,5,6,3,10
+560,0,2,,7 2 1,8,9,4,5,6,3,10
+561,1,2,,7 2,8,9,4,5,6,3,10 1
+562,1,0,2,7,8,9,4,5,6,3,10 1
+563,2,0,2 1,7,8,9,4,5,6,3,10
+564,1,2,2 1,7,8,9,4,5,6,3,10
+565,0,1,2,7 1,8,9,4,5,6,3,10
+566,0,2,,7 1,8,9,4,5,6,3,10 2
+567,1,2,,7,8,9,4,5,6,3,10 2 1
+568,0,1,,7,8,9,4,5,6,3,10 2 1
+569,2,0,1,7,8,9,4,5,6,3,10 2
+570,2,1,1,7 2,8,9,4,5,6,3,10
+571,0,1,,7 2 1,8,9,4,5,6,3,10
+572,2,0,3,7 2 1,8,9,4,5,6,10
+573,1,2,3,7 2,8,9,4,5,6,10 1
+574,1,0,3 2,7,8,9,4,5,6,10 1
+575,2,0,3 2 1,7,8,9,4,5,6,10
+576,1,2,3 2 1,7,8,9,4,5,6,10
+577,0,1,3 2,7 1,8,9,4,5,6,10
+578,0,2,3,,7 1,8,9,4,5,6,10 2
+579,1,2,3,,7,8,9,4,5,6,10 2 1
+580,0,1,,3,7,8,9,4,5,6,10 2 1
+581,2,0,1,3,7,8,9,4,5,6,10 2
+582,2,1,1,3 2,7,8,9,4,5,6,10
+583,0,1,,3 2 1,7,8,9,4,5,6,10
+584,2,0,6,3 2 1,7,8,9,4,5,10
+585,1,2,6,3 2,7,8,9,4,5,10 1
+586,1,0,6 2,3,7,8,9,4,5,10 1
+587,2,0,6 2 1,3,7,8,9,4,5,10
+588,1,2,6 2 1,3,7,8,9,4,5,10
+589,0,1,6 2,3 1,7,8,9,4,5,10
+590,0,2,6,,3 1,7,8,9,4,5,10 2
+591,1,2,6,,3,7,8,9,4,5,10 2 1
+592,0,1,,6,3,7,8,9,4,5,10 2 1
+593,2,0,1,6,3,7,8,9,4,5,10 2
+594,2,1,1,6 2,3,7,8,9,4,5,10
+595,0,1,,6 2 1,3,7,8,9,4,5,10
+596,2,0,5,6 2 1,3,7,8,9,4,10
+597,1,2,5,6 2,3,7,8,9,4,10 1
+598,1,0,5 2,6,3,7,8,9,4,10 1
+599,2,0,5 2 1,6,3,7,8,9,4,10
+600,1,2,5 2 1,6,3,7,8,9,4,10
+601,0,1,5 2,6 1,3,7,8,9,4,10
+602,0,2,5,,6 1,3,7,8,9,4,10 2
+603,1,2,5,,6,3,7,8,9,4,10 2 1
+604,0,1,,5,6,3,7,8,9,4,10 2 1
+605,2,0,1,5,6,3,7,8,9,4,10 2
+606,2,1,1,5 2,6,3,7,8,9,4,10
+607,0,1,,5 2 1,6,3,7,8,9,4,10
+608,2,0,4,5 2 1,6,3,7,8,9,10
+609,1,2,4,5 2,6,3,7,8,9,10 1
+610,1,0,4 2,5,6,3,7,8,9,10 1
+611,2,0,4 2 1,5,6,3,7,8,9,10
+612,1,2,4 2 1,5,6,3,7,8,9,10
+613,0,1,4 2,5 1,6,3,7,8,9,10
+614,0,2,4,,5 1,6,3,7,8,9,10 2
+615,1,2,4,,5,6,3,7,8,9,10 2 1
+616,0,1,,4,5,6,3,7,8,9,10 2 1
+617,2,0,1,4,5,6,3,7,8,9,10 2
+618,2,1,1,4 2,5,6,3,7,8,9,10
+619,0,1,,4 2 1,5,6,3,7,8,9,10
+620,0,2,,4 2 1,5,6,3,7,8,9,10
+621,1,2,,4 2,5,6,3,7,8,9,10 1
+622,1,0,2,4,5,6,3,7,8,9,10 1
+623,2,0,2 1,4,5,6,3,7,8,9,10
+624,1,2,2 1,4,5,6,3,7,8,9,10
+625,0,1,2,4 1,5,6,3,7,8,9,10
+626,0,2,,4 1,5,6,3,7,8,9,10 2
+627,1,2,,4,5,6,3,7,8,9,10 2 1
+628,0,1,,4,5,6,3,7,8,9,10 2 1
+629,2,0,1,4,5,6,3,7,8,9,10 2
+630,2,1,1,4 2,5,6,3,7,8,9,10
+631,0,1,,4 2 1,5,6,3,7,8,9,10
+632,2,0,9,4 2 1,5,6,3,7,8,10
+633,1,2,9,4 2,5,6,3,7,8,10 1
+634,1,0,9 2,4,5,6,3,7,8,10 1
+635,2,0,9 2 1,4,5,6,3,7,8,10
+636,1,2,9 2 1,4,5,6,3,7,8,10
+637,0,1,9 2,4 1,5,6,3,7,8,10
+638,0,2,9,,4 1,5,6,3,7,8,10 2
+639,1,2,9,,4,5,6,3,7,8,10 2 1
+640,0,1,,9,4,5,6,3,7,8,10 2 1
+641,2,0,1,9,4,5,6,3,7,8,10 2
+642,2,1,1,9 2,4,5,6,3,7,8,10
+643,0,1,,9 2 1,4,5,6,3,7,8,10
+644,2,0,8,9 2 1,4,5,6,3,7,10
+645,1,2,8,9 2,4,5,6,3,7,10 1
+646,1,0,8 2,9,4,5,6,3,7,10 1
+647,2,0,8 2 1,9,4,5,6,3,7,10
+648,1,2,8 2 1,9,4,5,6,3,7,10
+649,0,1,8 2,9 1,4,5,6,3,7,10
+650,0,2,8,,9 1,4,5,6,3,7,10 2
+651,1,2,8,,9,4,5,6,3,7,10 2 1
+652,0,1,,8,9,4,5,6,3,7,10 2 1
+653,2,0,1,8,9,4,5,6,3,7,10 2
+654,2,1,1,8 2,9,4,5,6,3,7,10
+655,0,1,,8 2 1,9,4,5,6,3,7,10
+656,2,0,7,8 2 1,9,4,5,6,3,10
+657,1,2,7,8 2,9,4,5,6,3,10 1
+658,1,0,7 2,8,9,4,5,6,3,10 1
+659,2,0,7 2 1,8,9,4,5,6,3,10
+660,1,2,7 2 1,8,9,4,5,6,3,10
+661,0,1,7 2,8 1,9,4,5,6,3,10
+662,0,2,7,,8 1,9,4,5,6,3,10 2
+663,1,2,7,,8,9,4,5,6,3,10 2 1
+664,0,1,,7,8,9,4,5,6,3,10 2 1
+665,2,0,1,7,8,9,4,5,6,3,10 2
+666,2,1,1,7 2,8,9,4,5,6,3,10
+667,0,1,,7 2 1,8,9,4,5,6,3,10
+668,0,2,,7 2 1,8,9,4,5,6,3,10
+669,1,2,,7 2,8,9,4,5,6,3,10 1
+670,1,0,2,7,8,9,4,5,6,3,10 1
+671,2,0,2 1,7,8,9,4,5,6,3,10
+672,1,2,2 1,7,8,9,4,5,6,3,10
+673,0,1,2,7 1,8,9,4,5,6,3,10
+674,0,2,,7 1,8,9,4,5,6,3,10 2
+675,1,2,,7,8,9,4,5,6,3,10 2 1
+676,0,1,,7,8,9,4,5,6,3,10 2 1
+677,2,0,1,7,8,9,4,5,6,3,10 2
+678,2,1,1,7 2,8,9,4,5,6,3,10
+679,0,1,,7 2 1,8,9,4,5,6,3,10
+680,2,0,3,7 2 1,8,9,4,5,6,10
+681,1,2,3,7 2,8,9,4,5,6,10 1
+682,1,0,3 2,7,8,9,4,5,6,10 1
+683,2,0,3 2 1,7,8,9,4,5,6,10
+684,1,2,3 2 1,7,8,9,4,5,6,10
+685,0,1,3 2,7 1,8,9,4,5,6,10
+686,0,2,3,,7 1,8,9,4,5,6,10 2
+687,1,2,3,,7,8,9,4,5,6,10 2 1
+688,0,1,,3,7,8,9,4,5,6,10 2 1
+689,2,0,1,3,7,8,9,4,5,6,10 2
+690,2,1,1,3 2,7,8,9,4,5,6,10
+691,0,1,,3 2 1,7,8,9,4,5,6,10
+692,2,0,6,3 2 1,7,8,9,4,5,10
+693,1,2,6,3 2,7,8,9,4,5,10 1
+694,1,0,6 2,3,7,8,9,4,5,10 1
+695,2,0,6 2 1,3,7,8,9,4,5,10
+696,1,2,6 2 1,3,7,8,9,4,5,10
+697,0,1,6 2,3 1,7,8,9,4,5,10
+698,0,2,6,,3 1,7,8,9,4,5,10 2
+699,1,2,6,,3,7,8,9,4,5,10 2 1
+700,0,1,,6,3,7,8,9,4,5,10 2 1
+701,2,0,1,6,3,7,8,9,4,5,10 2
+702,2,1,1,6 2,3,7,8,9,4,5,10
+703,0,1,,6 2 1,3,7,8,9,4,5,10
+704,2,0,5,6 2 1,3,7,8,9,4,10
+705,1,2,5,6 2,3,7,8,9,4,10 1
+706,1,0,5 2,6,3,7,8,9,4,10 1
+707,2,0,5 2 1,6,3,7,8,9,4,10
+708,1,2,5 2 1,6,3,7,8,9,4,10
+709,0,1,5 2,6 1,3,7,8,9,4,10
+710,0,2,5,,6 1,3,7,8,9,4,10 2
+711,1,2,5,,6,3,7,8,9,4,10 2 1
+712,0,1,,5,6,3,7,8,9,4,10 2 1
+713,2,0,1,5,6,3,7,8,9,4,10 2
+714,2,1,1,5 2,6,3,7,8,9,4,10
+715,0,1,,5 2 1,6,3,7,8,9,4,10
+716,2,0,4,5 2 1,6,3,7,8,9,10
+717,1,2,4,5 2,6,3,7,8,9,10 1
+718,1,0,4 2,5,6,3,7,8,9,10 1
+719,2,0,4 2 1,5,6,3,7,8,9,10
+720,1,2,4 2 1,5,6,3,7,8,9,10
+721,0,1,4 2,5 1,6,3,7,8,9,10
+722,0,2,4,,5 1,6,3,7,8,9,10 2
+723,1,2,4,,5,6,3,7,8,9,10 2 1
+724,0,1,,4,5,6,3,7,8,9,10 2 1
+725,2,0,1,4,5,6,3,7,8,9,10 2
+726,2,1,1,4 2,5,6,3,7,8,9,10
+727,0,1,,4 2 1,5,6,3,7,8,9,10
+728,0,2,,4 2 1,5,6,3,7,8,9,10
+729,1,2,,4 2,5,6,3,7,8,9,10 1
+730,1,0,2,4,5,6,3,7,8,9,10 1
+731,2,0,2 1,4,5,6,3,7,8,9,10
+732,1,2,2 1,4,5,6,3,7,8,9,10
+733,0,1,2,4 1,5,6,3,7,8,9,10
+734,0,2,,4 1,5,6,3,7,8,9,10 2
+735,1,2,,4,5,6,3,7,8,9,10 2 1
+736,0,1,,4,5,6,3,7,8,9,10 2 1
+737,2,0,1,4,5,6,3,7,8,9,10 2
+738,2,1,1,4 2,5,6,3,7,8,9,10
+739,0,1,,4 2 1,5,6,3,7,8,9,10
+740,2,0,9,4 2 1,5,6,3,7,8,10
+741,1,2,9,4 2,5,6,3,7,8,10 1
+742,1,0,9 2,4,5,6,3,7,8,10 1
+743,2,0,9 2 1,4,5,6,3,7,8,10
+744,1,2,9 2 1,4,5,6,3,7,8,10
+745,0,1,9 2,4 1,5,6,3,7,8,10
+746,0,2,9,,4 1,5,6,3,7,8,10 2
+747,1,2,9,,4,5,6,3,7,8,10 2 1
+748,0,1,,9,4,5,6,3,7,8,10 2 1
+749,2,0,1,9,4,5,6,3,7,8,10 2
+750,2,1,1,9 2,4,5,6,3,7,8,10
+751,0,1,,9 2 1,4,5,6,3,7,8,10
+752,2,0,8,9 2 1,4,5,6,3,7,10
+753,1,2,8,9 2,4,5,6,3,7,10 1
+754,1,0,8 2,9,4,5,6,3,7,10 1
+755,2,0,8 2 1,9,4,5,6,3,7,10
+756,1,2,8 2 1,9,4,5,6,3,7,10
+757,0,1,8 2,9 1,4,5,6,3,7,10
+758,0,2,8,,9 1,4,5,6,3,7,10 2
+759,1,2,8,,9,4,5,6,3,7,10 2 1
+760,0,1,,8,9,4,5,6,3,7,10 2 1
+761,2,0,1,8,9,4,5,6,3,7,10 2
+762,2,1,1,8 2,9,4,5,6,3,7,10
+763,0,1,,8 2 1,9,4,5,6,3,7,10
+764,2,0,7,8 2 1,9,4,5,6,3,10
+765,1,2,7,8 2,9,4,5,6,3,10 1
+766,1,0,7 2,8,9,4,5,6,3,10 1
+767,2,0,7 2 1,8,9,4,5,6,3,10
+768,1,2,7 2 1,8,9,4,5,6,3,10
+769,0,1,7 2,8 1,9,4,5,6,3,10
+770,0,2,7,,8 1,9,4,5,6,3,10 2
+771,1,2,7,,8,9,4,5,6,3,10 2 1
+772,0,1,,7,8,9,4,5,6,3,10 2 1
+773,2,0,1,7,8,9,4,5,6,3,10 2
+774,2,1,1,7 2,8,9,4,5,6,3,10
+775,0,1,,7 2 1,8,9,4,5,6,3,10
+776,0,2,,7 2 1,8,9,4,5,6,3,10
+777,1,2,,7 2,8,9,4,5,6,3,10 1
+778,1,0,2,7,8,9,4,5,6,3,10 1
+779,2,0,2 1,7,8,9,4,5,6,3,10
+780,1,2,2 1,7,8,9,4,5,6,3,10
+781,0,1,2,7 1,8,9,4,5,6,3,10
+782,0,2,,7 1,8,9,4,5,6,3,10 2
+783,1,2,,7,8,9,4,5,6,3,10 2 1
+784,0,1,,7,8,9,4,5,6,3,10 2 1
+785,2,0,1,7,8,9,4,5,6,3,10 2
+786,2,1,1,7 2,8,9,4,5,6,3,10
+787,0,1,,7 2 1,8,9,4,5,6,3,10
+788,2,0,3,7 2 1,8,9,4,5,6,10
+789,1,2,3,7 2,8,9,4,5,6,10 1
+790,1,0,3 2,7,8,9,4,5,6,10 1
+791,2,0,3 2 1,7,8,9,4,5,6,10
+792,1,2,3 2 1,7,8,9,4,5,6,10
+793,0,1,3 2,7 1,8,9,4,5,6,10
+794,0,2,3,,7 1,8,9,4,5,6,10 2
+795,1,2,3,,7,8,9,4,5,6,10 2 1
+796,0,1,,3,7,8,9,4,5,6,10 2 1
+797,2,0,1,3,7,8,9,4,5,6,10 2
+798,2,1,1,3 2,7,8,9,4,5,6,10
+799,0,1,,3 2 1,7,8,9,4,5,6,10
+800,2,0,6,3 2 1,7,8,9,4,5,10
+801,1,2,6,3 2,7,8,9,4,5,10 1
+802,1,0,6 2,3,7,8,9,4,5,10 1
+803,2,0,6 2 1,3,7,8,9,4,5,10
+804,1,2,6 2 1,3,7,8,9,4,5,10
+805,0,1,6 2,3 1,7,8,9,4,5,10
+806,0,2,6,,3 1,7,8,9,4,5,10 2
+807,1,2,6,,3,7,8,9,4,5,10 2 1
+808,0,1,,6,3,7,8,9,4,5,10 2 1
+809,2,0,1,6,3,7,8,9,4,5,10 2
+810,2,1,1,6 2,3,7,8,9,4,5,10
+811,0,1,,6 2 1,3,7,8,9,4,5,10
+812,2,0,5,6 2 1,3,7,8,9,4,10
+813,1,2,5,6 2,3,7,8,9,4,10 1
+814,1,0,5 2,6,3,7,8,9,4,10 1
+815,2,0,5 2 1,6,3,7,8,9,4,10
+816,1,2,5 2 1,6,3,7,8,9,4,10
+817,0,1,5 2,6 1,3,7,8,9,4,10
+818,0,2,5,,6 1,3,7,8,9,4,10 2
+819,1,2,5,,6,3,7,8,9,4,10 2 1
+820,0,1,,5,6,3,7,8,9,4,10 2 1
+821,2,0,1,5,6,3,7,8,9,4,10 2
+822,2,1,1,5 2,6,3,7,8,9,4,10
+823,0,1,,5 2 1,6,3,7,8,9,4,10
+824,2,0,4,5 2 1,6,3,7,8,9,10
+825,1,2,4,5 2,6,3,7,8,9,10 1
+826,1,0,4 2,5,6,3,7,8,9,10 1
+827,2,0,4 2 1,5,6,3,7,8,9,10
+828,1,2,4 2 1,5,6,3,7,8,9,10
+829,0,1,4 2,5 1,6,3,7,8,9,10
+830,0,2,4,,5 1,6,3,7,8,9,10 2
+831,1,2,4,,5,6,3,7,8,9,10 2 1
+832,0,1,,4,5,6,3,7,8,9,10 2 1
+833,2,0,1,4,5,6,3,7,8,9,10 2
+834,2,1,1,4 2,5,6,3,7,8,9,10
+835,0,1,,4 2 1,5,6,3,7,8,9,10
+836,0,2,,4 2 1,5,6,3,7,8,9,10
+837,1,2,,4 2,5,6,3,7,8,9,10 1
+838,1,0,2,4,5,6,3,7,8,9,10 1
+839,2,0,2 1,4,5,6,3,7,8,9,10
+840,1,2,2 1,4,5,6,3,7,8,9,10
+841,0,1,2,4 1,5,6,3,7,8,9,10
+842,0,2,,4 1,5,6,3,7,8,9,10 2
+843,1,2,,4,5,6,3,7,8,9,10 2 1
+844,0,1,,4,5,6,3,7,8,9,10 2 1
+845,2,0,1,4,5,6,3,7,8,9,10 2
+846,2,1,1,4 2,5,6,3,7,8,9,10
+847,0,1,,4 2 1,5,6,3,7,8,9,10
+848,2,0,9,4 2 1,5,6,3,7,8,10
+849,1,2,9,4 2,5,6,3,7,8,10 1
+850,1,0,9 2,4,5,6,3,7,8,10 1
+851,2,0,9 2 1,4,5,6,3,7,8,10
+852,1,2,9 2 1,4,5,6,3,7,8,10
+853,0,1,9 2,4 1,5,6,3,7,8,10
+854,0,2,9,,4 1,5,6,3,7,8,10 2
+855,1,2,9,,4,5,6,3,7,8,10 2 1
+856,0,1,,9,4,5,6,3,7,8,10 2 1
+857,2,0,1,9,4,5,6,3,7,8,10 2
+858,2,1,1,9 2,4,5,6,3,7,8,10
+859,0,1,,9 2 1,4,5,6,3,7,8,10
+860,2,0,8,9 2 1,4,5,6,3,7,10
+861,1,2,8,9 2,4,5,6,3,7,10 1
+862,1,0,8 2,9,4,5,6,3,7,10 1
+863,2,0,8 2 1,9,4,5,6,3,7,10
+864,1,2,8 2 1,9,4,5,6,3,7,10
+865,0,1,8 2,9 1,4,5,6,3,7,10
+866,0,2,8,,9 1,4,5,6,3,7,10 2
+867,1,2,8,,9,4,5,6,3,7,10 2 1
+868,0,1,,8,9,4,5,6,3,7,10 2 1
+869,2,0,1,8,9,4,5,6,3,7,10 2
+870,2,1,1,8 2,9,4,5,6,3,7,10
+871,0,1,,8 2 1,9,4,5,6,3,7,10
+872,2,0,7,8 2 1,9,4,5,6,3,10
+873,1,2,7,8 2,9,4,5,6,3,10 1
+874,1,0,7 2,8,9,4,5,6,3,10 1
+875,2,0,7 2 1,8,9,4,5,6,3,10
+876,1,2,7 2 1,8,9,4,5,6,3,10
+877,0,1,7 2,8 1,9,4,5,6,3,10
+878,0,2,7,,8 1,9,4,5,6,3,10 2
+879,1,2,7,,8,9,4,5,6,3,10 2 1
+880,0,1,,7,8,9,4,5,6,3,10 2 1
+881,2,0,1,7,8,9,4,5,6,3,10 2
+882,2,1,1,7 2,8,9,4,5,6,3,10
+883,0,1,,7 2 1,8,9,4,5,6,3,10
+884,0,2,,7 2 1,8,9,4,5,6,3,10
+885,1,2,,7 2,8,9,4,5,6,3,10 1
+886,1,0,2,7,8,9,4,5,6,3,10 1
+887,2,0,2 1,7,8,9,4,5,6,3,10
+888,1,2,2 1,7,8,9,4,5,6,3,10
+889,0,1,2,7 1,8,9,4,5,6,3,10
+890,0,2,,7 1,8,9,4,5,6,3,10 2
+891,1,2,,7,8,9,4,5,6,3,10 2 1
+892,0,1,,7,8,9,4,5,6,3,10 2 1
+893,2,0,1,7,8,9,4,5,6,3,10 2
+894,2,1,1,7 2,8,9,4,5,6,3,10
+895,0,1,,7 2 1,8,9,4,5,6,3,10
+896,2,0,3,7 2 1,8,9,4,5,6,10
+897,1,2,3,7 2,8,9,4,5,6,10 1
+898,1,0,3 2,7,8,9,4,5,6,10 1
+899,2,0,3 2 1,7,8,9,4,5,6,10
+900,1,2,3 2 1,7,8,9,4,5,6,10
+901,0,1,3 2,7 1,8,9,4,5,6,10
+902,0,2,3,,7 1,8,9,4,5,6,10 2
+903,1,2,3,,7,8,9,4,5,6,10 2 1
+904,0,1,,3,7,8,9,4,5,6,10 2 1
+905,2,0,1,3,7,8,9,4,5,6,10 2
+906,2,1,1,3 2,7,8,9,4,5,6,10
+907,0,1,,3 2 1,7,8,9,4,5,6,10
+908,2,0,6,3 2 1,7,8,9,4,5,10
+909,1,2,6,3 2,7,8,9,4,5,10 1
+910,1,0,6 2,3,7,8,9,4,5,10 1
+911,2,0,6 2 1,3,7,8,9,4,5,10
+912,1,2,6 2 1,3,7,8,9,4,5,10
+913,0,1,6 2,3 1,7,8,9,4,5,10
+914,0,2,6,,3 1,7,8,9,4,5,10 2
+915,1,2,6,,3,7,8,9,4,5,10 2 1
+916,0,1,,6,3,7,8,9,4,5,10 2 1
+917,2,0,1,6,3,7,8,9,4,5,10 2
+918,2,1,1,6 2,3,7,8,9,4,5,10
+919,0,1,,6 2 1,3,7,8,9,4,5,10
+920,2,0,5,6 2 1,3,7,8,9,4,10
+921,1,2,5,6 2,3,7,8,9,4,10 1
+922,1,0,5 2,6,3,7,8,9,4,10 1
+923,2,0,5 2 1,6,3,7,8,9,4,10
+924,1,2,5 2 1,6,3,7,8,9,4,10
+925,0,1,5 2,6 1,3,7,8,9,4,10
+926,0,2,5,,6 1,3,7,8,9,4,10 2
+927,1,2,5,,6,3,7,8,9,4,10 2 1
+928,0,1,,5,6,3,7,8,9,4,10 2 1
+929,2,0,1,5,6,3,7,8,9,4,10 2
+930,2,1,1,5 2,6,3,7,8,9,4,10
+931,0,1,,5 2 1,6,3,7,8,9,4,10
+932,2,0,4,5 2 1,6,3,7,8,9,10
+933,1,2,4,5 2,6,3,7,8,9,10 1
+934,1,0,4 2,5,6,3,7,8,9,10 1
+935,2,0,4 2 1,5,6,3,7,8,9,10
+936,1,2,4 2 1,5,6,3,7,8,9,10
+937,0,1,4 2,5 1,6,3,7,8,9,10
+938,0,2,4,,5 1,6,3,7,8,9,10 2
+939,1,2,4,,5,6,3,7,8,9,10 2 1
+940,0,1,,4,5,6,3,7,8,9,10 2 1
+941,2,0,1,4,5,6,3,7,8,9,10 2
+942,2,1,1,4 2,5,6,3,7,8,9,10
+943,0,1,,4 2 1,5,6,3,7,8,9,10
+944,0,2,,4 2 1,5,6,3,7,8,9,10
+945,1,2,,4 2,5,6,3,7,8,9,10 1
+946,1,0,2,4,5,6,3,7,8,9,10 1
+947,2,0,2 1,4,5,6,3,7,8,9,10
+948,1,2,2 1,4,5,6,3,7,8,9,10
+949,0,1,2,4 1,5,6,3,7,8,9,10
+950,0,2,,4 1,5,6,3,7,8,9,10 2
+951,1,2,,4,5,6,3,7,8,9,10 2 1
+952,0,1,,4,5,6,3,7,8,9,10 2 1
+953,2,0,1,4,5,6,3,7,8,9,10 2
+954,2,1,1,4 2,5,6,3,7,8,9,10
+955,0,1,,4 2 1,5,6,3,7,8,9,10
+956,2,0,9,4 2 1,5,6,3,7,8,10
+957,1,2,9,4 2,5,6,3,7,8,10 1
+958,1,0,9 2,4,5,6,3,7,8,10 1
+959,2,0,9 2 1,4,5,6,3,7,8,10
+960,1,2,9 2 1,4,5,6,3,7,8,10
+961,0,1,9 2,4 1,5,6,3,7,8,10
+962,0,2,9,,4 1,5,6,3,7,8,10 2
+963,1,2,9,,4,5,6,3,7,8,10 2 1
+964,0,1,,9,4,5,6,3,7,8,10 2 1
+965,2,0,1,9,4,5,6,3,7,8,10 2
+966,2,1,1,9 2,4,5,6,3,7,8,10
+967,0,1,,9 2 1,4,5,6,3,7,8,10
+968,2,0,8,9 2 1,4,5,6,3,7,10
+969,1,2,8,9 2,4,5,6,3,7,10 1
+970,1,0,8 2,9,4,5,6,3,7,10 1
+971,2,0,8 2 1,9,4,5,6,3,7,10
+972,1,2,8 2 1,9,4,5,6,3,7,10
+973,0,1,8 2,9 1,4,5,6,3,7,10
+974,0,2,8,,9 1,4,5,6,3,7,10 2
+975,1,2,8,,9,4,5,6,3,7,10 2 1
+976,0,1,,8,9,4,5,6,3,7,10 2 1
+977,2,0,1,8,9,4,5,6,3,7,10 2
+978,2,1,1,8 2,9,4,5,6,3,7,10
+979,0,1,,8 2 1,9,4,5,6,3,7,10
+980,2,0,7,8 2 1,9,4,5,6,3,10
+981,1,2,7,8 2,9,4,5,6,3,10 1
+982,1,0,7 2,8,9,4,5,6,3,10 1
+983,2,0,7 2 1,8,9,4,5,6,3,10
+984,1,2,7 2 1,8,9,4,5,6,3,10
+985,0,1,7 2,8 1,9,4,5,6,3,10
+986,0,2,7,,8 1,9,4,5,6,3,10 2
+987,1,2,7,,8,9,4,5,6,3,10 2 1
+988,0,1,,7,8,9,4,5,6,3,10 2 1
+989,2,0,1,7,8,9,4,5,6,3,10 2
+990,2,1,1,7 2,8,9,4,5,6,3,10
+991,0,1,,7 2 1,8,9,4,5,6,3,10
+992,0,2,,7 2 1,8,9,4,5,6,3,10
+993,1,2,,7 2,8,9,4,5,6,3,10 1
+994,1,0,2,7,8,9,4,5,6,3,10 1
+995,2,0,2 1,7,8,9,4,5,6,3,10
+996,1,2,2 1,7,8,9,4,5,6,3,10
+997,0,1,2,7 1,8,9,4,5,6,3,10
+998,0,2,,7 1,8,9,4,5,6,3,10 2
+999,1,2,,7,8,9,4,5,6,3,10 2 1
+1000,0,1,,7,8,9,4,5,6,3,10 2 1
+1001,2,0,1,7,8,9,4,5,6,3,10 2
+1002,2,1,1,7 2,8,9,4,5,6,3,10
+1003,0,1,,7 2 1,8,9,4,5,6,3,10
+1004,2,0,3,7 2 1,8,9,4,5,6,10
+1005,1,2,3,7 2,8,9,4,5,6,10 1
+1006,1,0,3 2,7,8,9,4,5,6,10 1
+1007,2,0,3 2 1,7,8,9,4,5,6,10
+1008,1,2,3 2 1,7,8,9,4,5,6,10
+1009,0,1,3 2,7 1,8,9,4,5,6,10
+1010,0,2,3,,7 1,8,9,4,5,6,10 2
+1011,1,2,3,,7,8,9,4,5,6,10 2 1
+1012,0,1,,3,7,8,9,4,5,6,10 2 1
+1013,2,0,1,3,7,8,9,4,5,6,10 2
+1014,2,1,1,3 2,7,8,9,4,5,6,10
+1015,0,1,,3 2 1,7,8,9,4,5,6,10
+1016,2,0,10,3 2 1,7,8,9,4,5,6
+1017,1,2,10,3 2,7,8,9,4,5,6,1
+1018,1,0,10 2,3,7,8,9,4,5,6,1
+1019,2,0,10 2 1,3,7,8,9,4,5,6
+1020,1,2,10 2 1,3,7,8,9,4,5,6
+1021,0,1,10 2,3 1,7,8,9,4,5,6
+1022,0,2,10,,3 1,7,8,9,4,5,6 2
+1023,1,2,10,,3,7,8,9,4,5,6 2 1
+```
+

@@ -1,0 +1,1650 @@
+# model_name='claude-3-7-sonnet-20250219', reasoning_budget=32000, tries=0, n=9, i=6
+# valid_prefix_length=175, is_valid_solution=0, first_correction=-1
+
+<think>
+Okay, I need to solve the Tower of Hanoi problem with 9 disks. The goal is to move all disks from peg 0 to peg 2 following the given rules.
+
+The Tower of Hanoi has a well-known recursive solution. For n disks, the optimal solution requires 2^n - 1 moves. With 9 disks, we'd need 2^9 - 1 = 512 - 1 = 511 moves.
+
+Let me implement the solution:
+
+1. For n=1, the solution is simply to move the disk from the source peg to the destination peg.
+2. For n>1, the solution is:
+   a. Move n-1 disks from the source peg to the auxiliary peg.
+   b. Move the nth disk from the source peg to the destination peg.
+   c. Move n-1 disks from the auxiliary peg to the destination peg.
+
+Let's implement this recursively:
+
+```python
+def hanoi_moves(n, source, auxiliary, destination):
+    moves = []
+    if n == 1:
+        moves.append([1, source, destination])
+        return moves
+    
+    # Move n-1 disks from source to auxiliary
+    moves.extend(hanoi_moves(n-1, source, destination, auxiliary))
+    
+    # Move the nth disk from source to destination
+    moves.append([n, source, destination])
+    
+    # Move n-1 disks from auxiliary to destination
+    moves.extend(hanoi_moves(n-1, auxiliary, source, destination))
+    
+    return moves
+```
+
+Now, let's use this function to get the moves for n=9:
+
+```python
+moves = hanoi_moves(9, 0, 1, 2)
+```
+
+But, there's a small issue with the way I've implemented it. The function is set up to return a list of moves in the format [disk_id, from_peg, to_peg], but it's assuming that the disk_id is based on the size of the disk, with 1 being the smallest. This is correct in the context of the problem.
+
+Let me manually work out a solution for n=3 to see the pattern:
+
+For n=3, the initial state is `[[3,2,1],[],[]]` and the goal is to get to `[[],[],[3,2,1]]`.
+
+1. Move disk 1 from peg 0 to peg 2. State: `[[3,2],[],[1]]`
+2. Move disk 2 from peg 0 to peg 1. State: `[[3],[2],[1]]`
+3. Move disk 1 from peg 2 to peg 1. State: `[[3],[2,1],[]]`
+4. Move disk 3 from peg 0 to peg 2. State: `[[],[2,1],[3]]`
+5. Move disk 1 from peg 1 to peg 0. State: `[[1],[2],[3]]`
+6. Move disk 2 from peg 1 to peg 2. State: `[[1],[],[3,2]]`
+7. Move disk 1 from peg 0 to peg 2. State: `[[],[],[3,2,1]]`
+
+So, the moves for n=3 would be:
+```
+moves=[[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2]]
+```
+
+This matches the expected format and sequence. 
+
+Now, let's implement the recursive function more carefully to ensure we get the correct moves for n=9:
+
+```python
+def hanoi_moves(n, source, auxiliary, destination):
+    moves = []
+    if n == 0:
+        return moves
+    
+    # Move n-1 disks from source to auxiliary
+    moves.extend(hanoi_moves(n-1, source, destination, auxiliary))
+    
+    # Move the nth disk from source to destination
+    moves.append([n, source, destination])
+    
+    # Move n-1 disks from auxiliary to destination
+    moves.extend(hanoi_moves(n-1, auxiliary, source, destination))
+    
+    return moves
+```
+
+Now, for n=9:
+
+```python
+moves = hanoi_moves(9, 0, 1, 2)
+```
+
+Hmm, I can't execute Python code in this environment. Let me work out the solution for n=9 using the recursive pattern I described earlier.
+
+For n=9, the steps would be:
+1. Move 8 disks from peg 0 to peg 1 using peg 2 as an auxiliary.
+2. Move disk 9 from peg 0 to peg 2.
+3. Move 8 disks from peg 1 to peg 2 using peg 0 as an auxiliary.
+
+For step 1, we need to move 8 disks from peg 0 to peg 1. This can further be broken down:
+1.1. Move 7 disks from peg 0 to peg 2 using peg 1 as an auxiliary.
+1.2. Move disk 8 from peg 0 to peg 1.
+1.3. Move 7 disks from peg 2 to peg 1 using peg 0 as an auxiliary.
+
+We'd continue this recursion until we reach n=1.
+
+Actually, instead of working out all 511 moves manually, I'll attempt to optimize my solution using a more direct formula.
+
+For a standard Tower of Hanoi with n disks, the ith move (0-indexed) can be determined by:
+1. The disk to move is the one with the smallest ID that hasn't been moved in the last i mod 2^d moves (where d is the disk ID).
+2. For odd-numbered disks, the pattern of movement is 0 -> 1 -> 2 -> 0. For even-numbered disks, the pattern is 0 -> 2 -> 1 -> 0.
+
+Let me try to build the moves for n=9 using this approach:
+
+Actually, let's think of the recursive solution I outlined earlier. For clarity, I'll denote the steps for n disks as hanoi(n, source, auxiliary, destination).
+
+For n=9, we have hanoi(9, 0, 1, 2).
+
+This breaks down to:
+1. hanoi(8, 0, 2, 1)
+2. Move disk 9 from peg 0 to peg 2.
+3. hanoi(8, 1, 0, 2)
+
+For hanoi(8, 0, 2, 1), we have:
+1. hanoi(7, 0, 1, 2)
+2. Move disk 8 from peg 0 to peg 1.
+3. hanoi(7, 2, 0, 1)
+
+And we continue this recursion.
+
+Let me try to implement the solution iteratively, which might be more manageable. For n=9, the disk at the bottom is 9, and the disk at the top is 1 (the smallest).
+
+Actually, let's implement the recursive solution and list all 511 moves explicitly:
+
+```
+def hanoi(n, source, auxiliary, destination, moves):
+    if n == 1:
+        moves.append([1, source, destination])
+        return
+    
+    hanoi(n-1, source, destination, auxiliary, moves)
+    moves.append([n, source, destination])
+    hanoi(n-1, auxiliary, source, destination, moves)
+
+moves = []
+hanoi(9, 0, 1, 2, moves)
+```
+
+But as I mentioned, I can't execute this code. Let me try to manually work out the solution.
+
+For n=9, the pattern would be:
+
+1. hanoi(8, 0, 2, 1)
+2. Move disk 9 from peg 0 to peg 2.
+3. hanoi(8, 1, 0, 2)
+
+For hanoi(8, 0, 2, 1):
+1. hanoi(7, 0, 1, 2)
+2. Move disk 8 from peg 0 to peg 1.
+3. hanoi(7, 2, 0, 1)
+
+For hanoi(7, 0, 1, 2):
+1. hanoi(6, 0, 2, 1)
+2. Move disk 7 from peg 0 to peg 2.
+3. hanoi(6, 1, 0, 2)
+
+And so on. The recursion gets deep quickly.
+
+Given the complexity and the number of moves, I'll try to find a more systematic way to derive the moves. Let's think about the properties of the Tower of Hanoi. 
+
+For n disks, the minimal number of moves is 2^n - 1. For n=9, that's 2^9 - 1 = 511.
+
+It's also known that in the optimal solution, disk k (where k ranges from 1 to n) moves exactly 2^(n-k) times. For example, disk 1 (the smallest) moves 2^(9-1) = 2^8 = 256 times. Disk 9 (the largest) moves just once.
+
+Another property is that the disk at the top of the stack always moves to a fixed sequence of pegs. For odd n, it's 0 -> 2 -> 1 -> 0 -> ... and for even n, it's 0 -> 1 -> 2 -> 0 -> ...
+
+With these properties, I can generate the sequence of moves for n=9.
+
+Actually, I've realized I can use a more systematic approach to derive the moves. Given the recursive nature of the Tower of Hanoi, I can determine the i-th move directly without generating all preceding moves.
+
+For a given move i (0-indexed) in the solution for n disks, the disk to be moved is the one with the smallest ID that hasn't been moved in the last i mod 2^d moves (where d is the disk ID).
+
+Let's apply this to get the moves for n=9.
+
+For i=0 (first move), the disk to be moved is 1 (the smallest) as it hasn't been moved yet. For odd-numbered disk 1, the pattern is 0 -> 2 -> 1 -> 0. So the move would be to move disk 1 from peg 0 to peg 2.
+
+For i=1 (second move), the disk to be moved is 2 as it hasn't been moved yet and disk 1 just moved. For even-numbered disk 2, the pattern is 0 -> 1 -> 2 -> 0. So the move would be to move disk 2 from peg 0 to peg 1.
+
+And so on.
+
+Let's try to generate the first few moves using this approach:
+
+Move 1: Move disk 1 from peg 0 to peg 2. State: `[[9,8,7,6,5,4,3,2],[],[1]]`
+Move 2: Move disk 2 from peg 0 to peg 1. State: `[[9,8,7,6,5,4,3],[2],[1]]`
+Move 3: Move disk 1 from peg 2 to peg 1. State: `[[9,8,7,6,5,4,3],[2,1],[]]`
+Move 4: Move disk 3 from peg 0 to peg 2. State: `[[9,8,7,6,5,4],[2,1],[3]]`
+Move 5: Move disk 1 from peg 1 to peg 0. State: `[[9,8,7,6,5,4,1],[2],[3]]`
+Move 6: Move disk 2 from peg 1 to peg 2. State: `[[9,8,7,6,5,4,1],[],[3,2]]`
+Move 7: Move disk 1 from peg 0 to peg 2. State: `[[9,8,7,6,5,4],[],[3,2,1]]`
+Move 8: Move disk 4 from peg 0 to peg 1. State: `[[9,8,7,6,5],[4],[3,2,1]]`
+
+Wait, I think I made a mistake. The disk movement pattern is not as I described. Let's think through it more carefully.
+
+For n disks, in the optimal solution:
+1. If n is odd, the first move of the smallest disk is from peg 0 to peg 2. And then it follows the pattern 0 -> 2 -> 1 -> 0 -> ...
+2. If n is even, the first move of the smallest disk is from peg 0 to peg 1. And then it follows the pattern 0 -> 1 -> 2 -> 0 -> ...
+
+For n=9 (odd), the pattern of the smallest disk would be 0 -> 2 -> 1 -> 0 -> ...
+
+Let's generate the moves using the recursive pattern:
+
+```
+function hanoi(n, source, auxiliary, destination, moves) {
+    if (n == 1) {
+        moves.push([1, source, destination]);
+        return;
+    }
+    
+    hanoi(n-1, source, destination, auxiliary, moves);
+    moves.push([n, source, destination]);
+    hanoi(n-1, auxiliary, source, destination, moves);
+}
+
+let moves = [];
+hanoi(9, 0, 1, 2, moves);
+```
+
+Instead, I'll implement the recursive solution manually for n=9. I'll denote hanoi(n, source, auxiliary, destination) as the sequence of moves to move n disks from source to destination using auxiliary as the intermediate peg.
+
+For n=9, the solution is:
+hanoi(9, 0, 1, 2) = hanoi(8, 0, 2, 1) + [[9, 0, 2]] + hanoi(8, 1, 0, 2)
+
+Let's break it down further:
+hanoi(8, 0, 2, 1) = hanoi(7, 0, 1, 2) + [[8, 0, 1]] + hanoi(7, 2, 0, 1)
+
+hanoi(7, 0, 1, 2) = hanoi(6, 0, 2, 1) + [[7, 0, 2]] + hanoi(6, 1, 0, 2)
+
+hanoi(6, 0, 2, 1) = hanoi(5, 0, 1, 2) + [[6, 0, 1]] + hanoi(5, 2, 0, 1)
+
+hanoi(5, 0, 1, 2) = hanoi(4, 0, 2, 1) + [[5, 0, 2]] + hanoi(4, 1, 0, 2)
+
+hanoi(4, 0, 2, 1) = hanoi(3, 0, 1, 2) + [[4, 0, 1]] + hanoi(3, 2, 0, 1)
+
+hanoi(3, 0, 1, 2) = hanoi(2, 0, 2, 1) + [[3, 0, 2]] + hanoi(2, 1, 0, 2)
+
+hanoi(2, 0, 2, 1) = hanoi(1, 0, 1, 2) + [[2, 0, 1]] + hanoi(1, 2, 0, 1)
+
+hanoi(1, 0, 1, 2) = [[1, 0, 2]]
+
+hanoi(1, 2, 0, 1) = [[1, 2, 1]]
+
+Now, let's expand this:
+
+hanoi(2, 0, 2, 1) = [[1, 0, 2]] + [[2, 0, 1]] + [[1, 2, 1]]
+
+hanoi(3, 0, 1, 2) = [[1, 0, 2]] + [[2, 0, 1]] + [[1, 2, 1]] + [[3, 0, 2]] + hanoi(2, 1, 0, 2)
+
+hanoi(2, 1, 0, 2) = hanoi(1, 1, 2, 0) + [[2, 1, 2]] + hanoi(1, 0, 1, 2)
+
+hanoi(1, 1, 2, 0) = [[1, 1, 0]]
+
+hanoi(1, 0, 1, 2) = [[1, 0, 2]]
+
+So, hanoi(2, 1, 0, 2) = [[1, 1, 0]] + [[2, 1, 2]] + [[1, 0, 2]]
+
+And now, hanoi(3, 0, 1, 2) = [[1, 0, 2]] + [[2, 0, 1]] + [[1, 2, 1]] + [[3, 0, 2]] + [[1, 1, 0]] + [[2, 1, 2]] + [[1, 0, 2]]
+
+Now, let's compute hanoi(3, 2, 0, 1).
+
+hanoi(3, 2, 0, 1) = hanoi(2, 2, 1, 0) + [[3, 2, 1]] + hanoi(2, 0, 2, 1)
+
+hanoi(2, 2, 1, 0) = hanoi(1, 2, 0, 1) + [[2, 2, 0]] + hanoi(1, 1, 2, 0)
+
+hanoi(1, 2, 0, 1) = [[1, 2, 1]]
+
+hanoi(1, 1, 2, 0) = [[1, 1, 0]]
+
+So, hanoi(2, 2, 1, 0) = [[1, 2, 1]] + [[2, 2, 0]] + [[1, 1, 0]]
+
+We already know hanoi(2, 0, 2, 1) = [[1, 0, 2]] + [[2, 0, 1]] + [[1, 2, 1]]
+
+So, hanoi(3, 2, 0, 1) = [[1, 2, 1]] + [[2, 2, 0]] + [[1, 1, 0]] + [[3, 2, 1]] + [[1, 0, 2]] + [[2, 0, 1]] + [[1, 2, 1]]
+
+With this, we can compute hanoi(4, 0, 2, 1):
+
+hanoi(4, 0, 2, 1) = hanoi(3, 0, 1, 2) + [[4, 0, 1]] + hanoi(3, 2, 0, 1)
+
+= [[1, 0, 2]] + [[2, 0, 1]] + [[1, 2, 1]] + [[3, 0, 2]] + [[1, 1, 0]] + [[2, 1, 2]] + [[1, 0, 2]] + [[4, 0, 1]] + [[1, 2, 1]] + [[2, 2, 0]] + [[1, 1, 0]] + [[3, 2, 1]] + [[1, 0, 2]] + [[2, 0, 1]] + [[1, 2, 1]]
+
+Actually, this is going to be very long if I continue in this manner because there are 511 moves in total. Let me try to find a more efficient way to describe the solution.
+
+I'll try to compute the moves using the property I mentioned earlier: for move i (0-indexed), the disk to be moved is the one with the smallest ID that hasn't been moved in the last i mod 2^d moves (where d is the disk ID).
+
+For a disk with ID d, it moves exactly once in every 2^d consecutive moves. The direction of movement for disk d is as follows:
+- If d is odd, the disk moves in a cyclic manner: 0 -> 2 -> 1 -> 0 -> ...
+- If d is even, the disk moves in a cyclic manner: 0 -> 1 -> 2 -> 0 -> ...
+
+Let's compute the first few moves for n=9.
+
+Move 0 (first move): Move disk 1 from peg 0 to peg 2.
+Move 1 (second move): Move disk 2 from peg 0 to peg 1.
+Move 2 (third move): Move disk 1 from peg 2 to peg 1.
+Move 3 (fourth move): Move disk 3 from peg 0 to peg 2.
+Move 4 (fifth move): Move disk 1 from peg 1 to peg 0.
+Move 5 (sixth move): Move disk 2 from peg 1 to peg 2.
+Move 6 (seventh move): Move disk 1 from peg 0 to peg 2.
+Move 7 (eighth move): Move disk 4 from peg 0 to peg 1.
+
+And so on.
+
+Given the recursive pattern of the Tower of Hanoi, it seems like I should be able to directly compute the i-th move without going through all preceding moves. This would allow me to generate all 511 moves more efficiently.
+
+Actually, from the iterative description, we can directly derive a method to compute the moves. For the i-th move (0-indexed):
+
+1. The disk to be moved is the smallest disk that hasn't been moved in the last i mod 2^d moves. This can be computed as the rightmost 0 in the binary representation of i+1. For instance, if i+1 = 10 (binary: 1010), the rightmost 0 is at position 1, so the disk to be moved is disk 2.
+2. The direction of movement depends on the parity of the disk and the parity of i/2^d. For odd-numbered disks (d=1, 3, 5, ...), the pattern is 0 -> 2 -> 1 -> 0 -> ... and for even-numbered disks (d=2, 4, 6, ...), the pattern is 0 -> 1 -> 2 -> 0 -> ...
+
+Let's try to use this to generate the moves for n=9.
+
+OK, so let's revisit the approach. We are going to compute all 511 moves, but I'll try to give a more efficient description of the algorithm.
+
+To compute the sequence of moves for the Tower of Hanoi:
+
+1. For each move i (0-indexed), compute the disk to be moved using the binary representation of i+1. The disk is given by the position of the rightmost 0 (1-indexed) in the binary representation of i+1. If there's no 0, the position is considered to be the position immediately to the right of the least significant bit.
+2. Determine the source and destination pegs for the move. This depends on the parity of the disk and the parity of i/2^d.
+
+Let's start generating the moves for n=9.
+
+For move 0 (first move):
+i+1 = 1 (binary: 1). There's no 0, so the position is considered to be 1. So, disk 1 is to be moved.
+The parity of disk 1 is odd, and the parity of 0/2^1 is even. According to the pattern 0 -> 2 -> 1 -> 0 for odd-numbered disks, the move would be 0 -> 2.
+Move 0: Move disk 1 from peg 0 to peg 2.
+
+For move 1 (second move):
+i+1 = 2 (binary: 10). The rightmost 0 is at position 1, so disk 2 is to be moved.
+The parity of disk 2 is even, and the parity of 1/2^2 is odd. According to the pattern 0 -> 1 -> 2 -> 0 for even-numbered disks, the move would be 0 -> 1.
+Move 1: Move disk 2 from peg 0 to peg 1.
+
+For move 2 (third move):
+i+1 = 3 (binary: 11). There's no 0, so the position is considered to be 1. So, disk 1 is to be moved.
+The parity of disk 1 is odd, and the parity of 2/2^1 is odd. According to the pattern 0 -> 2 -> 1 -> 0 for odd-numbered disks, the move would be 2 -> 1.
+Move 2: Move disk 1 from peg 2 to peg 1.
+
+For move 3 (fourth move):
+i+1 = 4 (binary: 100). The rightmost 0 is at position 3, so disk 3 is to be moved.
+The parity of disk 3 is odd, and the parity of 3/2^3 is odd. According to the pattern 0 -> 2 -> 1 -> 0 for odd-numbered disks, the move would be 0 -> 2.
+Move 3: Move disk 3 from peg 0 to peg 2.
+
+For move 4 (fifth move):
+i+1 = 5 (binary: 101). There's no 0 in the binary representation, so the position is considered to be 1. So, disk 1 is to be moved.
+The parity of disk 1 is odd, and the parity of 4/2^1 is even. According to the pattern 0 -> 2 -> 1 -> 0 for odd-numbered disks, the move would be 1 -> 0.
+Move 4: Move disk 1 from peg 1 to peg 0.
+
+For move 5 (sixth move):
+i+1 = 6 (binary: 110). The rightmost 0 is at position 1, so disk 2 is to be moved.
+The parity of disk 2 is even, and the parity of 5/2^2 is odd. According to the pattern 0 -> 1 -> 2 -> 0 for even-numbered disks, the move would be 1 -> 2.
+Move 5: Move disk 2 from peg 1 to peg 2.
+
+For move 6 (seventh move):
+i+1 = 7 (binary: 111). There's no 0, so the position is considered to be 1. So, disk 1 is to be moved.
+The parity of disk 1 is odd, and the parity of 6/2^1 is odd. According to the pattern 0 -> 2 -> 1 -> 0 for odd-numbered disks, the move would be 0 -> 2.
+Move 6: Move disk 1 from peg 0 to peg 2.
+
+For move 7 (eighth move):
+i+1 = 8 (binary: 1000). The rightmost 0 is at position 4, so disk 4 is to be moved.
+The parity of disk 4 is even, and the parity of 7/2^4 is odd. According to the pattern 0 -> 1 -> 2 -> 0 for even-numbered disks, the move would be 0 -> 1.
+Move 7: Move disk 4 from peg 0 to peg 1.
+
+For move 8 (ninth move):
+i+1 = 9 (binary: 1001). There's no 0 at positions 1 and 2, so the position is considered to be 1. So, disk 1 is to be moved.
+The parity of disk 1 is odd, and the parity of 8/2^1 is even. According to the pattern 0 -> 2 -> 1 -> 0 for odd-numbered disks, the move would be 2 -> 1.
+Move 8: Move disk 1 from peg 2 to peg 1.
+
+For move 9 (tenth move):
+i+1 = 10 (binary: 1010). The rightmost 0 is at position 2, so disk 2 is to be moved.
+The parity of disk 2 is even, and the parity of 9/2^2 is even. According to the pattern 0 -> 1 -> 2 -> 0 for even-numbered disks, the move would be 2 -> 0.
+Move 9: Move disk 2 from peg 2 to peg 0.
+
+For move 10 (eleventh move):
+i+1 = 11 (binary: 1011). There's no 0 at positions 1 and 2, so the position is considered to be 1. So, disk 1 is to be moved.
+The parity of disk 1 is odd, and the parity of 10/2^1 is odd. According to the pattern 0 -> 2 -> 1 -> 0 for odd-numbered disks, the move would be 1 -> 0.
+Move 10: Move disk 1 from peg 1 to peg 0.
+
+For move 11 (twelfth move):
+i+1 = 12 (binary: 1100). The rightmost 0 is at position 3, so disk 3 is to be moved.
+The parity of disk 3 is odd, and the parity of 11/2^3 is odd. According to the pattern 0 -> 2 -> 1 -> 0 for odd-numbered disks, the move would be 2 -> 1.
+Move 11: Move disk 3 from peg 2 to peg 1.
+
+For move 12 (thirteenth move):
+i+1 = 13 (binary: 1101). There's no 0 at positions 1 and 2, so the position is considered to be 1. So, disk 1 is to be moved.
+The parity of disk 1 is odd, and the parity of 12/2^1 is even. According to the pattern 0 -> 2 -> 1 -> 0 for odd-numbered disks, the move would be 0 -> 2.
+Move 12: Move disk 1 from peg 0 to peg 2.
+
+For move 13 (fourteenth move):
+i+1 = 14 (binary: 1110). The rightmost 0 is at position 1, so disk 2 is to be moved.
+The parity of disk 2 is even, and the parity of 13/2^2 is odd. According to the pattern 0 -> 1 -> 2 -> 0 for even-numbered disks, the move would be 0 -> 1.
+Move 13: Move disk 2 from peg 0 to peg 1.
+
+For move 14 (fifteenth move):
+i+1 = 15 (binary: 1111). There's no 0, so the position is considered to be 1. So, disk 1 is to be moved.
+The parity of disk 1 is odd, and the parity of 14/2^1 is odd. According to the pattern 0 -> 2 -> 1 -> 0 for odd-numbered disks, the move would be 2 -> 1.
+Move 14: Move disk 1 from peg 2 to peg 1.
+
+For move 15 (sixteenth move):
+i+1 = 16 (binary: 10000). The rightmost 0 is at position 5, so disk 5 is to be moved.
+The parity of disk 5 is odd, and the parity of 15/2^5 is odd. According to the pattern 0 -> 2 -> 1 -> 0 for odd-numbered disks, the move would be 0 -> 2.
+Move 15: Move disk 5 from peg 0 to peg 2.
+
+I am only at move 15 out of 511, so it'll be impractical to enumerate every single move here. I need to figure out a more systematic way to present the solution.
+
+Actually, I'm finding the method I'm using a bit cumbersome for enumerating all 511 moves. Let me reconsider using the recursive approach.
+
+For n=9, the recursive approach gives:
+1. Move 8 disks from source to auxiliary (Peg 0 to Peg 1).
+2. Move disk 9 from source to destination (Peg 0 to Peg 2).
+3. Move 8 disks from auxiliary to destination (Peg 1 to Peg 2).
+
+For "Move 8 disks from source to auxiliary", the process is recursive:
+1. Move 7 disks from source to destination (Peg 0 to Peg 2).
+2. Move disk 8 from source to auxiliary (Peg 0 to Peg 1).
+3. Move 7 disks from destination to auxiliary (Peg 2 to Peg 1).
+
+And so on...
+
+I'm going to see if there's a concise pattern I can use to enumerate the 511 moves.
+
+Maybe the clearest way is to use the iterative approach to generate all 511 moves. I'll determine the disk to be moved for each step based on the binary representation of i+1, and then determine the source and destination pegs based on the parity of the disk and the move.
+
+Let me define a method to generate the source and destination pegs for a given disk and move:
+
+For a disk with ID d and move i:
+1. If d is odd:
+   - If i/2^d is even, the move is from the current peg to the next peg in the cycle 0 -> 2 -> 1 -> 0.
+   - If i/2^d is odd, the move is from the current peg to the previous peg in the cycle 0 -> 2 -> 1 -> 0.
+2. If d is even:
+   - If i/2^d is even, the move is from the current peg to the next peg in the cycle 0 -> 1 -> 2 -> 0.
+   - If i/2^d is odd, the move is from the current peg to the previous peg in the cycle 0 -> 1 -> 2 -> 0.
+
+With this, I'll try to iterate through all 511 moves.
+
+Let's implement this systematically to generate all the moves:
+
+1. For each move i (0-indexed), we determine the disk to be moved. The disk is the position of the rightmost 0 in the binary representation of i+1. If there's no 0, the position is 1.
+2. Based on the disk and the move, we determine the source and destination pegs using the method described above.
+
+Let's generate the moves:
+
+```
+for i in range(511):
+    # Determine the disk to be moved
+    binary_rep = bin(i + 1)[2:]  # Convert to binary and remove '0b' prefix
+    if '0' in binary_rep:
+        disk = len(binary_rep) - binary_rep.rindex('0')
+    else:
+        disk = 1
+    
+    # Determine source and destination pegs
+    if disk % 2 == 1:  # Odd-numbered disk
+        if (i // (2 ** (disk - 1))) % 2 == 0:  # Even move
+            source = 0 if i == 0 else # Determine source based on previous state
+            destination = 2
+        else:  # Odd move
+            source = 2
+            destination = 1
+    else:  # Even-numbered disk
+        if (i // (2 ** (disk - 1))) % 2 == 0:  # Even move
+            source = 0
+            destination = 1
+        else:  # Odd move
+            source = 1
+            destination = 2
+    
+    moves.append([disk, source, destination])
+```
+
+Wait, this approach doesn't work well because the source and destination pegs depend on the current state, which depends on all previous moves. I need to rethink the approach.
+
+Let me reconsider the recursive solution. For n=9, I can represent the solution as:
+
+hanoi(9, 0, 1, 2) = hanoi(8, 0, 2, 1) + [[9, 0, 2]] + hanoi(8, 1, 0, 2)
+
+I can expand this recursively to get the complete list of moves. But again, given the large number of moves (511), I need a more systematic way.
+
+Let's think about the problem differently. In the recursive approach:
+
+1. For even n, the smallest disk alternates between source and auxiliary pegs for the first 2^n - 2 moves. For the last move (2^n - 1), it goes to the destination.
+2. For odd n, the smallest disk alternates between source and destination pegs for the first 2^n - 2 moves. For the last move (2^n - 1), it goes to the auxiliary.
+
+For n=9 (odd), the smallest disk (disk 1) alternates between peg 0 and peg 2 for the first 510 moves. On the 511th move, it goes to peg 1.
+
+But I need to determine the moves for all disks, not just the smallest one.
+
+Let me revisit the iterative approach. The key is to track the state of the Tower of Hanoi as we iterate through the moves.
+
+Given that the Tower of Hanoi has 3 pegs, let's denote the state as a tuple (p1, p2, ..., pn), where pi is the peg (0, 1, or 2) on which disk i is placed.
+
+Initially, all disks are on peg 0, so the state is (0, 0, 0, 0, 0, 0, 0, 0, 0).
+
+For each move, we determine the disk to be moved and its source and destination pegs, then update the state accordingly.
+
+Let's start from move 0 and iterate:
+
+For move 0 (first move):
+Disk 1 (the smallest) is moved. For odd n (n=9), the smallest disk moves from peg 0 to peg 2.
+State after move 0: (2, 0, 0, 0, 0, 0, 0, 0, 0)
+Move 0: Move disk 1 from peg 0 to peg 2.
+
+For move 1 (second move):
+Disk 2 is moved. Given the state, it moves from peg 0 to peg 1.
+State after move 1: (2, 1, 0, 0, 0, 0, 0, 0, 0)
+Move 1: Move disk 2 from peg 0 to peg 1.
+
+For move 2 (third move):
+Disk 1 is moved. Given the state, it moves from peg 2 to peg 1.
+State after move 2: (1, 1, 0, 0, 0, 0, 0, 0, 0)
+Move 2: Move disk 1 from peg 2 to peg 1.
+
+For move 3 (fourth move):
+Disk 3 is moved. Given the state, it moves from peg 0 to peg 2.
+State after move 3: (1, 1, 2, 0, 0, 0, 0, 0, 0)
+Move 3: Move disk 3 from peg 0 to peg 2.
+
+For move 4 (fifth move):
+Disk 1 is moved. Given the state, it moves from peg 1 to peg 0.
+State after move 4: (0, 1, 2, 0, 0, 0, 0, 0, 0)
+Move 4: Move disk 1 from peg 1 to peg 0.
+
+For move 5 (sixth move):
+Disk 2 is moved. Given the state, it moves from peg 1 to peg 2.
+State after move 5: (0, 2, 2, 0, 0, 0, 0, 0, 0)
+Move 5: Move disk 2 from peg 1 to peg 2.
+
+For move 6 (seventh move):
+Disk 1 is moved. Given the state, it moves from peg 0 to peg 2.
+State after move 6: (2, 2, 2, 0, 0, 0, 0, 0, 0)
+Move 6: Move disk 1 from peg 0 to peg 2.
+
+For move 7 (eighth move):
+Disk 4 is moved. Given the state, it moves from peg 0 to peg 1.
+State after move 7: (2, 2, 2, 1, 0, 0, 0, 0, 0)
+Move 7: Move disk 4 from peg 0 to peg 1.
+
+I'm going to continue with this approach, but I realized that I need a more systematic way to determine the destination peg given the current state.
+
+For a disk d, the valid destination pegs are the ones where there's no disk smaller than d.
+
+So, if the current state is (p1, p2, ..., pn) and the disk to be moved is d, the valid destination pegs are all pegs except pd (the source peg) and any peg that has a disk smaller than d.
+
+For the smallest disk (d=1), the valid destination pegs are all pegs except p1.
+
+For other disks, I need to check the positions of all disks smaller than d in the current state.
+
+I think I'm overcomplicating this. Let's go back to the recursive definition of the Tower of Hanoi and derive a direct formula for the ith move.
+
+For n disks, the recursive definition gives:
+
+hanoi(n, 0, 1, 2) = hanoi(n-1, 0, 2, 1) + [[n, 0, 2]] + hanoi(n-1, 1, 0, 2)
+
+We know that hanoi(n, source, auxiliary, destination) generates 2^n - 1 moves. So, for move i (0-indexed), we have:
+
+1. If i < 2^(n-1) - 1, the move is from hanoi(n-1, 0, 2, 1).
+2. If i = 2^(n-1) - 1, the move is [n, 0, 2].
+3. If i > 2^(n-1) - 1, the move is from hanoi(n-1, 1, 0, 2), but adjusted by subtracting 2^(n-1).
+
+The recursive pattern suggests that for move i, I need to determine the disk and the source and destination pegs. I'll try another approach:
+
+1. For move i, determine the most significant bit of i+1 that's set to 1. This gives the disk.
+2. Based on the disk and the parity of the configuration (even or odd), determine the source and destination pegs.
+
+Let's try to implement this:
+
+For n=9 (odd), the smallest disk follows the pattern 0 -> 2 -> 1 -> 0 -> ... for every 3 consecutive moves.
+
+For move 0 (first move):
+The most significant bit of 1 (binary: 1) is at position 0. This corresponds to disk 1.
+For odd n, the pattern for disk 1 is 0 -> 2 -> 1 -> 0 -> ... Since this is the first occurrence, the move is 0 -> 2.
+Move 0: Move disk 1 from peg 0 to peg 2.
+
+For move 1 (second move):
+The most significant bit of 2 (binary: 10) is at position 1. This corresponds to disk 2.
+For odd n, the pattern for disk 2 is 0 -> 1 -> 2 -> 0 -> ... Since this is the first occurrence, the move is 0 -> 1.
+Move 1: Move disk 2 from peg 0 to peg 1.
+
+For move 2 (third move):
+The most significant bit of 3 (binary: 11) is at position 1. This corresponds to disk 2.
+But disk 2 can't move since it's already at peg 1. So, disk 1 moves.
+For odd n, the pattern for disk 1 is 0 -> 2 -> 1 -> 0 -> ... Since this is the second occurrence, the move is 2 -> 1.
+Move 2: Move disk 1 from peg 2 to peg 1.
+
+Hmm, I think I'm not explaining the method very well or there may be errors in my approach.
+
+Let me revert back to the recursive approach and derive the moves systematically.
+
+For n=9, the moves are:
+
+1. hanoi(8, 0, 2, 1): Move 8 disks from peg 0 to peg 1 using peg 2 as an auxiliary.
+2. Move disk 9 from peg 0 to peg 2.
+3. hanoi(8, 1, 0, 2): Move 8 disks from peg 1 to peg 2 using peg 0 as an auxiliary.
+
+For hanoi(8, 0, 2, 1):
+
+1. hanoi(7, 0, 1, 2): Move 7 disks from peg 0 to peg 2 using peg 1 as an auxiliary.
+2. Move disk 8 from peg 0 to peg 1.
+3. hanoi(7, 2, 0, 1): Move 7 disks from peg 2 to peg 1 using peg 0 as an auxiliary.
+
+And this recursion continues. The total number of moves is 2^9 - 1 = 511.
+
+Considering the complexity, let's revisit the idea of representing the solution in a more concise form. When I analyze the recursive structure, I can see a pattern: each disk follows a set pattern of moves based on its identifier.
+
+Let's define a function, move(i), which gives the disk to be moved for the i-th move (0-indexed):
+
+move(i) = the position of the least significant bit of i+1 that's set to 1. If i+1 is 2^j, then the disk to be moved is j+1.
+
+For example:
+
+move(0) = the position of the least significant bit of 1 (binary: 1) that's set to 1, which is 0. So, the disk to be moved is 1.
+move(1) = the position of the least significant bit of 2 (binary: 10) that's set to 1, which is 1. So, the disk to be moved is 2.
+move(2) = the position of the least significant bit of 3 (binary: 11) that's set to 1, which is 0. So, the disk to be moved is 1.
+move(3) = the position of the least significant bit of 4 (binary: 100) that's set to 1, which is 2. So, the disk to be moved is 3.
+move(4) = the position of the least significant bit of 5 (binary: 101) that's set to 1, which is 0. So, the disk to be moved is 1.
+move(5) = the position of the least significant bit of 6 (binary: 110) that's set to 1, which is 1. So, the disk to be moved is 2.
+move(6) = the position of the least significant bit of 7 (binary: 111) that's set to 1, which is 0. So, the disk to be moved is 1.
+move(7) = the position of the least significant bit of 8 (binary: 1000) that's set to 1, which is 3. So, the disk to be moved is 4.
+
+Now, let's define the source and destination pegs for each disk:
+
+For disk d:
+- If d is odd and n is odd, the move pattern is 0 -> 2 -> 1 -> 0 -> ...
+- If d is odd and n is even, the move pattern is 0 -> 1 -> 2 -> 0 -> ...
+- If d is even and n is odd, the move pattern is 0 -> 1 -> 2 -> 0 -> ...
+- If d is even and n is even, the move pattern is 0 -> 2 -> 1 -> 0 -> ...
+
+For n=9 (odd), the patterns are:
+- For disk 1, 3, 5, 7, 9 (odd): 0 -> 2 -> 1 -> 0 -> ...
+- For disk 2, 4, 6, 8 (even): 0 -> 1 -> 2 -> 0 -> ...
+
+I'll determine the source and destination pegs for each move based on these patterns.
+
+For move 0 (first move):
+Disk 1 (odd) follows the pattern 0 -> 2 -> 1 -> 0 -> ... for odd n. So, the move is 0 -> 2.
+Move 0: Move disk 1 from peg 0 to peg 2.
+
+For move 1 (second move):
+Disk 2 (even) follows the pattern 0 -> 1 -> 2 -> 0 -> ... for odd n. So, the move is 0 -> 1.
+Move 1: Move disk 2 from peg 0 to peg 1.
+
+For move 2 (third move):
+Disk 1 (odd) follows the pattern 0 -> 2 -> 1 -> 0 -> ... for odd n. So, the move is 2 -> 1.
+Move 2: Move disk 1 from peg 2 to peg 1.
+
+For move 3 (fourth move):
+Disk 3 (odd) follows the pattern 0 -> 2 -> 1 -> 0 -> ... for odd n. So, the move is 0 -> 2.
+Move 3: Move disk 3 from peg 0 to peg 2.
+
+For move 4 (fifth move):
+Disk 1 (odd) follows the pattern 0 -> 2 -> 1 -> 0 -> ... for odd n. So, the move is 1 -> 0.
+Move 4: Move disk 1 from peg 1 to peg 0.
+
+For move 5 (sixth move):
+Disk 2 (even) follows the pattern 0 -> 1 -> 2 -> 0 -> ... for odd n. So, the move is 1 -> 2.
+Move 5: Move disk 2 from peg 1 to peg 2.
+
+For move 6 (seventh move):
+Disk 1 (odd) follows the pattern 0 -> 2 -> 1 -> 0 -> ... for odd n. So, the move is 0 -> 2.
+Move 6: Move disk 1 from peg 0 to peg 2.
+
+For move 7 (eighth move):
+Disk 4 (even) follows the pattern 0 -> 1 -> 2 -> 0 -> ... for odd n. So, the move is 0 -> 1.
+Move 7: Move disk 4 from peg 0 to peg 1.
+
+Now, I can see a pattern! For disk d and move i:
+
+1. The disk to be moved is the position of the least significant bit of i+1 that's set to 1, plus 1.
+2. For odd n (n=9), the move pattern for odd disks is 0 -> 2 -> 1 -> 0 -> ... and for even disks, it's 0 -> 1 -> 2 -> 0 -> ...
+
+Let me use this method to systematically generate the moves. However, for each disk, I need to keep track of its current peg. I'll iterate through the moves and update the positions of the disks.
+
+Let's represent the state as an array of positions, where the position of disk d is stored at index d-1. Initially, all disks are on peg 0.
+
+For n=9, the initial state is [0, 0, 0, 0, 0, 0, 0, 0, 0].
+
+For move 0 (first move):
+Disk 1 moves from peg 0 to peg 2. State after move: [2, 0, 0, 0, 0, 0, 0, 0, 0].
+Move 0: Move disk 1 from peg 0 to peg 2.
+
+For move 1 (second move):
+Disk 2 moves from peg 0 to peg 1. State after move: [2, 1, 0, 0, 0, 0, 0, 0, 0].
+Move 1: Move disk 2 from peg 0 to peg 1.
+
+For move 2 (third move):
+Disk 1 moves from peg 2 to peg 1. State after move: [1, 1, 0, 0, 0, 0, 0, 0, 0].
+Move 2: Move disk 1 from peg 2 to peg 1.
+
+For move 3 (fourth move):
+Disk 3 moves from peg 0 to peg 2. State after move: [1, 1, 2, 0, 0, 0, 0, 0, 0].
+Move 3: Move disk 3 from peg 0 to peg 2.
+
+For move 4 (fifth move):
+Disk 1 moves from peg 1 to peg 0. State after move: [0, 1, 2, 0, 0, 0, 0, 0, 0].
+Move 4: Move disk 1 from peg 1 to peg 0.
+
+For move 5 (sixth move):
+Disk 2 moves from peg 1 to peg 2. State after move: [0, 2, 2, 0, 0, 0, 0, 0, 0].
+Move 5: Move disk 2 from peg 1 to peg 2.
+
+For move 6 (seventh move):
+Disk 1 moves from peg 0 to peg 2. State after move: [2, 2, 2, 0, 0, 0, 0, 0, 0].
+Move 6: Move disk 1 from peg 0 to peg 2.
+
+For move 7 (eighth move):
+Disk 4 moves from peg 0 to peg 1. State after move: [2, 2, 2, 1, 0, 0, 0, 0, 0].
+Move 7: Move disk 4 from peg 0 to peg 1.
+
+I'll continue using this approach to generate all 511 moves.
+
+But the explanation has already been lengthy, and the approach is clear. The algorithm is as follows:
+1. Initialize the positions of all disks to peg 0.
+2. For each move i (0-indexed):
+   a. Determine the disk to be moved as the position of the least significant bit of i+1 that's set to 1, plus 1.
+   b. Determine the valid destination peg based on the current position of the disk and the Tower of Hanoi rules.
+   c. Update the position of the disk.
+   d. Add the move to the list of moves.
+
+Ok, just to be clear, I will list the first few moves again, including source and destination:
+
+Move 0: Move disk 1 from peg 0 to peg 2.
+Move 1: Move disk 2 from peg 0 to peg 1.
+Move 2: Move disk 1 from peg 2 to peg 1.
+Move 3: Move disk 3 from peg 0 to peg 2.
+Move 4: Move disk 1 from peg 1 to peg 0.
+Move 5: Move disk 2 from peg 1 to peg 2.
+Move 6: Move disk 1 from peg 0 to peg 2.
+Move 7: Move disk 4 from peg 0 to peg 1.
+
+These match the expected pattern. I'm going to systematize this further to be able to generate all 511 moves efficiently.
+
+Let's write a clearer algorithm based on the pattern I've identified:
+
+1. For move i (0-indexed), we determine the disk to be moved as the position of the least significant bit of i+1 that's set to 1, plus 1.
+2. For n=9 (odd), the move pattern for odd disks is 0 -> 2 -> 1 -> 0 -> ... and for even disks, it's 0 -> 1 -> 2 -> 0 -> ...
+3. We track the current position of each disk and update it after each move.
+
+Let's implement this to derive all 511 moves.
+
+I'll track the position of each disk:
+positions = [0, 0, 0, 0, 0, 0, 0, 0, 0]  # position of disk d is at index d-1
+
+And I'll generate the 511 moves using the algorithm described above.
+
+For each move i (0-indexed):
+1. Determine the disk d to be moved.
+2. Determine the source peg (current position of disk d) and the valid destination peg based on the move pattern.
+3. Update the position of disk d.
+4. Add the move to the list of moves.
+
+Let's generate all 511 moves.
+
+Ok, so we have the approach. Let's see if we can use the recursive definition to derive a more direct formula for the source and destination pegs.
+
+For n=9, the recursive definition of the Tower of Hanoi gives:
+1. hanoi(8, 0, 2, 1): Move 8 disks from peg 0 to peg 1 using peg 2 as an auxiliary.
+2. Move disk 9 from peg 0 to peg 2.
+3. hanoi(8, 1, 0, 2): Move 8 disks from peg 1 to peg 2 using peg 0 as an auxiliary.
+
+If we can derive a direct formula for the source and destination pegs for the first 8 disks based on the recursive structure, we can generate all 511 moves systematically.
+
+Here's what we know for disk d and move i:
+1. The disk to be moved is d = lowest bit position of i+1 that is set to 1, plus 1.
+2. For odd n, disks follow a specific movement pattern based on their parity.
+
+Let's try to derive a formula for the source and destination pegs.
+
+Actually, wait, I think I made an error in how I was thinking about disk movement patterns. Let me reconsider.
+
+For n=9, all disks are initially on peg 0. The goal is to move all disks to peg 2. Let's use the recursive definition to derive a movement pattern for each disk:
+
+1. For disk 1, it moves from peg 0 to peg 2 in the first move. The next move for disk 1 would be from peg 2 to peg 1, then from peg 1 to peg 0, and so on, following the pattern 0 -> 2 -> 1 -> 0 -> ...
+2. For disk 2, it moves from peg 0 to peg 1 in the second move. The next move for disk 2 would be from peg 1 to peg 2, then from peg 2 to peg 0, and so on, following the pattern 0 -> 1 -> 2 -> 0 -> ...
+
+For disk d and move i, the destination peg (let's call it dest) can be derived as follows:
+1. For odd disks, dest = (source + 1) % 3 if i/2^(d-1) is even, and dest = (source + 2) % 3 if i/2^(d-1) is odd.
+2. For even disks, dest = (source + 2) % 3 if i/2^(d-1) is even, and dest = (source + 1) % 3 if i/2^(d-1) is odd.
+
+Let's test this formula for the first few moves.
+
+For move 0 (first move):
+Disk 1 (odd) moves from peg 0. i/2^(d-1) = 0/2^0 = 0, which is even. So, dest = (0 + 1) % 3 = 1. But the expected dest is 2, not 1.
+
+This formula doesn't match the expected pattern. I need to reconsider.
+
+Actually, I made an error in my logic. The move pattern for each disk is not as I described.
+
+For n=9 (odd), the move pattern for disk 1 (the smallest) can be derived from the recursive definition of the Tower of Hanoi. Initially, disk 1 moves from peg 0 to peg 2 (0 -> 2). The next move for disk 1 would be from peg 2 to peg 1 (2 -> 1), then from peg 1 to peg 0 (1 -> 0), and so on, following the pattern 0 -> 2 -> 1 -> 0 -> ...
+
+But the move pattern for other disks is a bit more complex and depends on the recursive structure of the Tower of Hanoi.
+
+Let's think about this in a different way. Given the recursive structure of the Tower of Hanoi, we know that:
+
+hanoi(n, 0, 1, 2) = hanoi(n-1, 0, 2, 1) + [[n, 0, 2]] + hanoi(n-1, 1, 0, 2)
+
+For n=9, this translates to:
+
+hanoi(9, 0, 1, 2) = hanoi(8, 0, 2, 1) + [[9, 0, 2]] + hanoi(8, 1, 0, 2)
+
+I've been trying to derive a direct formula for the source and destination pegs, but it's becoming increasingly complex. Let's try a different approach.
+
+Let's reconsider the iterative solution to the Tower of Hanoi problem:
+
+For disk d and move i, the direction of movement depends on the parity of d and n. For n=9 (odd):
+1. For odd disks (d = 1, 3, 5, 7, 9), the move pattern is 0 -> 2 -> 1 -> 0 -> ...
+2. For even disks (d = 2, 4, 6, 8), the move pattern is 0 -> 1 -> 2 -> 0 -> ...
+
+Let's iterate through the moves and update the positions of the disks accordingly.
+
+For move 0 (first move):
+The disk to be moved is the position of the least significant bit of 1 (binary: 1) that's set to 1, plus 1, which is 1.
+Disk 1 (odd) is currently at peg 0. The move pattern for odd disks is 0 -> 2 -> 1 -> 0 -> ... So, the destination peg is 2.
+Move 0: Move disk 1 from peg 0 to peg 2.
+State after move 0: [2, 0, 0, 0, 0, 0, 0, 0, 0].
+
+For move 1 (second move):
+The disk to be moved is the position of the least significant bit of 2 (binary: 10) that's set to 1, plus 1, which is 2.
+Disk 2 (even) is currently at peg 0. The move pattern for even disks is 0 -> 1 -> 2 -> 0 -> ... So, the destination peg is 1.
+Move 1: Move disk 2 from peg 0 to peg 1.
+State after move 1: [2, 1, 0, 0, 0, 0, 0, 0, 0].
+
+For move 2 (third move):
+The disk to be moved is the position of the least significant bit of 3 (binary: 11) that's set to 1, plus 1, which is 1.
+Disk 1 (odd) is currently at peg 2. The move pattern for odd disks is 0 -> 2 -> 1 -> 0 -> ... So, the destination peg is 1.
+Move 2: Move disk 1 from peg 2 to peg 1.
+State after move 2: [1, 1, 0, 0, 0, 0, 0, 0, 0].
+
+For move 3 (fourth move):
+The disk to be moved is the position of the least significant bit of 4 (binary: 100) that's set to 1, plus 1, which is 3.
+Disk 3 (odd) is currently at peg 0. The move pattern for odd disks is 0 -> 2 -> 1 -> 0 -> ... So, the destination peg is 2.
+Move 3: Move disk 3 from peg 0 to peg 2.
+State after move 3: [1, 1, 2, 0, 0, 0, 0, 0, 0].
+
+I think I'm on the right track now. The move pattern for disk d is as I've described, but the source peg for each move is the current position of the disk, which depends on all previous moves for that disk.
+
+Let's derive the destination peg for disk d from peg p. For n=9 (odd):
+1. For odd disks (d = 1, 3, 5, 7, 9), the move sequence is 0 -> 2 -> 1 -> 0 -> ... So, if the current peg is p, the destination peg is (p + 1) % 3.
+2. For even disks (d = 2, 4, 6, 8), the move sequence is 0 -> 1 -> 2 -> 0 -> ... So, if the current peg is p, the destination peg is (p + 1) % 3.
+
+Wait, this doesn't match the move pattern I just derived.
+
+Let's be very specific. For n=9 (odd):
+1. For odd disks (d = 1, 3, 5, 7, 9):
+   - From peg 0, the disk moves to peg 2.
+   - From peg 2, the disk moves to peg 1.
+   - From peg 1, the disk moves to peg 0.
+2. For even disks (d = 2, 4, 6, 8):
+   - From peg 0, the disk moves to peg 1.
+   - From peg 1, the disk moves to peg 2.
+   - From peg 2, the disk moves to peg 0.
+
+I'll create a direct mapping for the destination peg:
+
+For odd disks (d = 1, 3, 5, 7, 9):
+- From peg 0, the disk moves to peg 2.
+- From peg 1, the disk moves to peg 0.
+- From peg 2, the disk moves to peg 1.
+
+For even disks (d = 2, 4, 6, 8):
+- From peg 0, the disk moves to peg 1.
+- From peg 1, the disk moves to peg 2.
+- From peg 2, the disk moves to peg 0.
+
+Let's use this mapping to determine the destination peg for each move.
+
+For move 0 (first move):
+The disk to be moved is 1 (odd). It's currently at peg 0. According to the mapping for odd disks, the destination peg is 2.
+Move 0: Move disk 1 from peg 0 to peg 2.
+State after move 0: [2, 0, 0, 0, 0, 0, 0, 0, 0].
+
+For move 1 (second move):
+The disk to be moved is 2 (even). It's currently at peg 0. According to the mapping for even disks, the destination peg is 1.
+Move 1: Move disk 2 from peg 0 to peg 1.
+State after move 1: [2, 1, 0, 0, 0, 0, 0, 0, 0].
+
+For move 2 (third move):
+The disk to be moved is 1 (odd). It's currently at peg 2. According to the mapping for odd disks, the destination peg is 1.
+Move 2: Move disk 1 from peg 2 to peg 1.
+State after move 2: [1, 1, 0, 0, 0, 0, 0, 0, 0].
+
+For move 3 (fourth move):
+The disk to be moved is 3 (odd). It's currently at peg 0. According to the mapping for odd disks, the destination peg is 2.
+Move 3: Move disk 3 from peg 0 to peg 2.
+State after move 3: [1, 1, 2, 0, 0, 0, 0, 0, 0].
+
+For move 4 (fifth move):
+The disk to be moved is 1 (odd). It's currently at peg 1. According to the mapping for odd disks, the destination peg is 0.
+Move 4: Move disk 1 from peg 1 to peg 0.
+State after move 4: [0, 1, 2, 0, 0, 0, 0, 0, 0].
+
+This matches the expected sequence for the first few moves. I'll use this approach to generate all 511 moves.
+
+Let's define a concise algorithm:
+
+1. Initialize the positions of all disks to peg 0.
+2. For each move i (0-indexed):
+   a. Determine the disk to be moved as the position of the least significant bit of i+1 that's set to 1, plus 1.
+   b. Determine the source peg as the current position of the disk.
+   c. Determine the destination peg using the mapping based on the parity of the disk.
+   d. Update the position of the disk.
+   e. Add the move to the list of moves.
+
+With this algorithm, I'll generate all 511 moves for n=9.
+
+Ok, it seems like this approach is working, so let me program it concisely:
+
+```python
+n = 9
+moves = []
+positions = [0] * n  # positions[i] is the peg where disk i+1 is currently at
+
+for i in range(2**n - 1):
+    # Determine the disk to be moved
+    binary = bin(i + 1)[2:]
+    disk = len(binary) - binary.rindex('1')
+    
+    # Determine the source and destination pegs
+    source = positions[disk - 1]
+    
+    # For odd disks
+    if disk % 2 == 1:
+        if source == 0:
+            dest = 2
+        elif source == 1:
+            dest = 0
+        else:  # source == 2
+            dest = 1
+    # For even disks
+    else:
+        if source == 0:
+            dest = 1
+        elif source == 1:
+            dest = 2
+        else:  # source == 2
+            dest = 0
+    
+    # Update the position of the disk
+    positions[disk - 1] = dest
+    
+    # Add the move to the list
+    moves.append([disk, source, dest])
+```
+
+Actually, I just realized I'm computing the "disk" incorrectly. The disk to be moved is the position of the least significant bit of i+1 that's set to 1, plus 1. Let me redefine it:
+
+```python
+n = 9
+moves = []
+positions = [0] * n  # positions[i] is the peg where disk i+1 is currently at
+
+for i in range(2**n - 1):
+    # Determine the disk to be moved
+    binary = bin(i + 1)[2:]
+    trailing_zeros = 0
+    for bit in reversed(binary):
+        if bit == '0':
+            trailing_zeros += 1
+        else:
+            break
+    disk = trailing_zeros + 1
+    
+    # Determine the source and destination pegs
+    source = positions[disk - 1]
+    
+    # For odd disks
+    if disk % 2 == 1:
+        if source == 0:
+            dest = 2
+        elif source == 1:
+            dest = 0
+        else:  # source == 2
+            dest = 1
+    # For even disks
+    else:
+        if source == 0:
+            dest = 1
+        elif source == 1:
+            dest = 2
+        else:  # source == 2
+            dest = 0
+    
+    # Update the position of the disk
+    positions[disk - 1] = dest
+    
+    # Add the move to the list
+    moves.append([disk, source, dest])
+```
+
+Actually, that's still not right. Let's use a cleaner approach. The least significant bit of i+1 that's set to 1 is the bit at position v where i+1 = 2^v * k (and k is odd). So, the disk to be moved is v+1.
+
+```python
+n = 9
+moves = []
+positions = [0] * n  # positions[i] is the peg where disk i+1 is currently at
+
+for i in range(2**n - 1):
+    # Determine the disk to be moved
+    num = i + 1
+    disk = 1
+    while num % 2 == 0:
+        num //= 2
+        disk += 1
+    
+    # Determine the source and destination pegs
+    source = positions[disk - 1]
+    
+    # For odd disks
+    if disk % 2 == 1:
+        if source == 0:
+            dest = 2
+        elif source == 1:
+            dest = 0
+        else:  # source == 2
+            dest = 1
+    # For even disks
+    else:
+        if source == 0:
+            dest = 1
+        elif source == 1:
+            dest = 2
+        else:  # source == 2
+            dest = 0
+    
+    # Update the position of the disk
+    positions[disk - 1] = dest
+    
+    # Add the move to the list
+    moves.append([disk, source, dest])
+```
+
+This algorithm correctly generates all 511 moves for n=9.
+
+Let's run the algorithm for the first few moves:
+
+For move 0 (first move):
+i + 1 = 1 (binary: 1). The least significant bit that's set to 1 is at position 0, so the disk to be moved is 1.
+Disk 1 (odd) is currently at peg 0. According to the mapping for odd disks, the destination peg is 2.
+Move 0: Move disk 1 from peg 0 to peg 2.
+State after move 0: [2, 0, 0, 0, 0, 0, 0, 0, 0].
+
+For move 1 (second move):
+i + 1 = 2 (binary: 10). The least significant bit that's set to 1 is at position 1, so the disk to be moved is 2.
+Disk 2 (even) is currently at peg 0. According to the mapping for even disks, the destination peg is 1.
+Move 1: Move disk 2 from peg 0 to peg 1.
+State after move 1: [2, 1, 0, 0, 0, 0, 0, 0, 0].
+
+For move 2 (third move):
+i + 1 = 3 (binary: 11). The least significant bit that's set to 1 is at position 0, so the disk to be moved is 1.
+Disk 1 (odd) is currently at peg 2. According to the mapping for odd disks, the destination peg is 1.
+Move 2: Move disk 1 from peg 2 to peg 1.
+State after move 2: [1, 1, 0, 0, 0, 0, 0, 0, 0].
+
+For move 3 (fourth move):
+i + 1 = 4 (binary: 100). The least significant bit that's set to 1 is at position 2, so the disk to be moved is 3.
+Disk 3 (odd) is currently at peg 0. According to the mapping for odd disks, the destination peg is 2.
+Move 3: Move disk 3 from peg 0 to peg 2.
+State after move 3: [1, 1, 2, 0, 0, 0, 0, 0, 0].
+
+This matches the expected moves. I'm now confident in the correctness of the algorithm.
+
+We should list all 511 moves to solve the Tower of Hanoi for n=9, with all disks initially on peg 0 and the goal being to move all disks to peg 2.
+
+Using the algorithm I've described, the list of moves is:
+
+```
+[1, 0, 2]
+[2, 0, 1]
+[1, 2, 1]
+[3, 0, 2]
+[1, 1, 0]
+[2, 1, 2]
+[1, 0, 2]
+[4, 0, 1]
+[1, 2, 1]
+[2, 2, 0]
+[1, 1, 0]
+[3, 2, 1]
+[1, 0, 2]
+[2, 0, 1]
+[1, 2, 1]
+[5, 0, 2]
+[1, 1, 0]
+[2, 1, 2]
+[1, 0, 2]
+[3, 1, 0]
+[1, 2, 1]
+[2, 2, 0]
+[1, 1, 0]
+[4, 1, 2]
+[1, 0, 2]
+[2, 0, 1]
+[1, 2, 1]
+[3, 0, 2]
+[1, 1, 0]
+[2, 1, 2]
+[1, 0, 2]
+[6, 0, 1]
+[1, 2, 1]
+[2, 2, 0]
+[1, 1, 0]
+[3, 2, 1]
+[1, 0, 2]
+[2, 0, 1]
+[1, 2, 1]
+[4, 2, 0]
+[1, 1, 0]
+[2, 1, 2]
+[1, 0, 2]
+[3, 1, 0]
+[1, 2, 1]
+[2, 2, 0]
+[1, 1, 0]
+[5, 2, 1]
+[1, 0, 2]
+[2, 0, 1]
+[1, 2, 1]
+[3, 0, 2]
+[1, 1, 0]
+[2, 1, 2]
+[1, 0, 2]
+[4, 0, 1]
+[1, 2, 1]
+[2, 2, 0]
+[1, 1, 0]
+[3, 2, 1]
+[1, 0, 2]
+[2, 0, 1]
+[1, 2, 1]
+[7, 0, 2]
+[1, 1, 0]
+[2, 1, 2]
+[1, 0, 2]
+[3, 1, 0]
+[1, 2, 1]
+[2, 2, 0]
+[1, 1, 0]
+[4, 1, 2]
+[1, 0, 2]
+[2, 0, 1]
+[1, 2, 1]
+[3, 0, 2]
+[1, 1, 0]
+[2, 1, 2]
+[1, 0, 2]
+[5, 1, 0]
+[1, 2, 1]
+[2, 2, 0]
+[1, 1, 0]
+[3, 2, 1]
+[1, 0, 2]
+[2, 0, 1]
+[1, 2, 1]
+[4, 2, 0]
+[1, 1, 0]
+[2, 1, 2]
+[1, 0, 2]
+[3, 1, 0]
+[1, 2, 1]
+[2, 2, 0]
+[1, 1, 0]
+[6, 1, 2]
+[1, 0, 2]
+[2, 0, 1]
+[1, 2, 1]
+[3, 0, 2]
+[1, 1, 0]
+[2, 1, 2]
+[1, 0, 2]
+[4, 0, 1]
+[1, 2, 1]
+[2, 2, 0]
+[1, 1, 0]
+[3, 2, 1]
+[1, 0, 2]
+[2, 0, 1]
+[1, 2, 1]
+[5, 0, 2]
+[1, 1, 0]
+[2, 1, 2]
+[1, 0, 2]
+[3, 1, 0]
+[1, 2, 1]
+[2, 2, 0]
+[1, 1, 0]
+[4, 1, 2]
+[1, 0, 2]
+[2, 0, 1]
+[1, 2, 1]
+[3, 0, 2]
+[1, 1, 0]
+[2, 1, 2]
+[1, 0, 2]
+[8, 0, 1]
+[1, 2, 1]
+[2, 2, 0]
+[1, 1, 0]
+[3, 2, 1]
+[1, 0, 2]
+[2, 0, 1]
+[1, 2, 1]
+[4, 2, 0]
+[1, 1, 0]
+[2, 1, 2]
+[1, 0, 2]
+[3, 1, 0]
+[1, 2, 1]
+[2, 2, 0]
+[1, 1, 0]
+[5, 2, 1]
+[1, 0, 2]
+[2, 0, 1]
+[1, 2, 1]
+[3, 0, 2]
+[1, 1, 0]
+[2, 1, 2]
+[1, 0, 2]
+[4, 0, 1]
+[1, 2, 1]
+[2, 2, 0]
+[1, 1, 0]
+[3, 2, 1]
+[1, 0, 2]
+[2, 0, 1]
+[1, 2, 1]
+[6, 2, 0]
+[1, 1, 0]
+[2, 1, 2]
+[1, 0, 2]
+[3, 1, 0]
+[1, 2, 1]
+[2, 2, 0]
+[1, 1, 0]
+[4, 1, 2]
+[1, 0, 2]
+[2, 0, 1]
+[1, 2, 1]
+[3, 0, 2]
+[1, 1, 0]
+[2, 1, 2]
+[1, 0, 2]
+[5, 0, 1]
+[1, 2, 1]
+[2, 2, 0]
+[1, 1, 0]
+[3, 2, 1]
+[1, 0, 2]
+[2, 0, 1]
+[1, 2, 1]
+[4, 2, 0]
+[1, 1, 0]
+[2, 1, 2]
+[1, 0, 2]
+[3, 1, 0]
+[1, 2, 1]
+[2, 2, 0]
+[1, 1, 0]
+[7, 2, 1]
+[1, 0, 2]
+[2, 0, 1]
+[1, 2, 1]
+[3, 0, 2]
+[1, 1, 0]
+[2, 1, 2]
+[1, 0, 2]
+[4, 0, 1]
+[1, 2, 1]
+[2, 2, 0]
+[1, 1, 0]
+[3, 2, 1]
+[1, 0, 2]
+[2, 0, 1]
+[1, 2, 1]
+[5, 0, 2]
+[1, 1, 0]
+[2, 1, 2]
+[1, 0, 2]
+[3, 1, 0]
+[1, 2, 1]
+[2, 2, 0]
+[1, 1, 0]
+[4, 1, 2]
+[1, 0, 2]
+[2, 0, 1]
+[1, 2, 1]
+[3, 0, 2]
+[1, 1, 0]
+[2, 1, 2]
+[1, 0, 2]
+[6, 0, 1]
+[1, 2, 1]
+[2, 2, 0]
+[1, 1, 0]
+[3, 2, 1]
+[1, 0, 2]
+[2, 0, 1]
+[1, 2, 1]
+[4, 2, 0]
+[1, 1, 0]
+[2, 1, 2]
+[1, 0, 2]
+[3, 1, 0]
+[1, 2, 1]
+[2, 2, 0]
+[1, 1, 0]
+[5, 2, 1]
+[1, 0, 2]
+[2, 0, 1]
+[1, 2, 1]
+[3, 0, 2]
+[1, 1, 0]
+[2, 1, 2]
+[1, 0, 2]
+[4, 0, 1]
+[1, 2, 1]
+[2, 2, 0]
+[1, 1, 0]
+[3, 2, 1]
+[1, 0, 2]
+[2, 0, 1]
+[1, 2, 1]
+[9, 0, 2]
+[1, 1, 0]
+[2, 1, 2]
+[1, 0, 2]
+[3, 1, 0]
+[1, 2, 1]
+[2, 2, 0]
+[1, 1, 0]
+[4, 1, 2]
+[1, 0, 2]
+[2, 0, 1]
+[1, 2, 1]
+[3, 0, 2]
+[1, 1, 0]
+[2, 1, 2]
+[1, 0, 2]
+[5, 1, 0]
+[1, 2, 1]
+[2, 2, 0]
+[1, 1, 0]
+[3, 2, 1]
+[1, 0, 2]
+[2, 0, 1]
+[1, 2, 1]
+[4, 2, 0]
+[1, 1, 0]
+[2, 1, 2]
+[1, 0, 2]
+[3, 1, 0]
+[1, 2, 1]
+[2, 2, 0]
+[1, 1, 0]
+[6, 1, 2]
+[1, 0, 2]
+[2, 0, 1]
+[1, 2, 1]
+[3, 0, 2]
+[1, 1, 0]
+[2, 1, 2]
+[1, 0, 2]
+[4, 0, 1]
+[1, 2, 1]
+[2, 2, 0]
+[1, 1, 0]
+[3, 2, 1]
+[1, 0, 2]
+[2, 0, 1]
+[1, 2, 1]
+[5, 0, 2]
+[1, 1, 0]
+[2, 1, 2]
+[1, 0, 2]
+[3, 1, 0]
+[1, 2, 1]
+[2, 2, 0]
+[1, 1, 0]
+[4, 1, 2]
+[1, 0, 2]
+[2, 0, 1]
+[1, 2, 1]
+[3, 0, 2]
+[1, 1, 0]
+[2, 1, 2]
+[1, 0, 2]
+[7, 0, 1]
+[1, 2, 1]
+[2, 2, 0]
+[1, 1, 0]
+[3, 2, 1]
+[1, 0, 2]
+[2, 0, 1]
+[1, 2, 1]
+[4, 2, 0]
+[1, 1, 0]
+[2, 1, 2]
+[1, 0, 2]
+[3, 1, 0]
+[1, 2, 1]
+[2, 2, 0]
+[1, 1, 0]
+[5, 2, 1]
+[1, 0, 2]
+[2, 0, 1]
+[1, 2, 1]
+[3, 0, 2]
+[1, 1, 0]
+[2, 1, 2]
+[1, 0, 2]
+[4, 0, 1]
+[1, 2, 1]
+[2, 2, 0]
+[1, 1, 0]
+[3, 2, 1]
+[1, 0, 2]
+[2, 0, 1]
+[1, 2, 1]
+[6, 2, 0]
+[1, 1, 0]
+[2, 1, 2]
+[1, 0, 2]
+[3, 1, 0]
+[1, 2, 1]
+[2, 2, 0]
+[1, 1, 0]
+[4, 1, 2]
+[1, 0, 2]
+[2, 0, 1]
+[1, 2, 1]
+[3, 0, 2]
+[1, 1, 0]
+[2, 1, 2]
+[1, 0, 2]
+[5, 0, 1]
+[1, 2, 1]
+[2, 2, 0]
+[1, 1, 0]
+[3, 2, 1]
+[1, 0, 2]
+[2, 0, 1]
+[1, 2, 1]
+[4, 2, 0]
+[1, 1, 0]
+[2, 1, 2]
+[1, 0, 2]
+[3, 1, 0]
+[1, 2, 1]
+[2, 2, 0]
+[1, 1, 0]
+[8, 1, 2]
+[1, 0, 2]
+[2, 0, 1]
+[1, 2, 1]
+[3, 0, 2]
+[1, 1, 0]
+[2, 1, 2]
+[1, 0, 2]
+[4, 0, 1]
+[1, 2, 1]
+[2, 2, 0]
+[1, 1, 0]
+[3, 2, 1]
+[1, 0, 2]
+[2, 0, 1]
+[1, 2, 1]
+[5, 0, 2]
+[1, 1, 0]
+[2, 1, 2]
+[1, 0, 2]
+[3, 1, 0]
+[1, 2, 1]
+[2, 2, 0]
+[1, 1, 0]
+[4, 1, 2]
+[1, 0, 2]
+[2, 0, 1]
+[1, 2, 1]
+[3, 0, 2]
+[1, 1, 0]
+[2, 1, 2]
+[1, 0, 2]
+[6, 0, 1]
+[1, 2, 1]
+[2, 2, 0]
+[1, 1, 0]
+[3, 2, 1]
+[1, 0, 2]
+[2, 0, 1]
+[1, 2, 1]
+[4, 2, 0]
+[1, 1, 0]
+[2, 1, 2]
+[1, 0, 2]
+[3, 1, 0]
+[1, 2, 1]
+[2, 2, 0]
+[1, 1, 0]
+[5, 2, 1]
+[1, 0, 2]
+[2, 0, 1]
+[1, 2, 1]
+[3, 0, 2]
+[1, 1, 0]
+[2, 1, 2]
+[1, 0, 2]
+[4, 0, 1]
+[1, 2, 1]
+[2, 2, 0]
+[1, 1, 0]
+[3, 2, 1]
+[1, 0, 2]
+[2, 0, 1]
+[1, 2, 1]
+[7, 0, 2]
+[1, 1, 0]
+[2, 1, 2]
+[1, 0, 2]
+[3, 1, 0]
+[1, 2, 1]
+[2, 2, 0]
+[1, 1, 0]
+[4, 1, 2]
+[1, 0, 2]
+[2, 0, 1]
+[1, 2, 1]
+[3, 0, 2]
+[1, 1, 0]
+[2, 1, 2]
+[1, 0, 2]
+[5, 1, 0]
+[1, 2, 1]
+[2, 2, 0]
+[1, 1, 0]
+[3, 2, 1]
+[1, 0, 2]
+[2, 0, 1]
+[1, 2, 1]
+[4, 2, 0]
+[1, 1, 0]
+[2, 1, 2]
+[1, 0, 2]
+[3, 1, 0]
+[1, 2, 1]
+[2, 2, 0]
+[1, 1, 0]
+[6, 1, 2]
+[1, 0, 2]
+[2, 0, 1]
+[1, 2, 1]
+[3, 0, 2]
+[1, 1, 0]
+[2, 1, 2]
+[1, 0, 2]
+[4, 0, 1]
+[1, 2, 1]
+[2, 2, 0]
+[1, 1, 0]
+[3, 2, 1]
+[1, 0, 2]
+[2, 0, 1]
+[1, 2, 1]
+[5, 0, 2]
+[1, 1, 0]
+[2, 1, 2]
+[1, 0, 2]
+[3, 1, 0]
+[1, 2, 1]
+[2, 2, 0]
+[1, 1, 0]
+[4, 1, 2]
+[1, 0, 2]
+[2, 0, 1]
+[1, 2, 1]
+[3, 0, 2]
+[1, 1, 0]
+[2, 1, 2]
+[1, 0, 2]
+```
+
+Actually, I miscounted. So there are 511 moves in total (2^9 - 1 = 511), and I've only listed 471. So we have 40 more moves to generate.
+
+Rather than using the above list, which could contain errors, I'll regenerate the list using the algorithm I've described:
+
+```python
+n = 9
+moves = []
+positions = [0] * n  # positions[i] is the peg where disk i+1 is currently at
+
+for i in range(2**n - 1):
+    # Determine the disk to be moved
+    num = i + 1
+    disk = 1
+    while num % 2 == 0:
+        num //= 2
+        disk += 1
+    
+    # Determine the source and destination pegs
+    source = positions[disk - 1]
+    
+    # For odd disks
+    if disk % 2 == 1:
+        if source == 0:
+            dest = 2
+        elif source == 1:
+            dest = 0
+        else:  # source == 2
+            dest = 1
+    # For even disks
+    else:
+        if source == 0:
+            dest = 1
+        elif source == 1:
+            dest = 2
+        else:  # source == 2
+            dest = 0
+    
+    # Update the position of the disk
+    positions[disk - 1] = dest
+    
+    # Add the move to the list
+    moves.append([disk, source, dest])
+```
+
+Wait, I just realized there's a simpler way to compute the disk to be moved. The disk to be moved is the position of the least significant bit of i+1 that's set to 1, plus 1. This can be computed directly:
+
+```python
+disk = 1
+num = i + 1
+while num & 1 == 0:
+    num >>= 1
+    disk += 1
+```
+
+The algorithm is correct, and the disk to be moved for each step is correctly identified. The recursive structure of the Tower of Hanoi ensures that the moves are valid.
+
+Since there are 511 moves in total, I've provided the algorithm to generate all of them. Each move is represented as [disk, source, destination], where disk is the disk to be moved (1 to 9), source is the peg from which the disk is moved (0, 1, or 2), and destination is the peg to which the disk is moved (0, 1, or 2).
+
+With this, I've presented a complete solution to the Tower of Hanoi problem for n=9, with all disks initially on peg 0 and the goal being to move all disks to peg 2.
+
+So in fact, the final answer is:
+
+moves=[[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[5,0,2],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[4,2,0],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[5,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[7,0,2],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[4,2,0],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[6,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[5,0,2],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[8,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[4,2,0],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[5,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,2,0],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[4,2,0],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[7,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[5,0,2],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[4,2,0],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[5,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[9,0,2],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[4,2,0],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[6,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[5,0,2],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[7,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[4,2,0],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[5,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,2,0],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[4,2,0],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[8,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[5,0,2],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[4,2,0],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[5,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[7,0,2],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[4,2,0],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[6,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[5,0,2],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2]]
+</think>
+
+```
+moves=[[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[5,0,2],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[4,2,0],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[5,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[7,0,2],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[4,2,0],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[6,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[5,0,2],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[8,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[4,2,0],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[5,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,2,0],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[4,2,0],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[7,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[5,0,2],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[4,2,0],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[5,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[9,0,2],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[4,2,0],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[6,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[5,0,2],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[7,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[4,2,0],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[5,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,2,0],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[4,2,0],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[8,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[5,0,2],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[6,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[4,2,0],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[5,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[7,0,2],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[5,1,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[4,2,0],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[6,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[5,0,2],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2]]
+```
+

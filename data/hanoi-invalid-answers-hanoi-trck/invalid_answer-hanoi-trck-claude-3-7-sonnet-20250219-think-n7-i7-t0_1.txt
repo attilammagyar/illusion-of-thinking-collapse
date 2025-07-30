@@ -1,0 +1,1423 @@
+# model_name='claude-3-7-sonnet-20250219', reasoning_budget=32000, tries=0, n=7, i=7
+# valid_prefix_length=29, is_valid_solution=0, first_correction=-1
+
+<think>
+This is the classic "Tower of Hanoi" puzzle with 7 disks. I need to find the sequence of moves to transfer all 7 disks from peg 0 to peg 2, following the rules.
+
+For the Tower of Hanoi problem with n disks, the optimal solution requires 2^n - 1 moves. With 7 disks, that means 2^7 - 1 = 128 - 1 = 127 moves. I'll need to enumerate all 127 moves.
+
+The recursive solution for Tower of Hanoi is:
+1. Move n-1 disks from source to auxiliary peg
+2. Move the largest disk from source to destination peg
+3. Move n-1 disks from auxiliary to destination peg
+
+Let me work through this step by step for 7 disks.
+
+Initial state:
+- Peg 0: [7, 6, 5, 4, 3, 2, 1] (bottom to top)
+- Peg 1: []
+- Peg 2: []
+
+I'll trace through the moves one by one, following the optimal solution pattern:
+
+For Tower of Hanoi with 7 disks, I need to:
+1. Move 6 disks from peg 0 to peg 1 (using peg 2 as auxiliary)
+2. Move disk 7 from peg 0 to peg 2
+3. Move 6 disks from peg 1 to peg 2 (using peg 0 as auxiliary)
+
+Step 1 involves solving Tower of Hanoi for 6 disks, which itself is recursive.
+
+Let me write a more systematic algorithm to generate all the moves:
+
+```
+function hanoi(n, source, target, auxiliary):
+    if n == 1:
+        print("Move disk 1 from peg", source, "to peg", target)
+        return
+    hanoi(n-1, source, auxiliary, target)
+    print("Move disk", n, "from peg", source, "to peg", target)
+    hanoi(n-1, auxiliary, target, source)
+```
+
+For n=7, with source=0, target=2, and auxiliary=1, I can generate all 127 moves.
+
+Let me trace through this algorithm for n=7:
+
+1. Call hanoi(7, 0, 2, 1)
+   - This calls hanoi(6, 0, 1, 2)
+     - This calls hanoi(5, 0, 2, 1)
+       - This calls hanoi(4, 0, 1, 2)
+         - This calls hanoi(3, 0, 2, 1)
+           - This calls hanoi(2, 0, 1, 2)
+             - This calls hanoi(1, 0, 2, 1)
+               - Move disk 1 from peg 0 to peg 2
+             - Move disk 2 from peg 0 to peg 1
+             - This calls hanoi(1, 2, 1, 0)
+               - Move disk 1 from peg 2 to peg 1
+           - Move disk 3 from peg 0 to peg 2
+           - This calls hanoi(2, 1, 2, 0)
+             - This calls hanoi(1, 1, 0, 2)
+               - Move disk 1 from peg 1 to peg 0
+             - Move disk 2 from peg 1 to peg 2
+             - This calls hanoi(1, 0, 2, 1)
+               - Move disk 1 from peg 0 to peg 2
+         - Move disk 4 from peg 0 to peg 1
+         - This calls hanoi(3, 2, 1, 0)
+           - This calls hanoi(2, 2, 0, 1)
+             - This calls hanoi(1, 2, 1, 0)
+               - Move disk 1 from peg 2 to peg 1
+             - Move disk 2 from peg 2 to peg 0
+             - This calls hanoi(1, 1, 0, 2)
+               - Move disk 1 from peg 1 to peg 0
+           - Move disk 3 from peg 2 to peg 1
+           - This calls hanoi(2, 0, 1, 2)
+             - This calls hanoi(1, 0, 2, 1)
+               - Move disk 1 from peg 0 to peg 2
+             - Move disk 2 from peg 0 to peg 1
+             - This calls hanoi(1, 2, 1, 0)
+               - Move disk 1 from peg 2 to peg 1
+
+Actually, generating this recursively gets quite complex to trace manually. Let me implement a more direct algorithm to track the state of the pegs and generate the moves sequentially.
+
+Let me implement an iterative solution to generate all moves for Tower of Hanoi:
+
+For n disks, the optimal solution follows a pattern:
+- If n is odd, the first move is from source to target
+- If n is even, the first move is from source to auxiliary
+
+Then the moves cycle through (source, auxiliary, target) but only make a move if it's legal according to the rules.
+
+Let me implement this algorithm for n=7:
+
+1. Since 7 is odd, the first move is from peg 0 to peg 2 (moving disk 1)
+2. Then we cycle through moves: (0->1), (2->1), (0->2), (1->0), (1->2), (0->2), and so on, always choosing a legal move.
+
+Let me generate the full sequence:
+
+Initial state:
+- Peg 0: [7, 6, 5, 4, 3, 2, 1]
+- Peg 1: []
+- Peg 2: []
+
+Actually, tracking this manually would be prone to errors. Let me systematically generate the moves using the recursive algorithm and keeping track of the state of the pegs.
+
+Let's set up variables to represent the current state:
+- peg0 = [7, 6, 5, 4, 3, 2, 1]
+- peg1 = []
+- peg2 = []
+
+And let's define a function to generate the moves:
+
+```
+function hanoi_moves(n, source, target, auxiliary, pegs, moves=[]):
+    if n == 0:
+        return moves
+    
+    hanoi_moves(n-1, source, auxiliary, target, pegs, moves)
+    
+    # Move disk n from source to target
+    disk = pegs[source].pop()
+    pegs[target].append(disk)
+    moves.append((source, target, pegs.copy()))
+    
+    hanoi_moves(n-1, auxiliary, target, source, pegs, moves)
+    
+    return moves
+```
+
+Let me track this algorithm through for the first few moves:
+
+Initial state:
+- Peg 0: [7, 6, 5, 4, 3, 2, 1]
+- Peg 1: []
+- Peg 2: []
+
+Oh, wait, I think I'm making this too complicated. The Tower of Hanoi has a well-known iterative solution. For 7 disks, we need to make 127 moves, and there's a pattern to determine the source and destination pegs for each move.
+
+For an optimal solution:
+1. Number the disks from 1 (smallest) to 7 (largest)
+2. For each move number i (from 1 to 127):
+   - If i is odd, move the smallest disk to the next peg (wrapping around if necessary)
+   - If i is divisible by 2 but not by 4, make the only legal move not involving the smallest disk
+   - If i is divisible by 4, move the smallest disk to the opposite direction as in step 2a
+
+But even with this algorithm, I still need to keep track of the state of the pegs.
+
+Actually, let me just code up the recursive solution and trace through it step by step:
+
+```
+function hanoi_moves(n, source, target, auxiliary, move_id=1):
+    if n == 0:
+        return move_id
+    
+    move_id = hanoi_moves(n-1, source, auxiliary, target, move_id)
+    
+    print(f"{move_id},{source},{target},...")  # Move disk n from source to target
+    move_id += 1
+    
+    move_id = hanoi_moves(n-1, auxiliary, target, source, move_id)
+    
+    return move_id
+```
+
+Now, I need to run this and keep track of the state. Let me trace through this by hand for the first few moves:
+
+Initial state:
+- Peg 0: [7, 6, 5, 4, 3, 2, 1]
+- Peg 1: []
+- Peg 2: []
+
+1. Call hanoi_moves(7, 0, 2, 1, 1)
+   - This calls hanoi_moves(6, 0, 1, 2, 1)
+     - This calls hanoi_moves(5, 0, 2, 1, 1)
+       - This calls hanoi_moves(4, 0, 1, 2, 1)
+         - This calls hanoi_moves(3, 0, 2, 1, 1)
+           - This calls hanoi_moves(2, 0, 1, 2, 1)
+             - This calls hanoi_moves(1, 0, 2, 1, 1)
+               - Print "1,0,2,..."  # Move disk 1 from peg 0 to peg 2
+               - After this move:
+                 - Peg 0: [7, 6, 5, 4, 3, 2]
+                 - Peg 1: []
+                 - Peg 2: [1]
+             - Print "2,0,1,..."  # Move disk 2 from peg 0 to peg 1
+             - After this move:
+               - Peg 0: [7, 6, 5, 4, 3]
+               - Peg 1: [2]
+               - Peg 2: [1]
+             - This calls hanoi_moves(1, 2, 1, 0, 3)
+               - Print "3,2,1,..."  # Move disk 1 from peg 2 to peg 1
+               - After this move:
+                 - Peg 0: [7, 6, 5, 4, 3]
+                 - Peg 1: [2, 1]
+                 - Peg 2: []
+
+OK this is going to be a lot of work to trace through manually. 
+
+Wait, I think I have a more systematic approach. Let me implement a simulation where I keep track of the state of the pegs and generate all moves according to the optimal solution.
+
+Let's start with the initial state:
+- peg0 = [7, 6, 5, 4, 3, 2, 1]
+- peg1 = []
+- peg2 = []
+
+And let's define a function to generate the optimal sequence of moves for Tower of Hanoi:
+
+```python
+def hanoi(n, source, target, auxiliary):
+    if n == 1:
+        yield (source, target)
+    else:
+        yield from hanoi(n-1, source, auxiliary, target)
+        yield (source, target)
+        yield from hanoi(n-1, auxiliary, target, source)
+```
+
+For n=7, source=0, target=2, auxiliary=1, this will yield all 127 moves in the optimal sequence.
+
+Let me trace through this simulation for the first several moves:
+
+Initial state:
+- Peg 0: [7, 6, 5, 4, 3, 2, 1]
+- Peg 1: []
+- Peg 2: []
+
+1. hanoi(7, 0, 2, 1) calls hanoi(6, 0, 1, 2)
+2. hanoi(6, 0, 1, 2) calls hanoi(5, 0, 2, 1)
+3. hanoi(5, 0, 2, 1) calls hanoi(4, 0, 1, 2)
+4. hanoi(4, 0, 1, 2) calls hanoi(3, 0, 2, 1)
+5. hanoi(3, 0, 2, 1) calls hanoi(2, 0, 1, 2)
+6. hanoi(2, 0, 1, 2) calls hanoi(1, 0, 2, 1)
+7. hanoi(1, 0, 2, 1) yields (0, 2)
+
+Move 1: Disk 1 from peg 0 to peg 2
+- Peg 0: [7, 6, 5, 4, 3, 2]
+- Peg 1: []
+- Peg 2: [1]
+
+8. hanoi(2, 0, 1, 2) yields (0, 1)
+
+Move 2: Disk 2 from peg 0 to peg 1
+- Peg 0: [7, 6, 5, 4, 3]
+- Peg 1: [2]
+- Peg 2: [1]
+
+9. hanoi(2, 0, 1, 2) calls hanoi(1, 2, 1, 0)
+10. hanoi(1, 2, 1, 0) yields (2, 1)
+
+Move 3: Disk 1 from peg 2 to peg 1
+- Peg 0: [7, 6, 5, 4, 3]
+- Peg 1: [2, 1]
+- Peg 2: []
+
+11. hanoi(3, 0, 2, 1) yields (0, 2)
+
+Move 4: Disk 3 from peg 0 to peg 2
+- Peg 0: [7, 6, 5, 4]
+- Peg 1: [2, 1]
+- Peg 2: [3]
+
+12. hanoi(3, 0, 2, 1) calls hanoi(2, 1, 2, 0)
+13. hanoi(2, 1, 2, 0) calls hanoi(1, 1, 0, 2)
+14. hanoi(1, 1, 0, 2) yields (1, 0)
+
+Move 5: Disk 1 from peg 1 to peg 0
+- Peg 0: [7, 6, 5, 4, 1]
+- Peg 1: [2]
+- Peg 2: [3]
+
+15. hanoi(2, 1, 2, 0) yields (1, 2)
+
+Move 6: Disk 2 from peg 1 to peg 2
+- Peg 0: [7, 6, 5, 4, 1]
+- Peg 1: []
+- Peg 2: [3, 2]
+
+16. hanoi(2, 1, 2, 0) calls hanoi(1, 0, 2, 1)
+17. hanoi(1, 0, 2, 1) yields (0, 2)
+
+Move 7: Disk 1 from peg 0 to peg 2
+- Peg 0: [7, 6, 5, 4]
+- Peg 1: []
+- Peg 2: [3, 2, 1]
+
+Let me continue this. I know I need to do this 127 times, and I want to ensure I don't make any errors. Let me focus on accurately generating the state after each move.
+
+18. hanoi(4, 0, 1, 2) yields (0, 1)
+
+Move 8: Disk 4 from peg 0 to peg 1
+- Peg 0: [7, 6, 5]
+- Peg 1: [4]
+- Peg 2: [3, 2, 1]
+
+19. hanoi(4, 0, 1, 2) calls hanoi(3, 2, 1, 0)
+20. hanoi(3, 2, 1, 0) calls hanoi(2, 2, 0, 1)
+21. hanoi(2, 2, 0, 1) calls hanoi(1, 2, 1, 0)
+22. hanoi(1, 2, 1, 0) yields (2, 1)
+
+Move 9: Disk 1 from peg 2 to peg 1
+- Peg 0: [7, 6, 5]
+- Peg 1: [4, 1]
+- Peg 2: [3, 2]
+
+23. hanoi(2, 2, 0, 1) yields (2, 0)
+
+Move 10: Disk 2 from peg 2 to peg 0
+- Peg 0: [7, 6, 5, 2]
+- Peg 1: [4, 1]
+- Peg 2: [3]
+
+24. hanoi(2, 2, 0, 1) calls hanoi(1, 1, 0, 2)
+25. hanoi(1, 1, 0, 2) yields (1, 0)
+
+Move 11: Disk 1 from peg 1 to peg 0
+- Peg 0: [7, 6, 5, 2, 1]
+- Peg 1: [4]
+- Peg 2: [3]
+
+26. hanoi(3, 2, 1, 0) yields (2, 1)
+
+Move 12: Disk 3 from peg 2 to peg 1
+- Peg 0: [7, 6, 5, 2, 1]
+- Peg 1: [4, 3]
+- Peg 2: []
+
+27. hanoi(3, 2, 1, 0) calls hanoi(2, 0, 1, 2)
+28. hanoi(2, 0, 1, 2) calls hanoi(1, 0, 2, 1)
+29. hanoi(1, 0, 2, 1) yields (0, 2)
+
+Move 13: Disk 1 from peg 0 to peg 2
+- Peg 0: [7, 6, 5, 2]
+- Peg 1: [4, 3]
+- Peg 2: [1]
+
+30. hanoi(2, 0, 1, 2) yields (0, 1)
+
+Move 14: Disk 2 from peg 0 to peg 1
+- Peg 0: [7, 6, 5]
+- Peg 1: [4, 3, 2]
+- Peg 2: [1]
+
+31. hanoi(2, 0, 1, 2) calls hanoi(1, 2, 1, 0)
+32. hanoi(1, 2, 1, 0) yields (2, 1)
+
+Move 15: Disk 1 from peg 2 to peg 1
+- Peg 0: [7, 6, 5]
+- Peg 1: [4, 3, 2, 1]
+- Peg 2: []
+
+33. hanoi(5, 0, 2, 1) yields (0, 2)
+
+Move 16: Disk 5 from peg 0 to peg 2
+- Peg 0: [7, 6]
+- Peg 1: [4, 3, 2, 1]
+- Peg 2: [5]
+
+I think I'm getting way too much into the details. I need to automate this more efficiently. Let me try to trace through this algorithm using a simulation:
+
+```python
+def simulate_hanoi(n, source, target, auxiliary):
+    # Initialize pegs
+    pegs = [[] for _ in range(3)]
+    for i in range(n, 0, -1):
+        pegs[source].append(i)
+    
+    # Initialize moves list
+    moves = []
+    
+    # Helper function to perform a move
+    def make_move(from_peg, to_peg):
+        disk = pegs[from_peg].pop()
+        pegs[to_peg].append(disk)
+        moves.append((from_peg, to_peg, [peg.copy() for peg in pegs]))
+    
+    # Recursive function to generate moves
+    def hanoi(n, source, target, auxiliary):
+        if n == 1:
+            make_move(source, target)
+        else:
+            hanoi(n-1, source, auxiliary, target)
+            make_move(source, target)
+            hanoi(n-1, auxiliary, target, source)
+    
+    # Generate all moves
+    hanoi(n, source, target, auxiliary)
+    
+    return moves
+```
+
+Let me use this to simulate and track the state for each move in the Tower of Hanoi with 7 disks:
+
+Wait, there's a problem. I need to rethink how I'm going to solve this, as my recursive solution is getting very complex.
+
+Let me use a more direct approach:
+
+1. Initialize the pegs:
+   - Peg 0: [7, 6, 5, 4, 3, 2, 1]
+   - Peg 1: []
+   - Peg 2: []
+
+2. Define the recursive hanoi function to generate moves:
+   - If n = 1, just move the disk from source to target
+   - If n > 1, then:
+     - Move n-1 disks from source to auxiliary
+     - Move the nth disk from source to target
+     - Move n-1 disks from auxiliary to target
+
+3. For each move, record the source peg, target peg, and the state of all pegs after the move.
+
+Let me implement this directly:
+
+```
+function hanoi(n, source, target, auxiliary, pegs, moves):
+    if n == 1:
+        # Move disk 1 from source to target
+        disk = pegs[source].pop()
+        pegs[target].append(disk)
+        moves.append((source, target, pegs.copy()))
+    else:
+        hanoi(n-1, source, auxiliary, target, pegs, moves)
+        # Move disk n from source to target
+        disk = pegs[source].pop()
+        pegs[target].append(disk)
+        moves.append((source, target, pegs.copy()))
+        hanoi(n-1, auxiliary, target, source, pegs, moves)
+```
+
+Actually, the pegs should be initialized with the largest disk at the bottom and the smallest disk at the top. So the correct initialization would be:
+
+- Peg 0: [7, 6, 5, 4, 3, 2, 1] (where 7 is at the bottom and 1 is at the top)
+- Peg 1: []
+- Peg 2: []
+
+But for easier manipulation (pop and append), I'll represent the pegs with the top disk being the last element:
+
+- Peg 0: [1, 2, 3, 4, 5, 6, 7] (where 1 is at the top and 7 is at the bottom)
+- Peg 1: []
+- Peg 2: []
+
+Actually, for the representation requested in the problem, I need to represent the state from bottom to top:
+
+- Peg 0: "7 6 5 4 3 2 1"
+- Peg 1: ""
+- Peg 2: ""
+
+Let me redefine the hanoi function to work with this representation:
+
+```
+function hanoi(n, source, target, auxiliary, states):
+    if n == 0:
+        return states
+    
+    states = hanoi(n-1, source, auxiliary, target, states)
+    states.append((source, target))
+    states = hanoi(n-1, auxiliary, target, source, states)
+    
+    return states
+```
+
+This will generate a list of (source, target) tuples for each move. I'll then need to simulate these moves to get the state after each move.
+
+Alright, let me just start from scratch and implement a direct solution:
+
+1. Generate the list of moves (source, target) for the Tower of Hanoi problem.
+2. Simulate each move and record the state after each move.
+
+```
+def generate_hanoi_moves(n, source, target, auxiliary):
+    moves = []
+    
+    def hanoi(n, source, target, auxiliary):
+        if n == 1:
+            moves.append((source, target))
+        else:
+            hanoi(n-1, source, auxiliary, target)
+            moves.append((source, target))
+            hanoi(n-1, auxiliary, target, source)
+    
+    hanoi(n, source, target, auxiliary)
+    return moves
+
+def simulate_moves(n, moves):
+    # Initialize pegs
+    pegs = [[] for _ in range(3)]
+    for i in range(n, 0, -1):
+        pegs[0].append(i)
+    
+    states = []
+    
+    for move_id, (source, target) in enumerate(moves, 1):
+        # Move disk from source to target
+        disk = pegs[source].pop()
+        pegs[target].append(disk)
+        
+        # Record the state
+        state = [list(reversed(peg)) for peg in pegs]
+        states.append((move_id, source, target, state))
+    
+    return states
+```
+
+Alright, so for n=7, source=0, target=2, auxiliary=1, I'll generate all 127 moves and then simulate each move to get the state after each move.
+
+Let me use the algorithms above to generate the list of moves and states:
+
+1. Call generate_hanoi_moves(7, 0, 2, 1) to get the list of moves.
+2. Call simulate_moves(7, moves) to get the state after each move.
+
+For the format requested, I need to represent the state of each peg as a space-separated list of disk numbers, from bottom to top. If a peg is empty, I'll represent it as an empty string.
+
+I think I'm overthinking this. Let me generate the list of moves step by step, tracking the state of the pegs manually.
+
+Let's go:
+
+Initial state:
+- Peg 0: [7, 6, 5, 4, 3, 2, 1] (bottom to top)
+- Peg 1: []
+- Peg 2: []
+
+Move 1: Disk 1 from peg 0 to peg 2
+- Peg 0: [7, 6, 5, 4, 3, 2]
+- Peg 1: []
+- Peg 2: [1]
+
+Move 2: Disk 2 from peg 0 to peg 1
+- Peg 0: [7, 6, 5, 4, 3]
+- Peg 1: [2]
+- Peg 2: [1]
+
+Move 3: Disk 1 from peg 2 to peg 1
+- Peg 0: [7, 6, 5, 4, 3]
+- Peg 1: [2, 1]
+- Peg 2: []
+
+Move 4: Disk 3 from peg 0 to peg 2
+- Peg 0: [7, 6, 5, 4]
+- Peg 1: [2, 1]
+- Peg 2: [3]
+
+Move 5: Disk 1 from peg 1 to peg 0
+- Peg 0: [7, 6, 5, 4, 1]
+- Peg 1: [2]
+- Peg 2: [3]
+
+Move 6: Disk 2 from peg 1 to peg 2
+- Peg 0: [7, 6, 5, 4, 1]
+- Peg 1: []
+- Peg 2: [3, 2]
+
+Move 7: Disk 1 from peg 0 to peg 2
+- Peg 0: [7, 6, 5, 4]
+- Peg 1: []
+- Peg 2: [3, 2, 1]
+
+Move 8: Disk 4 from peg 0 to peg 1
+- Peg 0: [7, 6, 5]
+- Peg 1: [4]
+- Peg 2: [3, 2, 1]
+
+Move 9: Disk 1 from peg 2 to peg 1
+- Peg 0: [7, 6, 5]
+- Peg 1: [4, 1]
+- Peg 2: [3, 2]
+
+Move 10: Disk 2 from peg 2 to peg 0
+- Peg 0: [7, 6, 5, 2]
+- Peg 1: [4, 1]
+- Peg 2: [3]
+
+Move 11: Disk 1 from peg 1 to peg 0
+- Peg 0: [7, 6, 5, 2, 1]
+- Peg 1: [4]
+- Peg 2: [3]
+
+Move 12: Disk 3 from peg 2 to peg 1
+- Peg 0: [7, 6, 5, 2, 1]
+- Peg 1: [4, 3]
+- Peg 2: []
+
+Move 13: Disk 1 from peg 0 to peg 2
+- Peg 0: [7, 6, 5, 2]
+- Peg 1: [4, 3]
+- Peg 2: [1]
+
+Move 14: Disk 2 from peg 0 to peg 1
+- Peg 0: [7, 6, 5]
+- Peg 1: [4, 3, 2]
+- Peg 2: [1]
+
+Move 15: Disk 1 from peg 2 to peg 1
+- Peg 0: [7, 6, 5]
+- Peg 1: [4, 3, 2, 1]
+- Peg 2: []
+
+Move 16: Disk 5 from peg 0 to peg 2
+- Peg 0: [7, 6]
+- Peg 1: [4, 3, 2, 1]
+- Peg 2: [5]
+
+Move 17: Disk 1 from peg 1 to peg 0
+- Peg 0: [7, 6, 1]
+- Peg 1: [4, 3, 2]
+- Peg 2: [5]
+
+Move 18: Disk 2 from peg 1 to peg 2
+- Peg 0: [7, 6, 1]
+- Peg 1: [4, 3]
+- Peg 2: [5, 2]
+
+Move 19: Disk 1 from peg 0 to peg 2
+- Peg 0: [7, 6]
+- Peg 1: [4, 3]
+- Peg 2: [5, 2, 1]
+
+Move 20: Disk 3 from peg 1 to peg 0
+- Peg 0: [7, 6, 3]
+- Peg 1: [4]
+- Peg 2: [5, 2, 1]
+
+Move 21: Disk 1 from peg 2 to peg 1
+- Peg 0: [7, 6, 3]
+- Peg 1: [4, 1]
+- Peg 2: [5, 2]
+
+Move 22: Disk 2 from peg 2 to peg 0
+- Peg 0: [7, 6, 3, 2]
+- Peg 1: [4, 1]
+- Peg 2: [5]
+
+Move 23: Disk 1 from peg 1 to peg 0
+- Peg 0: [7, 6, 3, 2, 1]
+- Peg 1: [4]
+- Peg 2: [5]
+
+Move 24: Disk 4 from peg 1 to peg 2
+- Peg 0: [7, 6, 3, 2, 1]
+- Peg 1: []
+- Peg 2: [5, 4]
+
+Move 25: Disk 1 from peg 0 to peg 2
+- Peg 0: [7, 6, 3, 2]
+- Peg 1: []
+- Peg 2: [5, 4, 1]
+
+Move 26: Disk 2 from peg 0 to peg 1
+- Peg 0: [7, 6, 3]
+- Peg 1: [2]
+- Peg 2: [5, 4, 1]
+
+Move 27: Disk 1 from peg 2 to peg 1
+- Peg 0: [7, 6, 3]
+- Peg 1: [2, 1]
+- Peg 2: [5, 4]
+
+Move 28: Disk 3 from peg 0 to peg 2
+- Peg 0: [7, 6]
+- Peg 1: [2, 1]
+- Peg 2: [5, 4, 3]
+
+Move 29: Disk 1 from peg 1 to peg 0
+- Peg 0: [7, 6, 1]
+- Peg 1: [2]
+- Peg 2: [5, 4, 3]
+
+Move 30: Disk 2 from peg 1 to peg 2
+- Peg 0: [7, 6, 1]
+- Peg 1: []
+- Peg 2: [5, 4, 3, 2]
+
+Move 31: Disk 1 from peg 0 to peg 2
+- Peg 0: [7, 6]
+- Peg 1: []
+- Peg 2: [5, 4, 3, 2, 1]
+
+Move 32: Disk 6 from peg 0 to peg 1
+- Peg 0: [7]
+- Peg 1: [6]
+- Peg 2: [5, 4, 3, 2, 1]
+
+Move 33: Disk 1 from peg 2 to peg 0
+- Peg 0: [7, 1]
+- Peg 1: [6]
+- Peg 2: [5, 4, 3, 2]
+
+Move 34: Disk 2 from peg 2 to peg 1
+- Peg 0: [7, 1]
+- Peg 1: [6, 2]
+- Peg 2: [5, 4, 3]
+
+Move 35: Disk 1 from peg 0 to peg 1
+- Peg 0: [7]
+- Peg 1: [6, 2, 1]
+- Peg 2: [5, 4, 3]
+
+Move 36: Disk 3 from peg 2 to peg 0
+- Peg 0: [7, 3]
+- Peg 1: [6, 2, 1]
+- Peg 2: [5, 4]
+
+Move 37: Disk 1 from peg 1 to peg 2
+- Peg 0: [7, 3]
+- Peg 1: [6, 2]
+- Peg 2: [5, 4, 1]
+
+Move 38: Disk 2 from peg 1 to peg 0
+- Peg 0: [7, 3, 2]
+- Peg 1: [6]
+- Peg 2: [5, 4, 1]
+
+Move 39: Disk 1 from peg 2 to peg 0
+- Peg 0: [7, 3, 2, 1]
+- Peg 1: [6]
+- Peg 2: [5, 4]
+
+Move 40: Disk 4 from peg 2 to peg 1
+- Peg 0: [7, 3, 2, 1]
+- Peg 1: [6, 4]
+- Peg 2: [5]
+
+Move 41: Disk 1 from peg 0 to peg 1
+- Peg 0: [7, 3, 2]
+- Peg 1: [6, 4, 1]
+- Peg 2: [5]
+
+Move 42: Disk 2 from peg 0 to peg 2
+- Peg 0: [7, 3]
+- Peg 1: [6, 4, 1]
+- Peg 2: [5, 2]
+
+Move 43: Disk 1 from peg 1 to peg 2
+- Peg 0: [7, 3]
+- Peg 1: [6, 4]
+- Peg 2: [5, 2, 1]
+
+Move 44: Disk 3 from peg 0 to peg 1
+- Peg 0: [7]
+- Peg 1: [6, 4, 3]
+- Peg 2: [5, 2, 1]
+
+Move 45: Disk 1 from peg 2 to peg 0
+- Peg 0: [7, 1]
+- Peg 1: [6, 4, 3]
+- Peg 2: [5, 2]
+
+Move 46: Disk 2 from peg 2 to peg 1
+- Peg 0: [7, 1]
+- Peg 1: [6, 4, 3, 2]
+- Peg 2: [5]
+
+Move 47: Disk 1 from peg 0 to peg 1
+- Peg 0: [7]
+- Peg 1: [6, 4, 3, 2, 1]
+- Peg 2: [5]
+
+Move 48: Disk 5 from peg 2 to peg 0
+- Peg 0: [7, 5]
+- Peg 1: [6, 4, 3, 2, 1]
+- Peg 2: []
+
+Move 49: Disk 1 from peg 1 to peg 2
+- Peg 0: [7, 5]
+- Peg 1: [6, 4, 3, 2]
+- Peg 2: [1]
+
+Move 50: Disk 2 from peg 1 to peg 0
+- Peg 0: [7, 5, 2]
+- Peg 1: [6, 4, 3]
+- Peg 2: [1]
+
+Move 51: Disk 1 from peg 2 to peg 0
+- Peg 0: [7, 5, 2, 1]
+- Peg 1: [6, 4, 3]
+- Peg 2: []
+
+Move 52: Disk 3 from peg 1 to peg 2
+- Peg 0: [7, 5, 2, 1]
+- Peg 1: [6, 4]
+- Peg 2: [3]
+
+Move 53: Disk 1 from peg 0 to peg 1
+- Peg 0: [7, 5, 2]
+- Peg 1: [6, 4, 1]
+- Peg 2: [3]
+
+Move 54: Disk 2 from peg 0 to peg 2
+- Peg 0: [7, 5]
+- Peg 1: [6, 4, 1]
+- Peg 2: [3, 2]
+
+Move 55: Disk 1 from peg 1 to peg 2
+- Peg 0: [7, 5]
+- Peg 1: [6, 4]
+- Peg 2: [3, 2, 1]
+
+Move 56: Disk 4 from peg 1 to peg 0
+- Peg 0: [7, 5, 4]
+- Peg 1: [6]
+- Peg 2: [3, 2, 1]
+
+Move 57: Disk 1 from peg 2 to peg 0
+- Peg 0: [7, 5, 4, 1]
+- Peg 1: [6]
+- Peg 2: [3, 2]
+
+Move 58: Disk 2 from peg 2 to peg 1
+- Peg 0: [7, 5, 4, 1]
+- Peg 1: [6, 2]
+- Peg 2: [3]
+
+Move 59: Disk 1 from peg 0 to peg 1
+- Peg 0: [7, 5, 4]
+- Peg 1: [6, 2, 1]
+- Peg 2: [3]
+
+Move 60: Disk 3 from peg 2 to peg 0
+- Peg 0: [7, 5, 4, 3]
+- Peg 1: [6, 2, 1]
+- Peg 2: []
+
+Move 61: Disk 1 from peg 1 to peg 2
+- Peg 0: [7, 5, 4, 3]
+- Peg 1: [6, 2]
+- Peg 2: [1]
+
+Move 62: Disk 2 from peg 1 to peg 0
+- Peg 0: [7, 5, 4, 3, 2]
+- Peg 1: [6]
+- Peg 2: [1]
+
+Move 63: Disk 1 from peg 2 to peg 0
+- Peg 0: [7, 5, 4, 3, 2, 1]
+- Peg 1: [6]
+- Peg 2: []
+
+Move 64: Disk 7 from peg 0 to peg 2
+- Peg 0: [5, 4, 3, 2, 1]
+- Peg 1: [6]
+- Peg 2: [7]
+
+I'm going to continue, but I might not trace through all 127 moves here in the thinking area. The important thing is that I understand the pattern and will generate the full list of moves in the final answer.
+
+Move 65: Disk 1 from peg 0 to peg 1
+- Peg 0: [5, 4, 3, 2]
+- Peg 1: [6, 1]
+- Peg 2: [7]
+
+Move 66: Disk 2 from peg 0 to peg 2
+- Peg 0: [5, 4, 3]
+- Peg 1: [6, 1]
+- Peg 2: [7, 2]
+
+Move 67: Disk 1 from peg 1 to peg 2
+- Peg 0: [5, 4, 3]
+- Peg 1: [6]
+- Peg 2: [7, 2, 1]
+
+Move 68: Disk 3 from peg 0 to peg 1
+- Peg 0: [5, 4]
+- Peg 1: [6, 3]
+- Peg 2: [7, 2, 1]
+
+Move 69: Disk 1 from peg 2 to peg 0
+- Peg 0: [5, 4, 1]
+- Peg 1: [6, 3]
+- Peg 2: [7, 2]
+
+Move 70: Disk 2 from peg 2 to peg 1
+- Peg 0: [5, 4, 1]
+- Peg 1: [6, 3, 2]
+- Peg 2: [7]
+
+Move 71: Disk 1 from peg 0 to peg 1
+- Peg 0: [5, 4]
+- Peg 1: [6, 3, 2, 1]
+- Peg 2: [7]
+
+Move 72: Disk 4 from peg 0 to peg 2
+- Peg 0: [5]
+- Peg 1: [6, 3, 2, 1]
+- Peg 2: [7, 4]
+
+Move 73: Disk 1 from peg 1 to peg 2
+- Peg 0: [5]
+- Peg 1: [6, 3, 2]
+- Peg 2: [7, 4, 1]
+
+Move 74: Disk 2 from peg 1 to peg 0
+- Peg 0: [5, 2]
+- Peg 1: [6, 3]
+- Peg 2: [7, 4, 1]
+
+Move 75: Disk 1 from peg 2 to peg 0
+- Peg 0: [5, 2, 1]
+- Peg 1: [6, 3]
+- Peg 2: [7, 4]
+
+Move 76: Disk 3 from peg 1 to peg 2
+- Peg 0: [5, 2, 1]
+- Peg 1: [6]
+- Peg 2: [7, 4, 3]
+
+Move 77: Disk 1 from peg 0 to peg 1
+- Peg 0: [5, 2]
+- Peg 1: [6, 1]
+- Peg 2: [7, 4, 3]
+
+Move 78: Disk 2 from peg 0 to peg 2
+- Peg 0: [5]
+- Peg 1: [6, 1]
+- Peg 2: [7, 4, 3, 2]
+
+Move 79: Disk 1 from peg 1 to peg 2
+- Peg 0: [5]
+- Peg 1: [6]
+- Peg 2: [7, 4, 3, 2, 1]
+
+Move 80: Disk 5 from peg 0 to peg 1
+- Peg 0: []
+- Peg 1: [6, 5]
+- Peg 2: [7, 4, 3, 2, 1]
+
+Move 81: Disk 1 from peg 2 to peg 0
+- Peg 0: [1]
+- Peg 1: [6, 5]
+- Peg 2: [7, 4, 3, 2]
+
+Move 82: Disk 2 from peg 2 to peg 1
+- Peg 0: [1]
+- Peg 1: [6, 5, 2]
+- Peg 2: [7, 4, 3]
+
+Move 83: Disk 1 from peg 0 to peg 1
+- Peg 0: []
+- Peg 1: [6, 5, 2, 1]
+- Peg 2: [7, 4, 3]
+
+Move 84: Disk 3 from peg 2 to peg 0
+- Peg 0: [3]
+- Peg 1: [6, 5, 2, 1]
+- Peg 2: [7, 4]
+
+Move 85: Disk 1 from peg 1 to peg 2
+- Peg 0: [3]
+- Peg 1: [6, 5, 2]
+- Peg 2: [7, 4, 1]
+
+Move 86: Disk 2 from peg 1 to peg 0
+- Peg 0: [3, 2]
+- Peg 1: [6, 5]
+- Peg 2: [7, 4, 1]
+
+Move 87: Disk 1 from peg 2 to peg 0
+- Peg 0: [3, 2, 1]
+- Peg 1: [6, 5]
+- Peg 2: [7, 4]
+
+Move 88: Disk 4 from peg 2 to peg 1
+- Peg 0: [3, 2, 1]
+- Peg 1: [6, 5, 4]
+- Peg 2: [7]
+
+Move 89: Disk 1 from peg 0 to peg 1
+- Peg 0: [3, 2]
+- Peg 1: [6, 5, 4, 1]
+- Peg 2: [7]
+
+Move 90: Disk 2 from peg 0 to peg 2
+- Peg 0: [3]
+- Peg 1: [6, 5, 4, 1]
+- Peg 2: [7, 2]
+
+Move 91: Disk 1 from peg 1 to peg 2
+- Peg 0: [3]
+- Peg 1: [6, 5, 4]
+- Peg 2: [7, 2, 1]
+
+Move 92: Disk 3 from peg 0 to peg 1
+- Peg 0: []
+- Peg 1: [6, 5, 4, 3]
+- Peg 2: [7, 2, 1]
+
+Move 93: Disk 1 from peg 2 to peg 0
+- Peg 0: [1]
+- Peg 1: [6, 5, 4, 3]
+- Peg 2: [7, 2]
+
+Move 94: Disk 2 from peg 2 to peg 1
+- Peg 0: [1]
+- Peg 1: [6, 5, 4, 3, 2]
+- Peg 2: [7]
+
+Move 95: Disk 1 from peg 0 to peg 1
+- Peg 0: []
+- Peg 1: [6, 5, 4, 3, 2, 1]
+- Peg 2: [7]
+
+Move 96: Disk 6 from peg 1 to peg 2
+- Peg 0: []
+- Peg 1: [5, 4, 3, 2, 1]
+- Peg 2: [7, 6]
+
+Move 97: Disk 1 from peg 1 to peg 2
+- Peg 0: []
+- Peg 1: [5, 4, 3, 2]
+- Peg 2: [7, 6, 1]
+
+Move 98: Disk 2 from peg 1 to peg 0
+- Peg 0: [2]
+- Peg 1: [5, 4, 3]
+- Peg 2: [7, 6, 1]
+
+Move 99: Disk 1 from peg 2 to peg 0
+- Peg 0: [2, 1]
+- Peg 1: [5, 4, 3]
+- Peg 2: [7, 6]
+
+Move 100: Disk 3 from peg 1 to peg 2
+- Peg 0: [2, 1]
+- Peg 1: [5, 4]
+- Peg 2: [7, 6, 3]
+
+Move 101: Disk 1 from peg 0 to peg 1
+- Peg 0: [2]
+- Peg 1: [5, 4, 1]
+- Peg 2: [7, 6, 3]
+
+Move 102: Disk 2 from peg 0 to peg 2
+- Peg 0: []
+- Peg 1: [5, 4, 1]
+- Peg 2: [7, 6, 3, 2]
+
+Move 103: Disk 1 from peg 1 to peg 2
+- Peg 0: []
+- Peg 1: [5, 4]
+- Peg 2: [7, 6, 3, 2, 1]
+
+Move 104: Disk 4 from peg 1 to peg 0
+- Peg 0: [4]
+- Peg 1: [5]
+- Peg 2: [7, 6, 3, 2, 1]
+
+Move 105: Disk 1 from peg 2 to peg 0
+- Peg 0: [4, 1]
+- Peg 1: [5]
+- Peg 2: [7, 6, 3, 2]
+
+Move 106: Disk 2 from peg 2 to peg 1
+- Peg 0: [4, 1]
+- Peg 1: [5, 2]
+- Peg 2: [7, 6, 3]
+
+Move 107: Disk 1 from peg 0 to peg 1
+- Peg 0: [4]
+- Peg 1: [5, 2, 1]
+- Peg 2: [7, 6, 3]
+
+Move 108: Disk 3 from peg 2 to peg 0
+- Peg 0: [4, 3]
+- Peg 1: [5, 2, 1]
+- Peg 2: [7, 6]
+
+Move 109: Disk 1 from peg 1 to peg 2
+- Peg 0: [4, 3]
+- Peg 1: [5, 2]
+- Peg 2: [7, 6, 1]
+
+Move 110: Disk 2 from peg 1 to peg 0
+- Peg 0: [4, 3, 2]
+- Peg 1: [5]
+- Peg 2: [7, 6, 1]
+
+Move 111: Disk 1 from peg 2 to peg 0
+- Peg 0: [4, 3, 2, 1]
+- Peg 1: [5]
+- Peg 2: [7, 6]
+
+Move 112: Disk 5 from peg 1 to peg 2
+- Peg 0: [4, 3, 2, 1]
+- Peg 1: []
+- Peg 2: [7, 6, 5]
+
+Move 113: Disk 1 from peg 0 to peg 1
+- Peg 0: [4, 3, 2]
+- Peg 1: [1]
+- Peg 2: [7, 6, 5]
+
+Move 114: Disk 2 from peg 0 to peg 2
+- Peg 0: [4, 3]
+- Peg 1: [1]
+- Peg 2: [7, 6, 5, 2]
+
+Move 115: Disk 1 from peg 1 to peg 2
+- Peg 0: [4, 3]
+- Peg 1: []
+- Peg 2: [7, 6, 5, 2, 1]
+
+Move 116: Disk 3 from peg 0 to peg 1
+- Peg 0: [4]
+- Peg 1: [3]
+- Peg 2: [7, 6, 5, 2, 1]
+
+Move 117: Disk 1 from peg 2 to peg 0
+- Peg 0: [4, 1]
+- Peg 1: [3]
+- Peg 2: [7, 6, 5, 2]
+
+Move 118: Disk 2 from peg 2 to peg 1
+- Peg 0: [4, 1]
+- Peg 1: [3, 2]
+- Peg 2: [7, 6, 5]
+
+Move 119: Disk 1 from peg 0 to peg 1
+- Peg 0: [4]
+- Peg 1: [3, 2, 1]
+- Peg 2: [7, 6, 5]
+
+Move 120: Disk 4 from peg 0 to peg 2
+- Peg 0: []
+- Peg 1: [3, 2, 1]
+- Peg 2: [7, 6, 5, 4]
+
+Move 121: Disk 1 from peg 1 to peg 2
+- Peg 0: []
+- Peg 1: [3, 2]
+- Peg 2: [7, 6, 5, 4, 1]
+
+Move 122: Disk 2 from peg 1 to peg 0
+- Peg 0: [2]
+- Peg 1: [3]
+- Peg 2: [7, 6, 5, 4, 1]
+
+Move 123: Disk 1 from peg 2 to peg 0
+- Peg 0: [2, 1]
+- Peg 1: [3]
+- Peg 2: [7, 6, 5, 4]
+
+Move 124: Disk 3 from peg 1 to peg 2
+- Peg 0: [2, 1]
+- Peg 1: []
+- Peg 2: [7, 6, 5, 4, 3]
+
+Move 125: Disk 1 from peg 0 to peg 1
+- Peg 0: [2]
+- Peg 1: [1]
+- Peg 2: [7, 6, 5, 4, 3]
+
+Move 126: Disk 2 from peg 0 to peg 2
+- Peg 0: []
+- Peg 1: [1]
+- Peg 2: [7, 6, 5, 4, 3, 2]
+
+Move 127: Disk 1 from peg 1 to peg 2
+- Peg 0: []
+- Peg 1: []
+- Peg 2: [7, 6, 5, 4, 3, 2, 1]
+
+And that's the complete solution! We've moved all 7 disks from peg 0 to peg 2 following the rules of the Tower of Hanoi.
+
+Now, let me format this according to the requested format:
+
+```
+move_id,from_peg,to_peg,peg0,peg1,peg2
+1,0,2,7 6 5 4 3 2,,1
+2,0,1,7 6 5 4 3,2,1
+3,2,1,7 6 5 4 3,2 1,
+4,0,2,7 6 5 4,,3
+5,1,0,7 6 5 4 1,2,3
+6,1,2,7 6 5 4 1,,3 2
+7,0,2,7 6 5 4,,,3 2 1
+8,0,1,7 6 5,4,3 2 1
+9,2,1,7 6 5,4 1,3 2
+10,2,0,7 6 5 2,4 1,3
+11,1,0,7 6 5 2 1,4,3
+12,2,1,7 6 5 2 1,4 3,
+13,0,2,7 6 5 2,4 3,1
+14,0,1,7 6 5,4 3 2,1
+15,2,1,7 6 5,4 3 2 1,
+16,0,2,7 6,,4 3 2 1,5
+17,1,0,7 6 1,4 3 2,5
+18,1,2,7 6 1,4 3,5 2
+19,0,2,7 6,4 3,5 2 1
+20,1,0,7 6 3,4,5 2 1
+21,2,1,7 6 3,4 1,5 2
+22,2,0,7 6 3 2,4 1,5
+23,1,0,7 6 3 2 1,4,5
+24,1,2,7 6 3 2 1,,5 4
+25,0,2,7 6 3 2,,5 4 1
+26,0,1,7 6 3,2,5 4 1
+27,2,1,7 6 3,2 1,5 4
+28,0,2,7 6,,2 1,5 4 3
+29,1,0,7 6 1,2,5 4 3
+30,1,2,7 6 1,,5 4 3 2
+31,0,2,7 6,,5 4 3 2 1
+32,0,1,7,6,5 4 3 2 1
+33,2,0,7 1,6,5 4 3 2
+34,2,1,7 1,6 2,5 4 3
+35,0,1,7,6 2 1,5 4 3
+36,2,0,7 3,6 2 1,5 4
+37,1,2,7 3,6 2,5 4 1
+38,1,0,7 3 2,6,5 4 1
+39,2,0,7 3 2 1,6,5 4
+40,2,1,7 3 2 1,6 4,5
+41,0,1,7 3 2,6 4 1,5
+42,0,2,7 3,6 4 1,5 2
+43,1,2,7 3,6 4,5 2 1
+44,0,1,7,6 4 3,5 2 1
+45,2,0,7 1,6 4 3,5 2
+46,2,1,7 1,6 4 3 2,5
+47,0,1,7,6 4 3 2 1,5
+48,2,0,7 5,6 4 3 2 1,
+49,1,2,7 5,6 4 3 2,1
+50,1,0,7 5 2,6 4 3,1
+51,2,0,7 5 2 1,6 4 3,
+52,1,2,7 5 2 1,6 4,3
+53,0,1,7 5 2,6 4 1,3
+54,0,2,7 5,6 4 1,3 2
+55,1,2,7 5,6 4,3 2 1
+56,1,0,7 5 4,6,3 2 1
+57,2,0,7 5 4 1,6,3 2
+58,2,1,7 5 4 1,6 2,3
+59,0,1,7 5 4,6 2 1,3
+60,2,0,7 5 4 3,6 2 1,
+61,1,2,7 5 4 3,6 2,1
+62,1,0,7 5 4 3 2,6,1
+63,2,0,7 5 4 3 2 1,6,
+64,0,2,5 4 3 2 1,6,7
+65,0,1,5 4 3 2,6 1,7
+66,0,2,5 4 3,6 1,7 2
+67,1,2,5 4 3,6,7 2 1
+68,0,1,5 4,6 3,7 2 1
+69,2,0,5 4 1,6 3,7 2
+70,2,1,5 4 1,6 3 2,7
+71,0,1,5 4,6 3 2 1,7
+72,0,2,5,6 3 2 1,7 4
+73,1,2,5,6 3 2,7 4 1
+74,1,0,5 2,6 3,7 4 1
+75,2,0,5 2 1,6 3,7 4
+76,1,2,5 2 1,6,7 4 3
+77,0,1,5 2,6 1,7 4 3
+78,0,2,5,6 1,7 4 3 2
+79,1,2,5,6,7 4 3 2 1
+80,0,1,,6 5,7 4 3 2 1
+81,2,0,1,6 5,7 4 3 2
+82,2,1,1,6 5 2,7 4 3
+83,0,1,,6 5 2 1,7 4 3
+84,2,0,3,6 5 2 1,7 4
+85,1,2,3,6 5 2,7 4 1
+86,1,0,3 2,6 5,7 4 1
+87,2,0,3 2 1,6 5,7 4
+88,2,1,3 2 1,6 5 4,7
+89,0,1,3 2,6 5 4 1,7
+90,0,2,3,6 5 4 1,7 2
+91,1,2,3,6 5 4,7 2 1
+92,0,1,,6 5 4 3,7 2 1
+93,2,0,1,6 5 4 3,7 2
+94,2,1,1,6 5 4 3 2,7
+95,0,1,,6 5 4 3 2 1,7
+96,1,2,,5 4 3 2 1,7 6
+97,1,2,,5 4 3 2,7 6 1
+98,1,0,2,5 4 3,7 6 1
+99,2,0,2 1,5 4 3,7 6
+100,1,2,2 1,5 4,7 6 3
+101,0,1,2,5 4 1,7 6 3
+102,0,2,,5 4 1,7 6 3 2
+103,1,2,,5 4,7 6 3 2 1
+104,1,0,4,5,7 6 3 2 1
+105,2,0,4 1,5,7 6 3 2
+106,2,1,4 1,5 2,7 6 3
+107,0,1,4,5 2 1,7 6 3
+108,2,0,4 3,5 2 1,7 6
+109,1,2,4 3,5 2,7 6 1
+110,1,0,4 3 2,5,7 6 1
+111,2,0,4 3 2 1,5,7 6
+112,1,2,4 3 2 1,,7 6 5
+113,0,1,4 3 2,1,7 6 5
+114,0,2,4 3,1,7 6 5 2
+115,1,2,4 3,,7 6 5 2 1
+116,0,1,4,3,7 6 5 2 1
+117,2,0,4 1,3,7 6 5 2
+118,2,1,4 1,3 2,7 6 5
+119,0,1,4,3 2 1,7 6 5
+120,0,2,,3 2 1,7 6 5 4
+121,1,2,,3 2,7 6 5 4 1
+122,1,0,2,3,7 6 5 4 1
+123,2,0,2 1,3,7 6 5 4
+124,1,2,2 1,,7 6 5 4 3
+125,0,1,2,1,7 6 5 4 3
+126,0,2,,1,7 6 5 4 3 2
+127,1,2,,,7 6 5 4 3 2 1
+```
+
+In this representation, I've formatted the state of each peg after each move as a space-separated list of disk numbers, from bottom to top. If a peg is empty, I've represented it as an empty string.
+</think>
+
+```
+move_id,from_peg,to_peg,peg0,peg1,peg2
+1,0,2,7 6 5 4 3 2,,1
+2,0,1,7 6 5 4 3,2,1
+3,2,1,7 6 5 4 3,2 1,
+4,0,2,7 6 5 4,,3
+5,1,0,7 6 5 4 1,2,3
+6,1,2,7 6 5 4 1,,3 2
+7,0,2,7 6 5 4,,3 2 1
+8,0,1,7 6 5,4,3 2 1
+9,2,1,7 6 5,4 1,3 2
+10,2,0,7 6 5 2,4 1,3
+11,1,0,7 6 5 2 1,4,3
+12,2,1,7 6 5 2 1,4 3,
+13,0,2,7 6 5 2,4 3,1
+14,0,1,7 6 5,4 3 2,1
+15,2,1,7 6 5,4 3 2 1,
+16,0,2,7 6,,4 3 2 1,5
+17,1,0,7 6 1,4 3 2,5
+18,1,2,7 6 1,4 3,5 2
+19,0,2,7 6,4 3,5 2 1
+20,1,0,7 6 3,4,5 2 1
+21,2,1,7 6 3,4 1,5 2
+22,2,0,7 6 3 2,4 1,5
+23,1,0,7 6 3 2 1,4,5
+24,1,2,7 6 3 2 1,,5 4
+25,0,2,7 6 3 2,,5 4 1
+26,0,1,7 6 3,2,5 4 1
+27,2,1,7 6 3,2 1,5 4
+28,0,2,7 6,,2 1,5 4 3
+29,1,0,7 6 1,2,5 4 3
+30,1,2,7 6 1,,5 4 3 2
+31,0,2,7 6,,5 4 3 2 1
+32,0,1,7,6,5 4 3 2 1
+33,2,0,7 1,6,5 4 3 2
+34,2,1,7 1,6 2,5 4 3
+35,0,1,7,6 2 1,5 4 3
+36,2,0,7 3,6 2 1,5 4
+37,1,2,7 3,6 2,5 4 1
+38,1,0,7 3 2,6,5 4 1
+39,2,0,7 3 2 1,6,5 4
+40,2,1,7 3 2 1,6 4,5
+41,0,1,7 3 2,6 4 1,5
+42,0,2,7 3,6 4 1,5 2
+43,1,2,7 3,6 4,5 2 1
+44,0,1,7,6 4 3,5 2 1
+45,2,0,7 1,6 4 3,5 2
+46,2,1,7 1,6 4 3 2,5
+47,0,1,7,6 4 3 2 1,5
+48,2,0,7 5,6 4 3 2 1,
+49,1,2,7 5,6 4 3 2,1
+50,1,0,7 5 2,6 4 3,1
+51,2,0,7 5 2 1,6 4 3,
+52,1,2,7 5 2 1,6 4,3
+53,0,1,7 5 2,6 4 1,3
+54,0,2,7 5,6 4 1,3 2
+55,1,2,7 5,6 4,3 2 1
+56,1,0,7 5 4,6,3 2 1
+57,2,0,7 5 4 1,6,3 2
+58,2,1,7 5 4 1,6 2,3
+59,0,1,7 5 4,6 2 1,3
+60,2,0,7 5 4 3,6 2 1,
+61,1,2,7 5 4 3,6 2,1
+62,1,0,7 5 4 3 2,6,1
+63,2,0,7 5 4 3 2 1,6,
+64,0,2,5 4 3 2 1,6,7
+65,0,1,5 4 3 2,6 1,7
+66,0,2,5 4 3,6 1,7 2
+67,1,2,5 4 3,6,7 2 1
+68,0,1,5 4,6 3,7 2 1
+69,2,0,5 4 1,6 3,7 2
+70,2,1,5 4 1,6 3 2,7
+71,0,1,5 4,6 3 2 1,7
+72,0,2,5,6 3 2 1,7 4
+73,1,2,5,6 3 2,7 4 1
+74,1,0,5 2,6 3,7 4 1
+75,2,0,5 2 1,6 3,7 4
+76,1,2,5 2 1,6,7 4 3
+77,0,1,5 2,6 1,7 4 3
+78,0,2,5,6 1,7 4 3 2
+79,1,2,5,6,7 4 3 2 1
+80,0,1,,6 5,7 4 3 2 1
+81,2,0,1,6 5,7 4 3 2
+82,2,1,1,6 5 2,7 4 3
+83,0,1,,6 5 2 1,7 4 3
+84,2,0,3,6 5 2 1,7 4
+85,1,2,3,6 5 2,7 4 1
+86,1,0,3 2,6 5,7 4 1
+87,2,0,3 2 1,6 5,7 4
+88,2,1,3 2 1,6 5 4,7
+89,0,1,3 2,6 5 4 1,7
+90,0,2,3,6 5 4 1,7 2
+91,1,2,3,6 5 4,7 2 1
+92,0,1,,6 5 4 3,7 2 1
+93,2,0,1,6 5 4 3,7 2
+94,2,1,1,6 5 4 3 2,7
+95,0,1,,6 5 4 3 2 1,7
+96,1,2,,5 4 3 2 1,7 6
+97,1,2,,5 4 3 2,7 6 1
+98,1,0,2,5 4 3,7 6 1
+99,2,0,2 1,5 4 3,7 6
+100,1,2,2 1,5 4,7 6 3
+101,0,1,2,5 4 1,7 6 3
+102,0,2,,5 4 1,7 6 3 2
+103,1,2,,5 4,7 6 3 2 1
+104,1,0,4,5,7 6 3 2 1
+105,2,0,4 1,5,7 6 3 2
+106,2,1,4 1,5 2,7 6 3
+107,0,1,4,5 2 1,7 6 3
+108,2,0,4 3,5 2 1,7 6
+109,1,2,4 3,5 2,7 6 1
+110,1,0,4 3 2,5,7 6 1
+111,2,0,4 3 2 1,5,7 6
+112,1,2,4 3 2 1,,7 6 5
+113,0,1,4 3 2,1,7 6 5
+114,0,2,4 3,1,7 6 5 2
+115,1,2,4 3,,7 6 5 2 1
+116,0,1,4,3,7 6 5 2 1
+117,2,0,4 1,3,7 6 5 2
+118,2,1,4 1,3 2,7 6 5
+119,0,1,4,3 2 1,7 6 5
+120,0,2,,3 2 1,7 6 5 4
+121,1,2,,3 2,7 6 5 4 1
+122,1,0,2,3,7 6 5 4 1
+123,2,0,2 1,3,7 6 5 4
+124,1,2,2 1,,7 6 5 4 3
+125,0,1,2,1,7 6 5 4 3
+126,0,2,,1,7 6 5 4 3 2
+127,1,2,,,7 6 5 4 3 2 1
+```
+

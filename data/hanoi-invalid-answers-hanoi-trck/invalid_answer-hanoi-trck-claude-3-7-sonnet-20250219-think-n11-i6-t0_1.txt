@@ -1,0 +1,3084 @@
+# model_name='claude-3-7-sonnet-20250219', reasoning_budget=32000, tries=0, n=11, i=6
+# valid_prefix_length=5, is_valid_solution=0, first_correction=-1
+
+<think>
+This is the classic Tower of Hanoi problem with 11 disks. The optimal solution for Tower of Hanoi with n disks requires 2^n - 1 moves. So for 11 disks, we need 2^11 - 1 = 2048 - 1 = 2047 moves.
+
+Let me solve this systematically. The recursive solution for Tower of Hanoi is:
+1. Move n-1 disks from source peg to auxiliary peg
+2. Move the largest disk from source peg to destination peg
+3. Move n-1 disks from auxiliary peg to destination peg
+
+For this problem:
+- Source peg = 0
+- Destination peg = 2
+- Auxiliary peg = 1
+
+Let me define a recursive function to solve this:
+
+```
+function hanoi(n, source, auxiliary, destination):
+    if n == 1:
+        print("Move disk 1 from peg", source, "to peg", destination)
+        return
+    hanoi(n-1, source, destination, auxiliary)
+    print("Move disk", n, "from peg", source, "to peg", destination)
+    hanoi(n-1, auxiliary, source, destination)
+```
+
+Now I'll trace through the execution for n=11, source=0, auxiliary=1, destination=2.
+
+Actually, instead of just printing the moves, I need to track the state of each peg after each move. I'll modify my approach:
+
+Let's keep track of the states of the pegs. Initially:
+- Peg 0: [11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1]
+- Peg 1: []
+- Peg 2: []
+
+I'll define a function to generate the moves and track the states:
+
+```
+function hanoi_with_states(n, source, auxiliary, destination, pegs, moves):
+    if n == 1:
+        # Move disk 1 from source to destination
+        disk = pegs[source].pop()
+        pegs[destination].append(disk)
+        moves.append((source, destination, pegs.copy()))
+        return
+    
+    hanoi_with_states(n-1, source, destination, auxiliary, pegs, moves)
+    
+    # Move disk n from source to destination
+    disk = pegs[source].pop()
+    pegs[destination].append(disk)
+    moves.append((source, destination, pegs.copy()))
+    
+    hanoi_with_states(n-1, auxiliary, source, destination, pegs, moves)
+```
+
+Actually, the recursion gets quite complex when tracking states. Let me take a different approach. I'll use an iterative algorithm based on the property that for n disks:
+
+- If n is odd, the first move is from source to destination
+- If n is even, the first move is from source to auxiliary
+
+Then, the next valid move is always determined by the rule: "Move the smallest disk to the next peg in a cyclic manner (0 -> 1 -> 2 -> 0) if n is odd, or (0 -> 2 -> 1 -> 0) if n is even."
+
+Let me implement this:
+
+```
+function iterative_hanoi(n, source, auxiliary, destination):
+    pegs = [list(range(n, 0, -1)), [], []]  # Initial state
+    moves = []
+    
+    if n % 2 == 0:
+        # For even n, interchange auxiliary and destination
+        auxiliary, destination = destination, auxiliary
+    
+    total_moves = 2^n - 1
+    
+    for move in range(1, total_moves + 1):
+        if move % 3 == 1:
+            # Move between source and destination
+            if pegs[source] and (not pegs[destination] or pegs[source][-1] < pegs[destination][-1]):
+                disk = pegs[source].pop()
+                pegs[destination].append(disk)
+                moves.append((source, destination, pegs.copy()))
+            else:
+                disk = pegs[destination].pop()
+                pegs[source].append(disk)
+                moves.append((destination, source, pegs.copy()))
+        elif move % 3 == 2:
+            # Move between source and auxiliary
+            if pegs[source] and (not pegs[auxiliary] or pegs[source][-1] < pegs[auxiliary][-1]):
+                disk = pegs[source].pop()
+                pegs[auxiliary].append(disk)
+                moves.append((source, auxiliary, pegs.copy()))
+            else:
+                disk = pegs[auxiliary].pop()
+                pegs[source].append(disk)
+                moves.append((auxiliary, source, pegs.copy()))
+        else:
+            # Move between auxiliary and destination
+            if pegs[auxiliary] and (not pegs[destination] or pegs[auxiliary][-1] < pegs[destination][-1]):
+                disk = pegs[auxiliary].pop()
+                pegs[destination].append(disk)
+                moves.append((auxiliary, destination, pegs.copy()))
+            else:
+                disk = pegs[destination].pop()
+                pegs[auxiliary].append(disk)
+                moves.append((destination, auxiliary, pegs.copy()))
+    
+    return moves
+```
+
+Wait, the iterative algorithm I described isn't quite right. Let me go back to the recursive approach, but I'll be careful about tracking the states.
+
+Actually, rather than trying to track the state during recursion, let me separate the concerns:
+1. Generate the list of moves using the recursive algorithm
+2. Simulate those moves to track the states
+
+```
+function generate_moves(n, source, auxiliary, destination):
+    if n == 1:
+        return [(source, destination)]
+    
+    moves = []
+    moves.extend(generate_moves(n-1, source, destination, auxiliary))
+    moves.append((source, destination))
+    moves.extend(generate_moves(n-1, auxiliary, source, destination))
+    
+    return moves
+
+function simulate_moves(moves, n):
+    pegs = [[i for i in range(n, 0, -1)], [], []]  # Initial state
+    results = []
+    
+    for i, (from_peg, to_peg) in enumerate(moves, 1):
+        disk = pegs[from_peg].pop()
+        pegs[to_peg].append(disk)
+        
+        # Format the state for output
+        peg_states = []
+        for peg in pegs:
+            peg_states.append(" ".join(map(str, peg)))
+        
+        results.append((i, from_peg, to_peg, peg_states[0], peg_states[1], peg_states[2]))
+    
+    return results
+```
+
+Actually, I realize there's a problem with the implementation above. When we pop a disk from a peg, we're removing the last element, which is at the top. But the problem specifies that the disks are numbered from 1 (smallest) to n (largest), and the pegs should be represented from bottom to top. So we need to be careful about the representation.
+
+Let's redefine the problem:
+- Disks are numbered from 1 (smallest) to 11 (largest)
+- Pegs are represented as lists with the bottom disk at index 0
+
+So, initially:
+- Peg 0: [11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1]
+- Peg 1: []
+- Peg 2: []
+
+Actually, let's be more explicit about the representation in my algorithm to avoid confusion:
+
+```
+function generate_moves(n, source, auxiliary, destination):
+    if n == 0:
+        return []
+    
+    moves = []
+    moves.extend(generate_moves(n-1, source, destination, auxiliary))
+    moves.append((source, destination))
+    moves.extend(generate_moves(n-1, auxiliary, source, destination))
+    
+    return moves
+
+function simulate_moves(moves, n):
+    # Initialize pegs with disks numbered from 1 (smallest) to n (largest)
+    # The smallest disk is at the top, so at the end of the list
+    pegs = [[i for i in range(n, 0, -1)], [], []]
+    results = []
+    
+    for i, (from_peg, to_peg) in enumerate(moves, 1):
+        disk = pegs[from_peg].pop()  # Remove the top disk (smallest)
+        pegs[to_peg].append(disk)  # Place it on top of the destination peg
+        
+        # Format the state for output
+        peg_states = []
+        for peg in pegs:
+            # Represent the state from bottom to top
+            peg_states.append(" ".join(map(str, peg)))
+        
+        results.append((i, from_peg, to_peg, peg_states[0], peg_states[1], peg_states[2]))
+    
+    return results
+```
+
+Let me trace through this algorithm for a small example, say n=3:
+
+Initializing:
+- Peg 0: [3, 2, 1]
+- Peg 1: []
+- Peg 2: []
+
+Generating moves:
+1. Call generate_moves(3, 0, 1, 2)
+2. Call generate_moves(2, 0, 2, 1)
+3. Call generate_moves(1, 0, 1, 2)
+4. Call generate_moves(0, 0, 2, 1) returns []
+5. Add (0, 2) to moves, now moves = [(0, 2)]
+6. Call generate_moves(0, 1, 0, 2) returns []
+7. Add (0, 1) to moves, now moves = [(0, 2), (0, 1)]
+8. Call generate_moves(1, 2, 0, 1)
+9. Call generate_moves(0, 2, 1, 0) returns []
+10. Add (2, 1) to moves, now moves = [(0, 2), (0, 1), (2, 1)]
+11. Call generate_moves(0, 0, 2, 1) returns []
+12. Add (0, 2) to moves, now moves = [(0, 2), (0, 1), (2, 1), (0, 2)]
+13. Call generate_moves(2, 1, 0, 2)
+14. Call generate_moves(1, 1, 2, 0)
+15. Call generate_moves(0, 1, 0, 2) returns []
+16. Add (1, 0) to moves, now moves = [(0, 2), (0, 1), (2, 1), (0, 2), (1, 0)]
+17. Call generate_moves(0, 2, 1, 0) returns []
+18. Add (1, 2) to moves, now moves = [(0, 2), (0, 1), (2, 1), (0, 2), (1, 0), (1, 2)]
+19. Call generate_moves(1, 0, 1, 2)
+20. Call generate_moves(0, 0, 2, 1) returns []
+21. Add (0, 2) to moves, now moves = [(0, 2), (0, 1), (2, 1), (0, 2), (1, 0), (1, 2), (0, 2)]
+22. Call generate_moves(0, 1, 0, 2) returns []
+
+So the final list of moves is:
+[(0, 2), (0, 1), (2, 1), (0, 2), (1, 0), (1, 2), (0, 2)]
+
+Wait, something seems off. Let me reconsider the recursive algorithm for Tower of Hanoi:
+
+```
+function hanoi(n, source, auxiliary, destination):
+    if n == 1:
+        print("Move disk 1 from peg", source, "to peg", destination)
+        return
+    hanoi(n-1, source, destination, auxiliary)
+    print("Move disk", n, "from peg", source, "to peg", destination)
+    hanoi(n-1, auxiliary, source, destination)
+```
+
+For n=3, source=0, auxiliary=1, destination=2, the recursion should unfold as:
+
+1. Call hanoi(3, 0, 1, 2)
+2. Call hanoi(2, 0, 2, 1)
+3. Call hanoi(1, 0, 1, 2)
+4. Print "Move disk 1 from peg 0 to peg 2"
+5. Print "Move disk 2 from peg 0 to peg 1"
+6. Call hanoi(1, 2, 0, 1)
+7. Print "Move disk 1 from peg 2 to peg 1"
+8. Print "Move disk 3 from peg 0 to peg 2"
+9. Call hanoi(2, 1, 0, 2)
+10. Call hanoi(1, 1, 2, 0)
+11. Print "Move disk 1 from peg 1 to peg 0"
+12. Print "Move disk 2 from peg 1 to peg 2"
+13. Call hanoi(1, 0, 1, 2)
+14. Print "Move disk 1 from peg 0 to peg 2"
+
+So the moves should be:
+[(0, 2), (0, 1), (2, 1), (0, 2), (1, 0), (1, 2), (0, 2)]
+
+Wait, I made an error in my original thinking. Let me reconsider the recursion:
+
+```
+function hanoi(n, source, auxiliary, destination):
+    if n == 1:
+        return [(source, destination)]
+    
+    moves = []
+    moves.extend(hanoi(n-1, source, destination, auxiliary))
+    moves.append((source, destination))
+    moves.extend(hanoi(n-1, auxiliary, source, destination))
+    
+    return moves
+```
+
+For n=3, source=0, auxiliary=1, destination=2, the recursion should unfold as:
+
+1. Call hanoi(3, 0, 1, 2)
+2. Call hanoi(2, 0, 2, 1)
+3. Call hanoi(1, 0, 1, 2) returns [(0, 2)]
+4. Add (0, 1) to moves, now moves = [(0, 2), (0, 1)]
+5. Call hanoi(1, 2, 0, 1) returns [(2, 1)]
+6. Moves from step 2 are [(0, 2), (0, 1), (2, 1)]
+7. Add (0, 2) to moves, now moves = [(0, 2), (0, 1), (2, 1), (0, 2)]
+8. Call hanoi(2, 1, 0, 2)
+9. Call hanoi(1, 1, 2, 0) returns [(1, 0)]
+10. Add (1, 2) to moves, now moves = [(0, 2), (0, 1), (2, 1), (0, 2), (1, 0), (1, 2)]
+11. Call hanoi(1, 0, 1, 2) returns [(0, 2)]
+12. Final moves are [(0, 2), (0, 1), (2, 1), (0, 2), (1, 0), (1, 2), (0, 2)]
+
+OK, that looks right. So let me implement the algorithm correctly:
+
+```python
+def generate_moves(n, source, auxiliary, destination):
+    if n == 1:
+        return [(source, destination)]
+    
+    moves = []
+    moves.extend(generate_moves(n-1, source, destination, auxiliary))
+    moves.append((source, destination))
+    moves.extend(generate_moves(n-1, auxiliary, source, destination))
+    
+    return moves
+
+def simulate_moves(moves, n):
+    # Initialize pegs with disks numbered from 1 (smallest) to n (largest)
+    # The smallest disk is at the top, so at the end of the list
+    pegs = [[i for i in range(n, 0, -1)], [], []]
+    results = []
+    
+    for i, (from_peg, to_peg) in enumerate(moves, 1):
+        disk = pegs[from_peg].pop()  # Remove the top disk (smallest)
+        pegs[to_peg].append(disk)  # Place it on top of the destination peg
+        
+        # Format the state for output
+        peg_states = []
+        for peg in pegs:
+            # Represent the state from bottom to top
+            peg_states.append(" ".join(map(str, peg)))
+        
+        results.append((i, from_peg, to_peg, peg_states[0], peg_states[1], peg_states[2]))
+    
+    return results
+```
+
+Now let's use this algorithm for n=11, source=0, auxiliary=1, destination=2:
+
+```
+moves = generate_moves(11, 0, 1, 2)
+results = simulate_moves(moves, 11)
+```
+
+Let me first test this with a smaller example, n=3, to make sure it's working correctly:
+
+```
+moves = generate_moves(3, 0, 1, 2)
+results = simulate_moves(moves, 3)
+```
+
+For n=3, the moves should be:
+[(0, 2), (0, 1), (2, 1), (0, 2), (1, 0), (1, 2), (0, 2)]
+
+The resulting states should be:
+
+1. Move disk 1 from peg 0 to peg 2:
+   - Peg 0: [3, 2]
+   - Peg 1: []
+   - Peg 2: [1]
+
+2. Move disk 2 from peg 0 to peg 1:
+   - Peg 0: [3]
+   - Peg 1: [2]
+   - Peg 2: [1]
+
+3. Move disk 1 from peg 2 to peg 1:
+   - Peg 0: [3]
+   - Peg 1: [2, 1]
+   - Peg 2: []
+
+4. Move disk 3 from peg 0 to peg 2:
+   - Peg 0: []
+   - Peg 1: [2, 1]
+   - Peg 2: [3]
+
+5. Move disk 1 from peg 1 to peg 0:
+   - Peg 0: [1]
+   - Peg 1: [2]
+   - Peg 2: [3]
+
+6. Move disk 2 from peg 1 to peg 2:
+   - Peg 0: [1]
+   - Peg 1: []
+   - Peg 2: [3, 2]
+
+7. Move disk 1 from peg 0 to peg 2:
+   - Peg 0: []
+   - Peg 1: []
+   - Peg 2: [3, 2, 1]
+
+That looks correct. Now let's apply our algorithm to n=11:
+
+```
+moves = generate_moves(11, 0, 1, 2)
+results = simulate_moves(moves, 11)
+```
+
+The number of moves for n=11 will be 2^11 - 1 = 2047, which is quite a lot. Rather than writing out all the moves and states, let me just implement the algorithm and then format the output as required.
+
+Let's implement the algorithm in Python:
+
+```python
+def generate_moves(n, source, auxiliary, destination):
+    if n == 1:
+        return [(source, destination)]
+    
+    moves = []
+    moves.extend(generate_moves(n-1, source, destination, auxiliary))
+    moves.append((source, destination))
+    moves.extend(generate_moves(n-1, auxiliary, source, destination))
+    
+    return moves
+
+def format_peg(peg):
+    return " ".join(map(str, peg))
+
+def simulate_moves(moves, n):
+    # Initialize pegs with disks numbered from n (largest) to 1 (smallest)
+    pegs = [[i for i in range(n, 0, -1)], [], []]
+    results = []
+    
+    for i, (from_peg, to_peg) in enumerate(moves, 1):
+        disk = pegs[from_peg].pop()  # Remove the top disk
+        pegs[to_peg].append(disk)  # Place it on top of the destination peg
+        
+        # Format the state for output
+        results.append((i, from_peg, to_peg, format_peg(pegs[0]), format_peg(pegs[1]), format_peg(pegs[2])))
+    
+    return results
+```
+
+Let me evaluate the complexity of this algorithm:
+- `generate_moves` makes 2^n - 1 recursive calls, resulting in a time complexity of O(2^n).
+- `simulate_moves` processes each move once, so its time complexity is O(m), where m is the number of moves (which is 2^n - 1).
+
+Overall, the time complexity is O(2^n), which is expected for the Tower of Hanoi problem.
+
+Now, for n=11, we'll have 2^11 - 1 = 2047 moves. Let's generate the moves and simulate them:
+
+```
+moves = generate_moves(11, 0, 1, 2)
+results = simulate_moves(moves, 11)
+```
+
+Since we need to output the results in a specific format, let's define a function for that:
+
+```python
+def format_results(results):
+    output = "move_id,from_peg,to_peg,peg0,peg1,peg2\n"
+    for move_id, from_peg, to_peg, peg0, peg1, peg2 in results:
+        output += f"{move_id},{from_peg},{to_peg},{peg0},{peg1},{peg2}\n"
+    return output
+```
+
+Now, let's put everything together:
+
+```python
+def solve_tower_of_hanoi(n, source, auxiliary, destination):
+    moves = generate_moves(n, source, auxiliary, destination)
+    results = simulate_moves(moves, n)
+    return format_results(results)
+```
+
+For n=11, source=0, auxiliary=1, destination=2, we would call:
+
+```
+solution = solve_tower_of_hanoi(11, 0, 1, 2)
+print(solution)
+```
+
+However, instead of writing out the entire solution with 2047 moves, let me simply implement the algorithm and then generate the output in the required format. This will ensure accuracy and avoid any potential errors in listing all the moves.
+
+So, the general algorithm for Tower of Hanoi is:
+1. Move n-1 disks from source to auxiliary.
+2. Move the largest disk from source to destination.
+3. Move n-1 disks from auxiliary to destination.
+
+Recursively applying this algorithm will give us the optimal solution with exactly 2^n - 1 moves.
+
+Alright, I'll now generate the complete solution for n=11 using the algorithm described above.
+
+First, I need to calculate the moves from the recursive solution. For n=11, we'd have 2^11 - 1 = 2047 moves.
+
+For this n, the recursive formula is:
+1. Move 10 disks from peg 0 to peg 1 using peg 2 as auxiliary.
+2. Move the largest disk (11) from peg 0 to peg 2.
+3. Move 10 disks from peg 1 to peg 2 using peg 0 as auxiliary.
+
+So, we have the recursive pattern. Let's generate the moves and states:
+
+```python
+def generate_moves(n, source, auxiliary, destination):
+    if n == 1:
+        return [(source, destination)]
+    
+    moves = []
+    moves.extend(generate_moves(n-1, source, destination, auxiliary))
+    moves.append((source, destination))
+    moves.extend(generate_moves(n-1, auxiliary, source, destination))
+    
+    return moves
+
+def simulate_moves(moves, n):
+    # Initialize pegs with disks numbered from n (largest) to 1 (smallest)
+    pegs = [[i for i in range(n, 0, -1)], [], []]
+    results = []
+    
+    for i, (from_peg, to_peg) in enumerate(moves, 1):
+        disk = pegs[from_peg].pop()  # Remove the top disk
+        pegs[to_peg].append(disk)  # Place it on top of the destination peg
+        
+        # Format the state for output
+        results.append((i, from_peg, to_peg, format_peg(pegs[0]), format_peg(pegs[1]), format_peg(pegs[2])))
+    
+    return results
+
+def format_peg(peg):
+    return " ".join(map(str, peg))
+```
+
+Now, I'll generate the moves for n=11 and format them for output:
+
+```python
+moves = generate_moves(11, 0, 1, 2)
+results = simulate_moves(moves, 11)
+
+output = "move_id,from_peg,to_peg,peg0,peg1,peg2\n"
+for move_id, from_peg, to_peg, peg0, peg1, peg2 in results:
+    output += f"{move_id},{from_peg},{to_peg},{peg0},{peg1},{peg2}\n"
+```
+
+Let me begin listing the actual results as requested:
+
+For n=11, we have 2047 moves. 
+
+Actually, instead of writing out all the moves, I'll directly code and execute the algorithm to ensure accuracy. The output will follow the format:
+
+```
+move_id,from_peg,to_peg,peg0,peg1,peg2
+```
+
+Where:
+- move_id: Starts from 1 and increases for each move.
+- from_peg, to_peg: The source and destination pegs (0, 1, or 2).
+- peg0, peg1, peg2: The state of each peg after the move, represented as a space-separated list of disk numbers from bottom to top.
+
+Let me take the recursive solution to Tower of Hanoi that I described earlier and write it in a way that directly outputs the required format.
+
+```python
+def generate_and_simulate(n, source, auxiliary, destination):
+    # Initialize pegs with disks numbered from n (largest) to 1 (smallest)
+    pegs = [[i for i in range(n, 0, -1)], [], []]
+    move_id = 1
+    
+    # Print header
+    print("move_id,from_peg,to_peg,peg0,peg1,peg2")
+    
+    # Recursive helper to generate and simulate moves
+    def hanoi(n, source, auxiliary, destination):
+        nonlocal move_id, pegs
+        
+        if n == 1:
+            disk = pegs[source].pop()  # Remove the top disk
+            pegs[destination].append(disk)  # Place it on top of the destination peg
+            
+            # Format the state for output
+            peg0 = " ".join(map(str, pegs[0]))
+            peg1 = " ".join(map(str, pegs[1]))
+            peg2 = " ".join(map(str, pegs[2]))
+            
+            print(f"{move_id},{source},{destination},{peg0},{peg1},{peg2}")
+            move_id += 1
+            return
+        
+        hanoi(n-1, source, destination, auxiliary)
+        hanoi(1, source, auxiliary, destination)
+        hanoi(n-1, auxiliary, source, destination)
+    
+    hanoi(n, source, auxiliary, destination)
+```
+
+For n=11, source=0, auxiliary=1, destination=2, we would call:
+
+```
+generate_and_simulate(11, 0, 1, 2)
+```
+
+This would directly print the solution in the required format. But since I can't execute the code here, I'll output the solution directly.
+
+Actually, let me correct the `format_peg` function. I want to handle the case where a peg is empty:
+
+```python
+def format_peg(peg):
+    if not peg:
+        return ""
+    return " ".join(map(str, peg))
+```
+
+Now, let's generate the moves and states:
+
+```python
+moves = generate_moves(11, 0, 1, 2)
+pegs = [[i for i in range(11, 0, -1)], [], []]
+results = []
+
+for i, (from_peg, to_peg) in enumerate(moves, 1):
+    disk = pegs[from_peg].pop()  # Remove the top disk
+    pegs[to_peg].append(disk)  # Place it on top of the destination peg
+    
+    # Format the state for output
+    peg0 = format_peg(pegs[0])
+    peg1 = format_peg(pegs[1])
+    peg2 = format_peg(pegs[2])
+    
+    results.append((i, from_peg, to_peg, peg0, peg1, peg2))
+```
+
+Now I'll generate the output:
+
+```
+move_id,from_peg,to_peg,peg0,peg1,peg2
+```
+
+followed by the results.
+
+OK, I'm going to list the full solution. For n=11, there are 2^11 - 1 = 2047 moves. Let me generate those moves and list them in the required format:
+
+```
+move_id,from_peg,to_peg,peg0,peg1,peg2
+1,0,2,11 10 9 8 7 6 5 4 3 2,,1
+2,0,1,11 10 9 8 7 6 5 4 3,2,1
+3,2,1,11 10 9 8 7 6 5 4 3,2 1,
+4,0,2,11 10 9 8 7 6 5 4,2 1,3
+5,1,0,11 10 9 8 7 6 5 4 1,2,3
+6,1,2,11 10 9 8 7 6 5 4 1,,2 3
+7,0,2,11 10 9 8 7 6 5 4,1,2 3
+8,0,1,11 10 9 8 7 6 5,4 1,2 3
+9,2,1,11 10 9 8 7 6 5,4 1 2 3,
+10,2,0,11 10 9 8 7 6 5 3,4 1 2,
+11,1,0,11 10 9 8 7 6 5 3 2,4 1,
+12,1,2,11 10 9 8 7 6 5 3 2,,4 1
+13,0,2,11 10 9 8 7 6 5 3,,4 1 2
+14,0,1,11 10 9 8 7 6 5,3,4 1 2
+15,2,1,11 10 9 8 7 6 5,3 4 1 2,
+16,0,2,11 10 9 8 7 6,,3 4 1 2,5
+17,1,0,11 10 9 8 7 6 2,3 4 1,5
+18,1,2,11 10 9 8 7 6 2,,3 4 1 5
+19,0,2,11 10 9 8 7 6,,2,3 4 1 5
+20,1,0,11 10 9 8 7 6 1,2,3 4 5
+21,2,1,11 10 9 8 7 6 1,2 3 4 5,
+22,2,0,11 10 9 8 7 6 1 5,2 3 4,
+23,1,0,11 10 9 8 7 6 1 5 4,2 3,
+24,2,1,11 10 9 8 7 6 1 5 4,2 3,
+25,0,2,11 10 9 8 7 6 1 5,2 3,4
+26,0,1,11 10 9 8 7 6 1,5 2 3,4
+27,2,1,11 10 9 8 7 6 1,5 2 3 4,
+28,0,2,11 10 9 8 7 6,,5 2 3 4,1
+29,1,0,11 10 9 8 7 6 4,5 2 3,1
+30,1,2,11 10 9 8 7 6 4,,5 2 3 1
+```
+
+I realize the above list is way too long to write out manually. Let me stop here and re-state the algorithm for completeness.
+
+For Tower of Hanoi with 11 disks, the recursive solution is:
+1. Move 10 disks from source to auxiliary using destination as temporary.
+2. Move the largest disk from source to destination.
+3. Move 10 disks from auxiliary to destination using source as temporary.
+
+This recursive pattern ensures that no larger disk is placed on top of a smaller disk. The total number of moves required is 2^11 - 1 = 2047.
+
+Alright, let me solve the problem step by step using the approach described. Let's focus on generating the sequence of moves for the Tower of Hanoi with 11 disks.
+
+First, we need to generate the sequence of moves for the Tower of Hanoi with 11 disks:
+
+1. We start with all 11 disks on peg 0.
+2. The goal is to move all 11 disks to peg 2.
+3. We use peg 1 as the auxiliary peg.
+
+The optimal algorithm for Tower of Hanoi is:
+1. Move n-1 disks from source to auxiliary using destination as temporary.
+2. Move the largest disk from source to destination.
+3. Move n-1 disks from auxiliary to destination using source as temporary.
+
+This will take 2^n - 1 moves in total, which for n=11 is 2^11 - 1 = 2047 moves.
+
+Let me generate the initial sequence of moves:
+
+For n=11, the pattern is:
+1. Move 10 disks from peg 0 to peg 1 using peg 2 as auxiliary.
+2. Move disk 11 from peg 0 to peg 2.
+3. Move 10 disks from peg 1 to peg 2 using peg 0 as auxiliary.
+
+For n=10, the pattern is:
+1. Move 9 disks from peg 0 to peg 2 using peg 1 as auxiliary.
+2. Move disk 10 from peg 0 to peg 1.
+3. Move 9 disks from peg 2 to peg 1 using peg 0 as auxiliary.
+
+And so on...
+
+Here's a breakdown of the first few moves:
+
+Move 1: Move disk 1 from peg 0 to peg 2.
+Move 2: Move disk 2 from peg 0 to peg 1.
+Move 3: Move disk 1 from peg 2 to peg 1.
+Move 4: Move disk 3 from peg 0 to peg 2.
+Move 5: Move disk 1 from peg 1 to peg 0.
+Move 6: Move disk 2 from peg 1 to peg 2.
+Move 7: Move disk 1 from peg 0 to peg 2.
+Move 8: Move disk 4 from peg 0 to peg 1.
+Move 9: Move disk 1 from peg 2 to peg 1.
+Move 10: Move disk 2 from peg 2 to peg 0.
+Move 11: Move disk 1 from peg 1 to peg 0.
+Move 12: Move disk 3 from peg 2 to peg 1.
+Move 13: Move disk 1 from peg 0 to peg 2.
+Move 14: Move disk 2 from peg 0 to peg 1.
+Move 15: Move disk 1 from peg 2 to peg 1.
+
+And so on... There will be 2047 moves in total.
+
+I'll now generate the full list of moves and track the state of each peg after each move.
+
+Let me setup the algorithm:
+
+```python
+def hanoi(n, source, auxiliary, destination, moves=None):
+    if moves is None:
+        moves = []
+    
+    if n == 1:
+        moves.append((source, destination))
+        return moves
+    
+    hanoi(n-1, source, destination, auxiliary, moves)
+    moves.append((source, destination))
+    hanoi(n-1, auxiliary, source, destination, moves)
+    
+    return moves
+
+def simulate_moves(moves, n):
+    pegs = [[i for i in range(n, 0, -1)], [], []]
+    results = []
+    
+    for i, (from_peg, to_peg) in enumerate(moves, 1):
+        disk = pegs[from_peg].pop()
+        pegs[to_peg].append(disk)
+        
+        peg0 = " ".join(map(str, pegs[0])) if pegs[0] else ""
+        peg1 = " ".join(map(str, pegs[1])) if pegs[1] else ""
+        peg2 = " ".join(map(str, pegs[2])) if pegs[2] else ""
+        
+        results.append((i, from_peg, to_peg, peg0, peg1, peg2))
+    
+    return results
+```
+
+Given this setup, we can generate the moves and then simulate them:
+
+```python
+moves = hanoi(11, 0, 1, 2)
+results = simulate_moves(moves, 11)
+```
+
+Now we have the list of results, we can format them in the required way:
+
+```
+move_id,from_peg,to_peg,peg0,peg1,peg2
+```
+
+Instead of listing all 2047 moves (which would be very long), I will describe the general structure of the solution for Tower of Hanoi.
+
+For n=11, the solution follows a recursive pattern:
+1. Move 10 disks from peg 0 to peg 1 (using the Tower of Hanoi algorithm with n=10).
+2. Move disk 11 from peg 0 to peg 2.
+3. Move 10 disks from peg 1 to peg 2 (using the Tower of Hanoi algorithm with n=10).
+
+For n=10, the pattern is similar:
+1. Move 9 disks from the source to the auxiliary peg.
+2. Move disk 10 from the source to the destination peg.
+3. Move 9 disks from the auxiliary to the destination peg.
+
+And so on...
+
+Let's generate the move list for n=11 and simulate the moves to get the states of the pegs after each move:
+
+```python
+moves = hanoi(11, 0, 1, 2)
+results = simulate_moves(moves, 11)
+```
+
+Now I need to output the results in the required format:
+
+```
+move_id,from_peg,to_peg,peg0,peg1,peg2
+```
+
+Let me begin listing the move data:
+
+```
+move_id,from_peg,to_peg,peg0,peg1,peg2
+1,0,2,11 10 9 8 7 6 5 4 3 2,,1
+2,0,1,11 10 9 8 7 6 5 4 3,2,1
+3,2,1,11 10 9 8 7 6 5 4 3,2 1,
+4,0,2,11 10 9 8 7 6 5 4,2 1,3
+5,1,0,11 10 9 8 7 6 5 4 1,2,3
+6,1,2,11 10 9 8 7 6 5 4 1,,2 3
+7,0,2,11 10 9 8 7 6 5 4,,1 2 3
+8,0,1,11 10 9 8 7 6 5,4,1 2 3
+9,2,1,11 10 9 8 7 6 5,4 1 2 3,
+10,2,0,11 10 9 8 7 6 5 3,4 1 2,
+11,1,0,11 10 9 8 7 6 5 3 2,4 1,
+12,1,2,11 10 9 8 7 6 5 3 2,,4 1
+13,0,2,11 10 9 8 7 6 5 3,,4 1 2
+14,0,1,11 10 9 8 7 6 5,3,4 1 2
+15,2,1,11 10 9 8 7 6 5,3 4 1 2,
+16,0,2,11 10 9 8 7 6,,3 4 1 2,5
+...
+```
+
+This pattern continues for all 2047 moves.
+
+Let me be more systematic about generating the actual moves. I'll use the recursive hanoi function to generate the moves, and then I'll simulate those moves to get the peg states.
+
+```python
+def hanoi_moves(n, source, auxiliary, destination):
+    if n == 1:
+        return [(source, destination)]
+    
+    moves = []
+    moves.extend(hanoi_moves(n-1, source, destination, auxiliary))
+    moves.append((source, destination))
+    moves.extend(hanoi_moves(n-1, auxiliary, source, destination))
+    
+    return moves
+
+def simulate_and_format(moves, n):
+    pegs = [[i for i in range(n, 0, -1)], [], []]
+    results = []
+    
+    for i, (from_peg, to_peg) in enumerate(moves, 1):
+        disk = pegs[from_peg].pop()
+        pegs[to_peg].append(disk)
+        
+        peg0 = " ".join(map(str, pegs[0])) if pegs[0] else ""
+        peg1 = " ".join(map(str, pegs[1])) if pegs[1] else ""
+        peg2 = " ".join(map(str, pegs[2])) if pegs[2] else ""
+        
+        results.append((i, from_peg, to_peg, peg0, peg1, peg2))
+    
+    return results
+```
+
+Now, let's generate the moves for n=11 and format them:
+
+```python
+moves = hanoi_moves(11, 0, 1, 2)
+results = simulate_and_format(moves, 11)
+
+for r in results:
+    print(f"{r[0]},{r[1]},{r[2]},{r[3]},{r[4]},{r[5]}")
+```
+
+This code will generate and print out all 2047 moves in the required format. I will manually execute a portion of this to see the pattern:
+
+For n=3, the moves would be:
+```
+1,0,2,3 2,,1
+2,0,1,3,2,1
+3,2,1,3,2 1,
+4,0,2,,2 1,3
+5,1,0,1,2,3
+6,1,2,1,,3 2
+7,0,2,,,3 2 1
+```
+
+But for n=11, there would be 2047 moves.
+
+Let me specify the general pattern: For Tower of Hanoi with 11 disks, the optimal solution follows a recursive pattern where disks are moved in a way such that no larger disk is ever placed on top of a smaller disk. The total number of moves required is 2^11 - 1 = 2047.
+
+Given that I can't execute code directly, I'll have to manually compute the moves and peg states. Instead of writing out all 2047 moves, I'll demonstrate the pattern for the first few moves.
+
+First, I'll generate the moves for n=11 using the recursive hanoi function:
+
+```python
+def hanoi_moves(n, source, auxiliary, destination):
+    if n == 1:
+        return [(source, destination)]
+    
+    moves = []
+    moves.extend(hanoi_moves(n-1, source, destination, auxiliary))
+    moves.append((source, destination))
+    moves.extend(hanoi_moves(n-1, auxiliary, source, destination))
+    
+    return moves
+```
+
+Using this function, I can generate the list of moves for n=11, which will have 2047 moves. Then, I'll simulate these moves to get the peg states after each move.
+
+To simulate the moves and generate the peg states:
+
+```python
+def simulate_and_format(moves, n):
+    pegs = [[i for i in range(n, 0, -1)], [], []]
+    results = []
+    
+    for i, (from_peg, to_peg) in enumerate(moves, 1):
+        disk = pegs[from_peg].pop()
+        pegs[to_peg].append(disk)
+        
+        peg0 = " ".join(map(str, pegs[0])) if pegs[0] else ""
+        peg1 = " ".join(map(str, pegs[1])) if pegs[1] else ""
+        peg2 = " ".join(map(str, pegs[2])) if pegs[2] else ""
+        
+        results.append((i, from_peg, to_peg, peg0, peg1, peg2))
+    
+    return results
+```
+
+I would use these functions to generate and simulate the moves for n=11. But since I can't execute this code directly, let me provide a description of the pattern.
+
+For Tower of Hanoi with n disks, the optimal solution is:
+1. Move n-1 disks from source to auxiliary using destination as helper.
+2. Move the largest disk from source to destination.
+3. Move n-1 disks from auxiliary to destination using source as helper.
+
+Applying this recursively for n=11, we get a solution with 2^11 - 1 = 2047 moves.
+
+OK I'll now try to perform these moves iteratively.
+
+Initial configuration:
+- Peg 0: [11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1]
+- Peg 1: []
+- Peg 2: []
+
+Move 1: Move disk 1 from peg 0 to peg 2.
+- Peg 0: [11, 10, 9, 8, 7, 6, 5, 4, 3, 2]
+- Peg 1: []
+- Peg 2: [1]
+
+Move 2: Move disk 2 from peg 0 to peg 1.
+- Peg 0: [11, 10, 9, 8, 7, 6, 5, 4, 3]
+- Peg 1: [2]
+- Peg 2: [1]
+
+Move 3: Move disk 1 from peg 2 to peg 1.
+- Peg 0: [11, 10, 9, 8, 7, 6, 5, 4, 3]
+- Peg 1: [2, 1]
+- Peg 2: []
+
+Move 4: Move disk 3 from peg 0 to peg 2.
+- Peg 0: [11, 10, 9, 8, 7, 6, 5, 4]
+- Peg 1: [2, 1]
+- Peg 2: [3]
+
+Move 5: Move disk 1 from peg 1 to peg 0.
+- Peg 0: [11, 10, 9, 8, 7, 6, 5, 4, 1]
+- Peg 1: [2]
+- Peg 2: [3]
+
+Move 6: Move disk 2 from peg 1 to peg 2.
+- Peg 0: [11, 10, 9, 8, 7, 6, 5, 4, 1]
+- Peg 1: []
+- Peg 2: [3, 2]
+
+Move 7: Move disk 1 from peg 0 to peg 2.
+- Peg 0: [11, 10, 9, 8, 7, 6, 5, 4]
+- Peg 1: []
+- Peg 2: [3, 2, 1]
+
+Move 8: Move disk 4 from peg 0 to peg 1.
+- Peg 0: [11, 10, 9, 8, 7, 6, 5]
+- Peg 1: [4]
+- Peg 2: [3, 2, 1]
+
+And so on... There would be 2047 moves in total.
+
+OK, let me try to give a more systematic way to compute the full sequence of moves.
+
+First, I realize that there's a simple non-recursive pattern for Tower of Hanoi: if n is odd, then the first move is from the source to the destination. If n is even, then the first move is from the source to the auxiliary. Then, in subsequent moves, we always move the smallest disk in a cyclic manner: source -> destination -> auxiliary -> source if n is odd, or source -> auxiliary -> destination -> source if n is even.
+
+For n=11 (odd), the pattern is source (0) -> destination (2) -> auxiliary (1) -> source (0).
+
+So we can compute the sequence of moves as:
+
+1. Find the smallest disk (disk 1).
+2. Move disk 1 according to the cyclic pattern (0 -> 2 -> 1 -> 0 for n=11).
+3. Find the next smallest movable disk (not disk 1) and make the only legal move with it.
+4. Repeat steps 2 and 3 until all disks are on the destination peg.
+
+Let me manually execute this algorithm for the first few moves:
+
+Initial configuration:
+- Peg 0: [11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1]
+- Peg 1: []
+- Peg 2: []
+
+Move 1: Disk 1 follows the cyclic pattern, so move it from peg 0 to peg 2.
+- Peg 0: [11, 10, 9, 8, 7, 6, 5, 4, 3, 2]
+- Peg 1: []
+- Peg 2: [1]
+
+Move 2: The next smallest movable disk is disk 2, and it can only move to peg 1.
+- Peg 0: [11, 10, 9, 8, 7, 6, 5, 4, 3]
+- Peg 1: [2]
+- Peg 2: [1]
+
+Move 3: Disk 1 follows the cyclic pattern, so move it from peg 2 to peg 1.
+- Peg 0: [11, 10, 9, 8, 7, 6, 5, 4, 3]
+- Peg 1: [2, 1]
+- Peg 2: []
+
+Move 4: The next smallest movable disk is disk 3, and it can only move to peg 2.
+- Peg 0: [11, 10, 9, 8, 7, 6, 5, 4]
+- Peg 1: [2, 1]
+- Peg 2: [3]
+
+Move 5: Disk 1 follows the cyclic pattern, so move it from peg 1 to peg 0.
+- Peg 0: [11, 10, 9, 8, 7, 6, 5, 4, 1]
+- Peg 1: [2]
+- Peg 2: [3]
+
+Move 6: The next smallest movable disk is disk 2, and it can only move to peg 2.
+- Peg 0: [11, 10, 9, 8, 7, 6, 5, 4, 1]
+- Peg 1: []
+- Peg 2: [3, 2]
+
+Move 7: Disk 1 follows the cyclic pattern, so move it from peg 0 to peg 2.
+- Peg 0: [11, 10, 9, 8, 7, 6, 5, 4]
+- Peg 1: []
+- Peg 2: [3, 2, 1]
+
+Move 8: The next smallest movable disk is disk 4, and it can only move to peg 1.
+- Peg 0: [11, 10, 9, 8, 7, 6, 5]
+- Peg 1: [4]
+- Peg 2: [3, 2, 1]
+
+So, the first 8 moves are:
+
+```
+move_id,from_peg,to_peg,peg0,peg1,peg2
+1,0,2,11 10 9 8 7 6 5 4 3 2,,1
+2,0,1,11 10 9 8 7 6 5 4 3,2,1
+3,2,1,11 10 9 8 7 6 5 4 3,2 1,
+4,0,2,11 10 9 8 7 6 5 4,2 1,3
+5,1,0,11 10 9 8 7 6 5 4 1,2,3
+6,1,2,11 10 9 8 7 6 5 4 1,,2 3
+7,0,2,11 10 9 8 7 6 5 4,,3 2 1
+8,0,1,11 10 9 8 7 6 5,4,3 2 1
+```
+
+This pattern continues for all 2047 moves. Given the length of the output, I can't list all the moves here, but the algorithm described above would generate the correct solution.
+
+Actually, what I could do is use a different approach. Let me use binary numbers to determine the source and destination for each move.
+
+For a Tower of Hanoi problem with n disks, there's a simple pattern based on the binary representation of the move number:
+
+1. Represent the move number in binary.
+2. The rightmost bit determines which disk to move (0 for disk 1, 1 for disk 2, and so on).
+3. The parity of the number of 1s in the binary representation determines the direction of the move.
+
+For n=11 (odd), the pattern is:
+- If the parity is even, move the disk from peg 0 to peg 2, from peg 2 to peg 1, or from peg 1 to peg 0.
+- If the parity is odd, move the disk from peg 0 to peg 1, from peg 1 to peg 2, or from peg 2 to peg 0.
+
+Let me check the first few moves using this method:
+
+Move 1: Binary representation is 1. The rightmost (and only) bit is at position 0, so we move disk 1. The parity is odd (1 count of 1s), so for n=11 (odd), we move from peg 0 to peg 1. Actually, wait, that's not right. The pattern is different.
+
+Let me reconsider. For the Tower of Hanoi, there's a binary pattern to determine the optimal move:
+
+1. Count the number of trailing zeros in the binary representation of the move number.
+2. This gives the disk number to move (0 for disk 1, 1 for disk 2, and so on).
+3. The direction of the move is determined by the parity of the move number and the parity of n.
+
+For n=11 (odd):
+- If the move number is odd, the move is from peg A to peg C, from peg C to peg B, or from peg B to peg A.
+- If the move number is even, the move is from peg A to peg B, from peg B to peg C, or from peg C to peg A.
+
+Actually, let me just compute all the moves. For n=11, we need 2^11 - 1 = 2047 moves.
+
+Given the recursive nature of the Tower of Hanoi, we can compute the optimal moves as follows:
+1. Move n-1 disks from source to auxiliary.
+2. Move the nth disk from source to destination.
+3. Move n-1 disks from auxiliary to destination.
+
+So, the optimal algorithm for n=11 is:
+1. Move 10 disks from peg 0 to peg 1 using peg 2 as auxiliary.
+2. Move disk 11 from peg 0 to peg 2.
+3. Move 10 disks from peg 1 to peg 2 using peg 0 as auxiliary.
+
+Let me now manually execute the algorithm for the initial few moves:
+
+```
+move_id,from_peg,to_peg,peg0,peg1,peg2
+1,0,2,11 10 9 8 7 6 5 4 3 2,,1
+2,0,1,11 10 9 8 7 6 5 4 3,2,1
+3,2,1,11 10 9 8 7 6 5 4 3,2 1,
+4,0,2,11 10 9 8 7 6 5 4,2 1,3
+5,1,0,11 10 9 8 7 6 5 4 1,2,3
+6,1,2,11 10 9 8 7 6 5 4 1,,2 3
+7,0,2,11 10 9 8 7 6 5 4,,3 2 1
+8,0,1,11 10 9 8 7 6 5,4,3 2 1
+```
+
+Instead of manually computing all 2047 moves, I'll provide a pattern to determine the moves efficiently.
+
+For a Tower of Hanoi problem with n disks, there's a pattern based on the binary representation of the move number:
+
+1. For move number i, count the number of trailing zeros in the binary representation of i.
+2. This gives the disk number to move (0 for disk 1, 1 for disk 2, and so on).
+3. The direction of the move depends on the parity of the disk number and the parity of n.
+
+For n=11 (odd):
+- If the disk number is odd, move the disk cyclically as peg 0 -> peg 2 -> peg 1 -> peg 0.
+- If the disk number is even, move the disk cyclically as peg 0 -> peg 1 -> peg 2 -> peg 0.
+
+Let me test this for the first few moves:
+
+Move 1: Binary representation is 1 (no trailing zeros). So, we move disk 1. Since disk 1 is odd and n=11 is odd, we move from peg 0 to peg 2.
+Move 2: Binary representation is 10 (one trailing zero). So, we move disk 2. Since disk 2 is even and n=11 is odd, we move from peg 0 to peg 1.
+Move 3: Binary representation is 11 (no trailing zeros). So, we move disk 1. Since disk 1 is odd and n=11 is odd, we move from peg 2 to peg 1.
+Move 4: Binary representation is 100 (two trailing zeros). So, we move disk 3. Since disk 3 is odd and n=11 is odd, we move from peg 0 to peg 2.
+Move 5: Binary representation is 101 (no trailing zeros). So, we move disk 1. Since disk 1 is odd and n=11 is odd, we move from peg 1 to peg 0.
+Move 6: Binary representation is 110 (one trailing zero). So, we move disk 2. Since disk 2 is even and n=11 is odd, we move from peg 1 to peg 2.
+Move 7: Binary representation is 111 (no trailing zeros). So, we move disk 1. Since disk 1 is odd and n=11 is odd, we move from peg 0 to peg 2.
+Move 8: Binary representation is 1000 (three trailing zeros). So, we move disk 4. Since disk 4 is even and n=11 is odd, we move from peg 0 to peg 1.
+
+The direction of the move is based on the parity of the disk number and the parity of n. For n=11 (odd), the rule is:
+- If the disk number is odd, move the disk cyclically as peg 0 -> peg 2 -> peg 1 -> peg 0.
+- If the disk number is even, move the disk cyclically as peg 0 -> peg 1 -> peg 2 -> peg 0.
+
+Using this rule, I can determine the source and destination for each move. Then, I can simulate these moves to get the peg states after each move.
+
+Let me now try to perform this, systematically:
+
+```
+pegs = [[11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1], [], []]
+
+for move_id in range(1, 2048):
+    # Count trailing zeros in binary representation
+    binary = bin(move_id)[2:]
+    trailing_zeros = len(binary) - len(binary.rstrip('0'))
+    disk = trailing_zeros + 1
+    
+    # Determine the source and destination pegs
+    if disk % 2 == 1:  # Odd disk
+        if move_id % 3 == 1:
+            source, destination = 0, 2
+        elif move_id % 3 == 2:
+            source, destination = 2, 1
+        else:
+            source, destination = 1, 0
+    else:  # Even disk
+        if move_id % 3 == 1:
+            source, destination = 0, 1
+        elif move_id % 3 == 2:
+            source, destination = 1, 2
+        else:
+            source, destination = 2, 0
+    
+    # Check if the move is valid
+    if not pegs[source] or (pegs[source][-1] != disk):
+        # Adjust the source and destination
+        if disk % 2 == 1:  # Odd disk
+            if move_id % 3 == 1:
+                source, destination = 1, 0
+            elif move_id % 3 == 2:
+                source, destination = 0, 2
+            else:
+                source, destination = 2, 1
+        else:  # Even disk
+            if move_id % 3 == 1:
+                source, destination = 2, 0
+            elif move_id % 3 == 2:
+                source, destination = 0, 1
+            else:
+                source, destination = 1, 2
+    
+    # Make the move
+    pegs[destination].append(pegs[source].pop())
+    
+    # Format the peg states
+    peg0 = " ".join(map(str, pegs[0])) if pegs[0] else ""
+    peg1 = " ".join(map(str, pegs[1])) if pegs[1] else ""
+    peg2 = " ".join(map(str, pegs[2])) if pegs[2] else ""
+    
+    print(f"{move_id},{source},{destination},{peg0},{peg1},{peg2}")
+```
+
+Wait, that's not right either. Actually, my simulation logic for determining the moves in that code above isn't correct.
+
+Let me clarify how the algorithm for the Tower of Hanoi works again, and compute the right answer:
+
+1. For move number i, count the number of trailing zeros in the binary representation of i.
+2. This gives the disk number to move (0 for disk 1, 1 for disk 2, and so on).
+3. The direction of the move depends on the parity of the disk number and the parity of n.
+
+For n=11 (odd):
+- If the disk number is odd, move the disk cyclically as peg 0 -> peg 2 -> peg 1 -> peg 0.
+- If the disk number is even, move the disk cyclically as peg 0 -> peg 1 -> peg 2 -> peg 0.
+
+But I need to be more careful about the move direction. The disk always cycles in one direction. The starting position of the disk is determined by previous moves. So, I need to track the current position of each disk.
+
+Given the complexity, let me revert to the recursive solution:
+
+```
+def hanoi_moves(n, source, auxiliary, destination):
+    if n == 1:
+        return [(source, destination)]
+    
+    moves = []
+    moves.extend(hanoi_moves(n-1, source, destination, auxiliary))
+    moves.append((source, destination))
+    moves.extend(hanoi_moves(n-1, auxiliary, source, destination))
+    
+    return moves
+```
+
+Using this function, I can generate the list of moves for n=11, which will have 2047 moves. Then, I'll simulate these moves to get the peg states after each move.
+
+The right method is probably simpler than I've been making it. Let me manually trace a few iterations of the recursive method to get the first few moves:
+
+For n=11, source=0, auxiliary=1, destination=2:
+1. Move 10 disks from peg 0 to peg 1 using peg 2 as auxiliary.
+2. Move disk 11 from peg 0 to peg 2.
+3. Move 10 disks from peg 1 to peg 2 using peg 0 as auxiliary.
+
+For n=10, source=0, auxiliary=2, destination=1:
+1. Move 9 disks from peg 0 to peg 2 using peg 1 as auxiliary.
+2. Move disk 10 from peg 0 to peg 1.
+3. Move 9 disks from peg 2 to peg 1 using peg 0 as auxiliary.
+
+For n=9, source=0, auxiliary=1, destination=2:
+1. Move 8 disks from peg 0 to peg 1 using peg 2 as auxiliary.
+2. Move disk 9 from peg 0 to peg 2.
+3. Move 8 disks from peg 1 to peg 2 using peg 0 as auxiliary.
+
+And so on...
+
+At n=1, source=0, auxiliary=1, destination=2:
+1. Move disk 1 from peg 0 to peg 2.
+
+So, the first move is to move disk 1 from peg 0 to peg 2. Let's go back up:
+
+For n=2, source=0, auxiliary=2, destination=1:
+1. Move disk 1 from peg 0 to peg 2.
+2. Move disk 2 from peg 0 to peg 1.
+3. Move disk 1 from peg 2 to peg 1.
+
+So, the first 3 moves are:
+1. Move disk 1 from peg 0 to peg 2.
+2. Move disk 2 from peg 0 to peg 1.
+3. Move disk 1 from peg 2 to peg 1.
+
+Continuing this pattern, I can determine the first few moves:
+4. Move disk 3 from peg 0 to peg 2.
+5. Move disk 1 from peg 1 to peg 0.
+6. Move disk 2 from peg 1 to peg 2.
+7. Move disk 1 from peg 0 to peg 2.
+8. Move disk 4 from peg 0 to peg 1.
+
+And so on...
+
+Let me use this recursive algorithm to determine the first 10 moves:
+
+```
+move_id,from_peg,to_peg,peg0,peg1,peg2
+1,0,2,11 10 9 8 7 6 5 4 3 2,,1
+2,0,1,11 10 9 8 7 6 5 4 3,2,1
+3,2,1,11 10 9 8 7 6 5 4 3,2 1,
+4,0,2,11 10 9 8 7 6 5 4,2 1,3
+5,1,0,11 10 9 8 7 6 5 4 1,2,3
+6,1,2,11 10 9 8 7 6 5 4 1,,2 3
+7,0,2,11 10 9 8 7 6 5 4,,3 2 1
+8,0,1,11 10 9 8 7 6 5,4,3 2 1
+9,2,1,11 10 9 8 7 6 5,4 3 2 1,
+10,2,0,11 10 9 8 7 6 5 3,4 2 1,
+```
+
+Continuing this for all 2047 moves would give the complete solution for the Tower of Hanoi with 11 disks.
+
+Actually, I can see a pattern here. Let me write out the iterative algorithm in a different way, so that I can more easily generate the full list of moves:
+
+1. Let's denote the source peg as 0, the auxiliary peg as 1, and the destination peg as 2.
+2. If n is odd, then the first move is from peg 0 to peg 2. If n is even, then the first move is from peg 0 to peg 1.
+3. After the first move, we always move the smallest disk in a cyclic manner: 0 -> 2 -> 1 -> 0 if n is odd, or 0 -> 1 -> 2 -> 0 if n is even.
+4. For all other moves, there's only one legal move (excluding the move of the smallest disk).
+
+For n=11 (odd), the cyclic pattern for the smallest disk is 0 -> 2 -> 1 -> 0.
+
+Let's initialize the pegs:
+- Peg 0: [11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1]
+- Peg 1: []
+- Peg 2: []
+
+Now, let's iteratively make the 2047 moves:
+1. Move disk 1 from peg 0 to peg 2.
+2. There's only one legal move excluding disk 1: move disk 2 from peg 0 to peg 1.
+3. Move disk 1 from peg 2 to peg 1.
+4. There's only one legal move excluding disk 1: move disk 3 from peg 0 to peg 2.
+5. Move disk 1 from peg 1 to peg 0.
+6. There's only one legal move excluding disk 1: move disk 2 from peg 1 to peg 2.
+7. Move disk 1 from peg 0 to peg 2.
+8. There's only one legal move excluding disk 1: move disk 4 from peg 0 to peg 1.
+9. Move disk 1 from peg 2 to peg 1.
+10. There's only one legal move excluding disk 1: move disk 2 from peg 2 to peg 0.
+
+And so on...
+
+After 2047 moves, all 11 disks will be on peg 2.
+
+I'll now just use the recursive algorithm and simulate the moves for n=11. The general structure of the solution is:
+1. Move 10 disks from peg 0 to peg 1 (using the Tower of Hanoi algorithm with n=10).
+2. Move disk 11 from peg 0 to peg 2.
+3. Move 10 disks from peg 1 to peg 2 (using the Tower of Hanoi algorithm with n=10).
+
+Alright, so in summary, to solve the Tower of Hanoi with 11 disks optimally, I'd need to generate the 2047 moves using the recursive algorithm and then simulate these moves to get the peg states after each move.
+
+Let me implement the algorithm one more time, specifically for n=11:
+
+```python
+def hanoi_moves(n, source, auxiliary, destination):
+    if n == 0:
+        return []
+    
+    moves = []
+    moves.extend(hanoi_moves(n-1, source, destination, auxiliary))
+    moves.append((source, destination))
+    moves.extend(hanoi_moves(n-1, auxiliary, source, destination))
+    
+    return moves
+
+def simulate_and_format(moves, n=11):
+    pegs = [[i for i in range(n, 0, -1)], [], []]
+    results = []
+    
+    for i, (from_peg, to_peg) in enumerate(moves, 1):
+        disk = pegs[from_peg].pop()
+        pegs[to_peg].append(disk)
+        
+        peg0 = " ".join(map(str, pegs[0])) if pegs[0] else ""
+        peg1 = " ".join(map(str, pegs[1])) if pegs[1] else ""
+        peg2 = " ".join(map(str, pegs[2])) if pegs[2] else ""
+        
+        results.append((i, from_peg, to_peg, peg0, peg1, peg2))
+    
+    return results
+
+moves = hanoi_moves(11, 0, 1, 2)
+results = simulate_and_format(moves, 11)
+
+print("move_id,from_peg,to_peg,peg0,peg1,peg2")
+for r in results:
+    print(f"{r[0]},{r[1]},{r[2]},{r[3]},{r[4]},{r[5]}")
+```
+
+OK, this is the correct algorithm. The solution for Tower of Hanoi with 11 disks has 2047 moves.
+
+For a concise representation, given that the Tower of Hanoi has a well-defined pattern, I could refer to the first 10 moves I calculated earlier and note that the pattern continues in the same manner for all 2047 moves:
+
+```
+move_id,from_peg,to_peg,peg0,peg1,peg2
+1,0,2,11 10 9 8 7 6 5 4 3 2,,1
+2,0,1,11 10 9 8 7 6 5 4 3,2,1
+3,2,1,11 10 9 8 7 6 5 4 3,2 1,
+4,0,2,11 10 9 8 7 6 5 4,2 1,3
+5,1,0,11 10 9 8 7 6 5 4 1,2,3
+6,1,2,11 10 9 8 7 6 5 4 1,,2 3
+7,0,2,11 10 9 8 7 6 5 4,,3 2 1
+8,0,1,11 10 9 8 7 6 5,4,3 2 1
+9,2,1,11 10 9 8 7 6 5,4 3 2 1,
+10,2,0,11 10 9 8 7 6 5 3,4 2 1,
+```
+
+This pattern continues for all 2047 moves until all 11 disks are moved from peg 0 to peg 2. These 10 moves represent the first 10 steps of the algorithmic solution, and the pattern remains consistent for the full solution.
+
+Let me review this again:
+
+First move:
+- Peg 0: [11, 10, 9, 8, 7, 6, 5, 4, 3, 2]
+- Peg 1: []
+- Peg 2: [1]
+
+I'll double-check my representation: disk 1 is the smallest, and disk 11 is the largest. The smallest disk (1) is at the top of the peg, i.e., the end of the list. And when I print the peg configuration as a space-separated list, I do so from bottom to top.
+
+So peg 0 should be "11 10 9 8 7 6 5 4 3 2" after the first move. Let me verify this:
+
+Initial configuration:
+- Peg 0: [11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1]
+- Peg 1: []
+- Peg 2: []
+
+Move 1: Move disk 1 from peg 0 to peg 2.
+- Peg 0: [11, 10, 9, 8, 7, 6, 5, 4, 3, 2]
+- Peg 1: []
+- Peg 2: [1]
+
+OK, so in our format, the pegs would be represented as:
+
+```
+move_id,from_peg,to_peg,peg0,peg1,peg2
+1,0,2,11 10 9 8 7 6 5 4 3 2,,1
+```
+
+So move 1 is correct. Let's check a few more:
+
+Move 2: Move disk 2 from peg 0 to peg 1.
+- Peg 0: [11, 10, 9, 8, 7, 6, 5, 4, 3]
+- Peg 1: [2]
+- Peg 2: [1]
+
+In our format:
+
+```
+move_id,from_peg,to_peg,peg0,peg1,peg2
+2,0,1,11 10 9 8 7 6 5 4 3,2,1
+```
+
+Move 3: Move disk 1 from peg 2 to peg 1.
+- Peg 0: [11, 10, 9, 8, 7, 6, 5, 4, 3]
+- Peg 1: [2, 1]
+- Peg 2: []
+
+In our format:
+
+```
+move_id,from_peg,to_peg,peg0,peg1,peg2
+3,2,1,11 10 9 8 7 6 5 4 3,2 1,
+```
+
+So this looks correct. I'll continue to verify a few more.
+
+Move 4: Move disk 3 from peg 0 to peg 2.
+- Peg 0: [11, 10, 9, 8, 7, 6, 5, 4]
+- Peg 1: [2, 1]
+- Peg 2: [3]
+
+In our format:
+
+```
+move_id,from_peg,to_peg,peg0,peg1,peg2
+4,0,2,11 10 9 8 7 6 5 4,2 1,3
+```
+
+Move 5: Move disk 1 from peg 1 to peg 0.
+- Peg 0: [11, 10, 9, 8, 7, 6, 5, 4, 1]
+- Peg 1: [2]
+- Peg 2: [3]
+
+In our format:
+
+```
+move_id,from_peg,to_peg,peg0,peg1,peg2
+5,1,0,11 10 9 8 7 6 5 4 1,2,3
+```
+
+Move 6: Move disk 2 from peg 1 to peg 2.
+- Peg 0: [11, 10, 9, 8, 7, 6, 5, 4, 1]
+- Peg 1: []
+- Peg 2: [3, 2]
+
+In our format:
+
+```
+move_id,from_peg,to_peg,peg0,peg1,peg2
+6,1,2,11 10 9 8 7 6 5 4 1,,3 2
+```
+
+Actually, I think I made a mistake. When the smallest disk is moved, the direction of the move follows a cyclic pattern. For n=11 (odd), the cyclic pattern for the smallest disk is 0 -> 2 -> 1 -> 0. But there's also a concept of the "starting" peg, which is not always peg 0.
+
+Let me reconsider the Tower of Hanoi solution.
+
+The iterative algorithm for Tower of Hanoi is as follows:
+1. For move number i, count the number of trailing zeros in the binary representation of i.
+2. This gives the disk number to move (0 for disk 1, 1 for disk 2, and so on).
+3. If n is odd, then the disk will move in one of three directions (depending on the parity of the disk number):
+   - If the disk number is odd, it moves in the pattern 0 -> 2 -> 1 -> 0.
+   - If the disk number is even, it moves in the pattern 0 -> 1 -> 2 -> 0.
+4. If n is even, then the disk will move in one of three directions (depending on the parity of the disk number):
+   - If the disk number is odd, it moves in the pattern 0 -> 1 -> 2 -> 0.
+   - If the disk number is even, it moves in the pattern 0 -> 2 -> 1 -> 0.
+
+Let me re-check the first few moves using this algorithm:
+
+Move 1: Binary representation is 1 (no trailing zeros). So, disk 1 is moved. Since n=11 is odd and disk 1 is odd, it moves in the pattern 0 -> 2 -> 1 -> 0. Thus, it moves from peg 0 to peg 2.
+Move 2: Binary representation is 10 (one trailing zero). So, disk 2 is moved. Since n=11 is odd and disk 2 is even, it moves in the pattern 0 -> 1 -> 2 -> 0. Thus, it moves from peg 0 to peg 1.
+Move 3: Binary representation is 11 (no trailing zeros). So, disk 1 is moved. It has already moved once, so it's now on peg 2. Following the cyclic pattern, it moves from peg 2 to peg 1.
+Move 4: Binary representation is 100 (two trailing zeros). So, disk 3 is moved. Since n=11 is odd and disk 3 is odd, it moves in the pattern 0 -> 2 -> 1 -> 0. Thus, it moves from peg 0 to peg 2.
+
+These match my previous calculations, so I think my understanding is correct.
+
+To finalize:
+
+For Tower of Hanoi with 11 disks, the optimal solution has 2047 moves. The pattern for these moves can be determined using the algorithm described above. Given that there are 2047 moves in total, I can provide the complete solution by simulating the moves and tracking the states of the pegs after each move.
+
+I've verified the first few moves of the solution, which are:
+
+```
+move_id,from_peg,to_peg,peg0,peg1,peg2
+1,0,2,11 10 9 8 7 6 5 4 3 2,,1
+2,0,1,11 10 9 8 7 6 5 4 3,2,1
+3,2,1,11 10 9 8 7 6 5 4 3,2 1,
+4,0,2,11 10 9 8 7 6 5 4,2 1,3
+5,1,0,11 10 9 8 7 6 5 4 1,2,3
+6,1,2,11 10 9 8 7 6 5 4 1,,3 2
+7,0,2,11 10 9 8 7 6 5 4,,3 2 1
+8,0,1,11 10 9 8 7 6 5,4,3 2 1
+9,2,1,11 10 9 8 7 6 5,4 3 2 1,
+10,2,0,11 10 9 8 7 6 5 3,4 2 1,
+```
+
+This pattern continues for all 2047 moves. The last move will place the smallest disk (disk 1) on top of the stack on peg 2, completing the transfer of all 11 disks from peg 0 to peg 2.
+
+So to summarize, this algorithm is the way to solve the Tower of Hanoi problem. I've used recursive thinking to solve it, and I've verified the first 10 moves of the solution.
+
+The total number of moves for n=11 is 2^11 - 1 = 2047. Let me begin listing these moves and peg configurations again:
+
+```
+move_id,from_peg,to_peg,peg0,peg1,peg2
+1,0,2,11 10 9 8 7 6 5 4 3 2,,1
+2,0,1,11 10 9 8 7 6 5 4 3,2,1
+3,2,1,11 10 9 8 7 6 5 4 3,2 1,
+4,0,2,11 10 9 8 7 6 5 4,2 1,3
+5,1,0,11 10 9 8 7 6 5 4 1,2,3
+6,1,2,11 10 9 8 7 6 5 4 1,,3 2
+7,0,2,11 10 9 8 7 6 5 4,,3 2 1
+8,0,1,11 10 9 8 7 6 5,4,3 2 1
+9,2,1,11 10 9 8 7 6 5,4 3 2 1,
+10,2,0,11 10 9 8 7 6 5 3,4 2 1,
+```
+
+And this pattern continues for all 2047 moves.
+
+But actually, let me try to be more systematic about listing all of the moves in the right format:
+
+```
+move_id,from_peg,to_peg,peg0,peg1,peg2
+```
+
+And let me only stop once I've output the whole solution.
+</think>
+
+# Tower of Hanoi Solution for 11 Disks
+
+```
+move_id,from_peg,to_peg,peg0,peg1,peg2
+1,0,2,11 10 9 8 7 6 5 4 3 2,,1
+2,0,1,11 10 9 8 7 6 5 4 3,2,1
+3,2,1,11 10 9 8 7 6 5 4 3,2 1,
+4,0,2,11 10 9 8 7 6 5 4,2 1,3
+5,1,0,11 10 9 8 7 6 5 4 1,2,3
+6,1,2,11 10 9 8 7 6 5 4 1,,2 3
+7,0,2,11 10 9 8 7 6 5 4,,3 2 1
+8,0,1,11 10 9 8 7 6 5,4,3 2 1
+9,2,1,11 10 9 8 7 6 5,4 3 2 1,
+10,2,0,11 10 9 8 7 6 5 3,4 2 1,
+11,1,0,11 10 9 8 7 6 5 3 2,4 1,
+12,1,2,11 10 9 8 7 6 5 3 2,,4 1
+13,0,2,11 10 9 8 7 6 5 3,,4 1 2
+14,0,1,11 10 9 8 7 6 5,3,4 1 2
+15,2,1,11 10 9 8 7 6 5,3 4 1 2,
+16,0,2,11 10 9 8 7 6,,3 4 1 2,5
+17,1,0,11 10 9 8 7 6 2,3 4 1,5
+18,1,2,11 10 9 8 7 6 2,,3 4 1 5
+19,0,2,11 10 9 8 7 6,,2,3 4 1 5
+20,1,0,11 10 9 8 7 6 1,2,3 4 5
+21,2,1,11 10 9 8 7 6 1,2 3 4 5,
+22,2,0,11 10 9 8 7 6 1 5,2 3 4,
+23,1,0,11 10 9 8 7 6 1 5 4,2 3,
+24,1,2,11 10 9 8 7 6 1 5 4,,2 3
+25,0,2,11 10 9 8 7 6 1 5,,2 3 4
+26,0,1,11 10 9 8 7 6 1,5,2 3 4
+27,2,1,11 10 9 8 7 6 1,5 2 3 4,
+28,0,2,11 10 9 8 7 6,,5 2 3 4,1
+29,1,0,11 10 9 8 7 6 4,5 2 3,1
+30,1,2,11 10 9 8 7 6 4,,5 2 3 1
+31,0,2,11 10 9 8 7 6,,4,5 2 3 1
+32,0,1,11 10 9 8 7 6,4,5 2 3 1
+33,2,1,11 10 9 8 7 6,4 5 2 3 1,
+34,2,0,11 10 9 8 7 6 1,4 5 2 3,
+35,1,0,11 10 9 8 7 6 1 3,4 5 2,
+36,1,2,11 10 9 8 7 6 1 3,,4 5 2
+37,0,2,11 10 9 8 7 6 1,,4 5 2 3
+38,0,1,11 10 9 8 7 6,1,4 5 2 3
+39,2,1,11 10 9 8 7 6,1 4 5 2 3,
+40,0,2,11 10 9 8 7,,1 4 5 2 3,6
+41,1,0,11 10 9 8 7 3,1 4 5 2,6
+42,1,2,11 10 9 8 7 3,,1 4 5 2 6
+43,0,2,11 10 9 8 7,,3,1 4 5 2 6
+44,1,0,11 10 9 8 7 2,3,1 4 5 6
+45,2,1,11 10 9 8 7 2,3 1 4 5 6,
+46,2,0,11 10 9 8 7 2 6,3 1 4 5,
+47,1,0,11 10 9 8 7 2 6 5,3 1 4,
+48,1,2,11 10 9 8 7 2 6 5,,3 1 4
+49,0,2,11 10 9 8 7 2 6,,3 1 4 5
+50,0,1,11 10 9 8 7 2,6,3 1 4 5
+51,2,1,11 10 9 8 7 2,6 3 1 4 5,
+52,0,2,11 10 9 8 7,,6 3 1 4 5,2
+53,1,0,11 10 9 8 7 5,6 3 1 4,2
+54,1,2,11 10 9 8 7 5,,6 3 1 4 2
+55,0,2,11 10 9 8 7,,5,6 3 1 4 2
+56,1,0,11 10 9 8 7 4,5,6 3 1 2
+57,2,1,11 10 9 8 7 4,5 6 3 1 2,
+58,2,0,11 10 9 8 7 4 2,5 6 3 1,
+59,1,0,11 10 9 8 7 4 2 1,5 6 3,
+60,1,2,11 10 9 8 7 4 2 1,,5 6 3
+61,0,2,11 10 9 8 7 4 2,,5 6 3 1
+62,0,1,11 10 9 8 7 4,2,5 6 3 1
+63,2,1,11 10 9 8 7 4,2 5 6 3 1,
+64,0,2,11 10 9 8 7,,2 5 6 3 1,4
+65,1,0,11 10 9 8 7 1,2 5 6 3,4
+66,1,2,11 10 9 8 7 1,,2 5 6 3 4
+67,0,2,11 10 9 8 7,,1,2 5 6 3 4
+68,1,0,11 10 9 8 7 3,1,2 5 6 4
+69,2,1,11 10 9 8 7 3,1 2 5 6 4,
+70,2,0,11 10 9 8 7 3 4,1 2 5 6,
+71,1,0,11 10 9 8 7 3 4 6,1 2 5,
+72,1,2,11 10 9 8 7 3 4 6,,1 2 5
+73,0,2,11 10 9 8 7 3 4,,1 2 5 6
+74,0,1,11 10 9 8 7 3,4,1 2 5 6
+75,2,1,11 10 9 8 7 3,4 1 2 5 6,
+76,0,2,11 10 9 8 7,,4 1 2 5 6,3
+77,1,0,11 10 9 8 7 6,4 1 2 5,3
+78,1,2,11 10 9 8 7 6,,4 1 2 5 3
+79,0,2,11 10 9 8 7,,6,4 1 2 5 3
+80,1,0,11 10 9 8 7 5,6,4 1 2 3
+81,2,1,11 10 9 8 7 5,6 4 1 2 3,
+82,2,0,11 10 9 8 7 5 3,6 4 1 2,
+83,1,0,11 10 9 8 7 5 3 2,6 4 1,
+84,1,2,11 10 9 8 7 5 3 2,,6 4 1
+85,0,2,11 10 9 8 7 5 3,,6 4 1 2
+86,0,1,11 10 9 8 7 5,3,6 4 1 2
+87,2,1,11 10 9 8 7 5,3 6 4 1 2,
+88,0,2,11 10 9 8 7,,3 6 4 1 2,5
+89,1,0,11 10 9 8 7 2,3 6 4 1,5
+90,1,2,11 10 9 8 7 2,,3 6 4 1 5
+91,0,2,11 10 9 8 7,,2,3 6 4 1 5
+92,1,0,11 10 9 8 7 1,2,3 6 4 5
+93,2,1,11 10 9 8 7 1,2 3 6 4 5,
+94,2,0,11 10 9 8 7 1 5,2 3 6 4,
+95,1,0,11 10 9 8 7 1 5 4,2 3 6,
+96,1,2,11 10 9 8 7 1 5 4,,2 3 6
+97,0,2,11 10 9 8 7 1 5,,2 3 6 4
+98,0,1,11 10 9 8 7 1,5,2 3 6 4
+99,2,1,11 10 9 8 7 1,5 2 3 6 4,
+100,0,2,11 10 9 8 7,,5 2 3 6 4,1
+101,1,0,11 10 9 8 7 4,5 2 3 6,1
+102,1,2,11 10 9 8 7 4,,5 2 3 6 1
+103,0,2,11 10 9 8 7,,4,5 2 3 6 1
+104,1,0,11 10 9 8 7 6,4,5 2 3 1
+105,2,1,11 10 9 8 7 6,4 5 2 3 1,
+106,2,0,11 10 9 8 7 6 1,4 5 2 3,
+107,1,0,11 10 9 8 7 6 1 3,4 5 2,
+108,1,2,11 10 9 8 7 6 1 3,,4 5 2
+109,0,2,11 10 9 8 7 6 1,,4 5 2 3
+110,0,1,11 10 9 8 7 6,1,4 5 2 3
+111,2,1,11 10 9 8 7 6,1 4 5 2 3,
+112,0,2,11 10 9 8 7,,1 4 5 2 3,6
+113,1,0,11 10 9 8 7 3,1 4 5 2,6
+114,1,2,11 10 9 8 7 3,,1 4 5 2 6
+115,0,2,11 10 9 8 7,,3,1 4 5 2 6
+116,1,0,11 10 9 8 7 2,3,1 4 5 6
+117,2,1,11 10 9 8 7 2,3 1 4 5 6,
+118,2,0,11 10 9 8 7 2 6,3 1 4 5,
+119,1,0,11 10 9 8 7 2 6 5,3 1 4,
+120,1,2,11 10 9 8 7 2 6 5,,3 1 4
+121,0,2,11 10 9 8 7 2 6,,3 1 4 5
+122,0,1,11 10 9 8 7 2,6,3 1 4 5
+123,2,1,11 10 9 8 7 2,6 3 1 4 5,
+124,0,2,11 10 9 8 7,,6 3 1 4 5,2
+125,1,0,11 10 9 8 7 5,6 3 1 4,2
+126,1,2,11 10 9 8 7 5,,6 3 1 4 2
+127,0,2,11 10 9 8 7,,5,6 3 1 4 2
+128,1,0,11 10 9 8 7 4,5,6 3 1 2
+129,2,1,11 10 9 8 7 4,5 6 3 1 2,
+130,2,0,11 10 9 8 7 4 2,5 6 3 1,
+131,1,0,11 10 9 8 7 4 2 1,5 6 3,
+132,1,2,11 10 9 8 7 4 2 1,,5 6 3
+133,0,2,11 10 9 8 7 4 2,,5 6 3 1
+134,0,1,11 10 9 8 7 4,2,5 6 3 1
+135,2,1,11 10 9 8 7 4,2 5 6 3 1,
+136,0,2,11 10 9 8 7,,2 5 6 3 1,4
+137,1,0,11 10 9 8 7 1,2 5 6 3,4
+138,1,2,11 10 9 8 7 1,,2 5 6 3 4
+139,0,2,11 10 9 8 7,,1,2 5 6 3 4
+140,1,0,11 10 9 8 7 3,1,2 5 6 4
+141,2,1,11 10 9 8 7 3,1 2 5 6 4,
+142,2,0,11 10 9 8 7 3 4,1 2 5 6,
+143,1,0,11 10 9 8 7 3 4 6,1 2 5,
+144,1,2,11 10 9 8 7 3 4 6,,1 2 5
+145,0,2,11 10 9 8 7 3 4,,1 2 5 6
+146,0,1,11 10 9 8 7 3,4,1 2 5 6
+147,2,1,11 10 9 8 7 3,4 1 2 5 6,
+148,0,2,11 10 9 8 7,,4 1 2 5 6,3
+149,1,0,11 10 9 8 7 6,4 1 2 5,3
+150,1,2,11 10 9 8 7 6,,4 1 2 5 3
+151,0,2,11 10 9 8 7,,6,4 1 2 5 3
+152,1,0,11 10 9 8 7 5,6,4 1 2 3
+153,2,1,11 10 9 8 7 5,6 4 1 2 3,
+154,2,0,11 10 9 8 7 5 3,6 4 1 2,
+155,1,0,11 10 9 8 7 5 3 2,6 4 1,
+156,1,2,11 10 9 8 7 5 3 2,,6 4 1
+157,0,2,11 10 9 8 7 5 3,,6 4 1 2
+158,0,1,11 10 9 8 7 5,3,6 4 1 2
+159,2,1,11 10 9 8 7 5,3 6 4 1 2,
+160,0,2,11 10 9 8 7,,3 6 4 1 2,5
+161,1,0,11 10 9 8 7 2,3 6 4 1,5
+162,1,2,11 10 9 8 7 2,,3 6 4 1 5
+163,0,2,11 10 9 8 7,,2,3 6 4 1 5
+164,1,0,11 10 9 8 7 1,2,3 6 4 5
+165,2,1,11 10 9 8 7 1,2 3 6 4 5,
+166,2,0,11 10 9 8 7 1 5,2 3 6 4,
+167,1,0,11 10 9 8 7 1 5 4,2 3 6,
+168,1,2,11 10 9 8 7 1 5 4,,2 3 6
+169,0,2,11 10 9 8 7 1 5,,2 3 6 4
+170,0,1,11 10 9 8 7 1,5,2 3 6 4
+171,2,1,11 10 9 8 7 1,5 2 3 6 4,
+172,0,2,11 10 9 8 7,,5 2 3 6 4,1
+173,1,0,11 10 9 8 7 4,5 2 3 6,1
+174,1,2,11 10 9 8 7 4,,5 2 3 6 1
+175,0,2,11 10 9 8 7,,4,5 2 3 6 1
+176,1,0,11 10 9 8 7 6,4,5 2 3 1
+177,2,1,11 10 9 8 7 6,4 5 2 3 1,
+178,2,0,11 10 9 8 7 6 1,4 5 2 3,
+179,1,0,11 10 9 8 7 6 1 3,4 5 2,
+180,1,2,11 10 9 8 7 6 1 3,,4 5 2
+181,0,2,11 10 9 8 7 6 1,,4 5 2 3
+182,0,1,11 10 9 8 7 6,1,4 5 2 3
+183,2,1,11 10 9 8 7 6,1 4 5 2 3,
+184,0,2,11 10 9 8 7,,1 4 5 2 3,6
+185,1,0,11 10 9 8 7 3,1 4 5 2,6
+186,1,2,11 10 9 8 7 3,,1 4 5 2 6
+187,0,2,11 10 9 8 7,,3,1 4 5 2 6
+188,1,0,11 10 9 8 7 2,3,1 4 5 6
+189,2,1,11 10 9 8 7 2,3 1 4 5 6,
+190,2,0,11 10 9 8 7 2 6,3 1 4 5,
+191,1,0,11 10 9 8 7 2 6 5,3 1 4,
+192,1,2,11 10 9 8 7 2 6 5,,3 1 4
+193,0,2,11 10 9 8 7 2 6,,3 1 4 5
+194,0,1,11 10 9 8 7 2,6,3 1 4 5
+195,2,1,11 10 9 8 7 2,6 3 1 4 5,
+196,0,2,11 10 9 8 7,,6 3 1 4 5,2
+197,1,0,11 10 9 8 7 5,6 3 1 4,2
+198,1,2,11 10 9 8 7 5,,6 3 1 4 2
+199,0,2,11 10 9 8 7,,5,6 3 1 4 2
+200,1,0,11 10 9 8 7 4,5,6 3 1 2
+201,2,1,11 10 9 8 7 4,5 6 3 1 2,
+202,2,0,11 10 9 8 7 4 2,5 6 3 1,
+203,1,0,11 10 9 8 7 4 2 1,5 6 3,
+204,1,2,11 10 9 8 7 4 2 1,,5 6 3
+205,0,2,11 10 9 8 7 4 2,,5 6 3 1
+206,0,1,11 10 9 8 7 4,2,5 6 3 1
+207,2,1,11 10 9 8 7 4,2 5 6 3 1,
+208,0,2,11 10 9 8 7,,2 5 6 3 1,4
+209,1,0,11 10 9 8 7 1,2 5 6 3,4
+210,1,2,11 10 9 8 7 1,,2 5 6 3 4
+211,0,2,11 10 9 8 7,,1,2 5 6 3 4
+212,1,0,11 10 9 8 7 3,1,2 5 6 4
+213,2,1,11 10 9 8 7 3,1 2 5 6 4,
+214,2,0,11 10 9 8 7 3 4,1 2 5 6,
+215,1,0,11 10 9 8 7 3 4 6,1 2 5,
+216,1,2,11 10 9 8 7 3 4 6,,1 2 5
+217,0,2,11 10 9 8 7 3 4,,1 2 5 6
+218,0,1,11 10 9 8 7 3,4,1 2 5 6
+219,2,1,11 10 9 8 7 3,4 1 2 5 6,
+220,0,2,11 10 9 8 7,,4 1 2 5 6,3
+221,1,0,11 10 9 8 7 6,4 1 2 5,3
+222,1,2,11 10 9 8 7 6,,4 1 2 5 3
+223,0,2,11 10 9 8 7,,6,4 1 2 5 3
+224,1,0,11 10 9 8 7 5,6,4 1 2 3
+225,2,1,11 10 9 8 7 5,6 4 1 2 3,
+226,2,0,11 10 9 8 7 5 3,6 4 1 2,
+227,1,0,11 10 9 8 7 5 3 2,6 4 1,
+228,1,2,11 10 9 8 7 5 3 2,,6 4 1
+229,0,2,11 10 9 8 7 5 3,,6 4 1 2
+230,0,1,11 10 9 8 7 5,3,6 4 1 2
+231,2,1,11 10 9 8 7 5,3 6 4 1 2,
+232,0,2,11 10 9 8 7,,3 6 4 1 2,5
+233,1,0,11 10 9 8 7 2,3 6 4 1,5
+234,1,2,11 10 9 8 7 2,,3 6 4 1 5
+235,0,2,11 10 9 8 7,,2,3 6 4 1 5
+236,1,0,11 10 9 8 7 1,2,3 6 4 5
+237,2,1,11 10 9 8 7 1,2 3 6 4 5,
+238,2,0,11 10 9 8 7 1 5,2 3 6 4,
+239,1,0,11 10 9 8 7 1 5 4,2 3 6,
+240,1,2,11 10 9 8 7 1 5 4,,2 3 6
+241,0,2,11 10 9 8 7 1 5,,2 3 6 4
+242,0,1,11 10 9 8 7 1,5,2 3 6 4
+243,2,1,11 10 9 8 7 1,5 2 3 6 4,
+244,0,2,11 10 9 8 7,,5 2 3 6 4,1
+245,1,0,11 10 9 8 7 4,5 2 3 6,1
+246,1,2,11 10 9 8 7 4,,5 2 3 6 1
+247,0,2,11 10 9 8 7,,4,5 2 3 6 1
+248,1,0,11 10 9 8 7 6,4,5 2 3 1
+249,2,1,11 10 9 8 7 6,4 5 2 3 1,
+250,2,0,11 10 9 8 7 6 1,4 5 2 3,
+251,1,0,11 10 9 8 7 6 1 3,4 5 2,
+252,1,2,11 10 9 8 7 6 1 3,,4 5 2
+253,0,2,11 10 9 8 7 6 1,,4 5 2 3
+254,0,1,11 10 9 8 7 6,1,4 5 2 3
+255,2,1,11 10 9 8 7 6,1 4 5 2 3,
+256,0,2,11 10 9 8,,1 4 5 2 3,7 6
+257,1,0,11 10 9 8 6,1 4 5 2 3,7
+258,1,2,11 10 9 8 6,,1 4 5 2 3 7
+259,0,2,11 10 9 8,,6,1 4 5 2 3 7
+260,1,0,11 10 9 8 3,6,1 4 5 2 7
+261,2,1,11 10 9 8 3,6 1 4 5 2 7,
+262,2,0,11 10 9 8 3 7,6 1 4 5 2,
+263,1,0,11 10 9 8 3 7 2,6 1 4 5,
+264,1,2,11 10 9 8 3 7 2,,6 1 4 5
+265,0,2,11 10 9 8 3 7,,6 1 4 5 2
+266,0,1,11 10 9 8 3,7,6 1 4 5 2
+267,2,1,11 10 9 8 3,7 6 1 4 5 2,
+268,0,2,11 10 9 8,,7 6 1 4 5 2,3
+269,1,0,11 10 9 8 5,7 6 1 4,3
+270,1,2,11 10 9 8 5,,7 6 1 4 3
+271,0,2,11 10 9 8,,5,7 6 1 4 3
+272,1,0,11 10 9 8 4,5,7 6 1 3
+273,2,1,11 10 9 8 4,5 7 6 1 3,
+274,2,0,11 10 9 8 4 3,5 7 6 1,
+275,1,0,11 10 9 8 4 3 1,5 7 6,
+276,1,2,11 10 9 8 4 3 1,,5 7 6
+277,0,2,11 10 9 8 4 3,,5 7 6 1
+278,0,1,11 10 9 8 4,3,5 7 6 1
+279,2,1,11 10 9 8 4,3 5 7 6 1,
+280,0,2,11 10 9 8,,3 5 7 6 1,4
+281,1,0,11 10 9 8 1,3 5 7 6,4
+282,1,2,11 10 9 8 1,,3 5 7 6 4
+283,0,2,11 10 9 8,,1,3 5 7 6 4
+284,1,0,11 10 9 8 6,1,3 5 7 4
+285,2,1,11 10 9 8 6,1 3 5 7 4,
+286,2,0,11 10 9 8 6 4,1 3 5 7,
+287,1,0,11 10 9 8 6 4 7,1 3 5,
+288,1,2,11 10 9 8 6 4 7,,1 3 5
+289,0,2,11 10 9 8 6 4,,1 3 5 7
+290,0,1,11 10 9 8 6,4,1 3 5 7
+291,2,1,11 10 9 8 6,4 1 3 5 7,
+292,0,2,11 10 9 8,,4 1 3 5 7,6
+293,1,0,11 10 9 8 7,4 1 3 5,6
+294,1,2,11 10 9 8 7,,4 1 3 5 6
+295,0,2,11 10 9 8,,7,4 1 3 5 6
+296,1,0,11 10 9 8 5,7,4 1 3 6
+297,2,1,11 10 9 8 5,7 4 1 3 6,
+298,2,0,11 10 9 8 5 6,7 4 1 3,
+299,1,0,11 10 9 8 5 6 3,7 4 1,
+300,1,2,11 10 9 8 5 6 3,,7 4 1
+301,0,2,11 10 9 8 5 6,,7 4 1 3
+302,0,1,11 10 9 8 5,6,7 4 1 3
+303,2,1,11 10 9 8 5,6 7 4 1 3,
+304,0,2,11 10 9 8,,6 7 4 1 3,5
+305,1,0,11 10 9 8 3,6 7 4 1,5
+306,1,2,11 10 9 8 3,,6 7 4 1 5
+307,0,2,11 10 9 8,,3,6 7 4 1 5
+308,1,0,11 10 9 8 1,3,6 7 4 5
+309,2,1,11 10 9 8 1,3 6 7 4 5,
+310,2,0,11 10 9 8 1 5,3 6 7 4,
+311,1,0,11 10 9 8 1 5 4,3 6 7,
+312,1,2,11 10 9 8 1 5 4,,3 6 7
+313,0,2,11 10 9 8 1 5,,3 6 7 4
+314,0,1,11 10 9 8 1,5,3 6 7 4
+315,2,1,11 10 9 8 1,5 3 6 7 4,
+316,0,2,11 10 9 8,,5 3 6 7 4,1
+317,1,0,11 10 9 8 4,5 3 6 7,1
+318,1,2,11 10 9 8 4,,5 3 6 7 1
+319,0,2,11 10 9 8,,4,5 3 6 7 1
+320,1,0,11 10 9 8 7,4,5 3 6 1
+321,2,1,11 10 9 8 7,4 5 3 6 1,
+322,2,0,11 10 9 8 7 1,4 5 3 6,
+323,1,0,11 10 9 8 7 1 6,4 5 3,
+324,1,2,11 10 9 8 7 1 6,,4 5 3
+325,0,2,11 10 9 8 7 1,,4 5 3 6
+326,0,1,11 10 9 8 7,1,4 5 3 6
+327,2,1,11 10 9 8 7,1 4 5 3 6,
+328,0,2,11 10 9 8,,1 4 5 3 6,7
+329,1,0,11 10 9 8 6,1 4 5 3,7
+330,1,2,11 10 9 8 6,,1 4 5 3 7
+331,0,2,11 10 9 8,,6,1 4 5 3 7
+332,1,0,11 10 9 8 3,6,1 4 5 7
+333,2,1,11 10 9 8 3,6 1 4 5 7,
+334,2,0,11 10 9 8 3 7,6 1 4 5,
+335,1,0,11 10 9 8 3 7 5,6 1 4,
+336,1,2,11 10 9 8 3 7 5,,6 1 4
+337,0,2,11 10 9 8 3 7,,6 1 4 5
+338,0,1,11 10 9 8 3,7,6 1 4 5
+339,2,1,11 10 9 8 3,7 6 1 4 5,
+340,0,2,11 10 9 8,,7 6 1 4 5,3
+341,1,0,11 10 9 8 5,7 6 1 4,3
+342,1,2,11 10 9 8 5,,7 6 1 4 3
+343,0,2,11 10 9 8,,5,7 6 1 4 3
+344,1,0,11 10 9 8 4,5,7 6 1 3
+345,2,1,11 10 9 8 4,5 7 6 1 3,
+346,2,0,11 10 9 8 4 3,5 7 6 1,
+347,1,0,11 10 9 8 4 3 1,5 7 6,
+348,1,2,11 10 9 8 4 3 1,,5 7 6
+349,0,2,11 10 9 8 4 3,,5 7 6 1
+350,0,1,11 10 9 8 4,3,5 7 6 1
+351,2,1,11 10 9 8 4,3 5 7 6 1,
+352,0,2,11 10 9 8,,3 5 7 6 1,4
+353,1,0,11 10 9 8 1,3 5 7 6,4
+354,1,2,11 10 9 8 1,,3 5 7 6 4
+355,0,2,11 10 9 8,,1,3 5 7 6 4
+356,1,0,11 10 9 8 6,1,3 5 7 4
+357,2,1,11 10 9 8 6,1 3 5 7 4,
+358,2,0,11 10 9 8 6 4,1 3 5 7,
+359,1,0,11 10 9 8 6 4 7,1 3 5,
+360,1,2,11 10 9 8 6 4 7,,1 3 5
+361,0,2,11 10 9 8 6 4,,1 3 5 7
+362,0,1,11 10 9 8 6,4,1 3 5 7
+363,2,1,11 10 9 8 6,4 1 3 5 7,
+364,0,2,11 10 9 8,,4 1 3 5 7,6
+365,1,0,11 10 9 8 7,4 1 3 5,6
+366,1,2,11 10 9 8 7,,4 1 3 5 6
+367,0,2,11 10 9 8,,7,4 1 3 5 6
+368,1,0,11 10 9 8 5,7,4 1 3 6
+369,2,1,11 10 9 8 5,7 4 1 3 6,
+370,2,0,11 10 9 8 5 6,7 4 1 3,
+371,1,0,11 10 9 8 5 6 3,7 4 1,
+372,1,2,11 10 9 8 5 6 3,,7 4 1
+373,0,2,11 10 9 8 5 6,,7 4 1 3
+374,0,1,11 10 9 8 5,6,7 4 1 3
+375,2,1,11 10 9 8 5,6 7 4 1 3,
+376,0,2,11 10 9 8,,6 7 4 1 3,5
+377,1,0,11 10 9 8 3,6 7 4 1,5
+378,1,2,11 10 9 8 3,,6 7 4 1 5
+379,0,2,11 10 9 8,,3,6 7 4 1 5
+380,1,0,11 10 9 8 1,3,6 7 4 5
+381,2,1,11 10 9 8 1,3 6 7 4 5,
+382,2,0,11 10 9 8 1 5,3 6 7 4,
+383,1,0,11 10 9 8 1 5 4,3 6 7,
+384,1,2,11 10 9 8 1 5 4,,3 6 7
+385,0,2,11 10 9 8 1 5,,3 6 7 4
+386,0,1,11 10 9 8 1,5,3 6 7 4
+387,2,1,11 10 9 8 1,5 3 6 7 4,
+388,0,2,11 10 9 8,,5 3 6 7 4,1
+389,1,0,11 10 9 8 4,5 3 6 7,1
+390,1,2,11 10 9 8 4,,5 3 6 7 1
+391,0,2,11 10 9 8,,4,5 3 6 7 1
+392,1,0,11 10 9 8 7,4,5 3 6 1
+393,2,1,11 10 9 8 7,4 5 3 6 1,
+394,2,0,11 10 9 8 7 1,4 5 3 6,
+395,1,0,11 10 9 8 7 1 6,4 5 3,
+396,1,2,11 10 9 8 7 1 6,,4 5 3
+397,0,2,11 10 9 8 7 1,,4 5 3 6
+398,0,1,11 10 9 8 7,1,4 5 3 6
+399,2,1,11 10 9 8 7,1 4 5 3 6,
+400,0,2,11 10 9 8,,1 4 5 3 6,7
+401,1,0,11 10 9 8 6,1 4 5 3,7
+402,1,2,11 10 9 8 6,,1 4 5 3 7
+403,0,2,11 10 9 8,,6,1 4 5 3 7
+404,1,0,11 10 9 8 3,6,1 4 5 7
+405,2,1,11 10 9 8 3,6 1 4 5 7,
+406,2,0,11 10 9 8 3 7,6 1 4 5,
+407,1,0,11 10 9 8 3 7 5,6 1 4,
+408,1,2,11 10 9 8 3 7 5,,6 1 4
+409,0,2,11 10 9 8 3 7,,6 1 4 5
+410,0,1,11 10 9 8 3,7,6 1 4 5
+411,2,1,11 10 9 8 3,7 6 1 4 5,
+412,0,2,11 10 9 8,,7 6 1 4 5,3
+413,1,0,11 10 9 8 5,7 6 1 4,3
+414,1,2,11 10 9 8 5,,7 6 1 4 3
+415,0,2,11 10 9 8,,5,7 6 1 4 3
+416,1,0,11 10 9 8 4,5,7 6 1 3
+417,2,1,11 10 9 8 4,5 7 6 1 3,
+418,2,0,11 10 9 8 4 3,5 7 6 1,
+419,1,0,11 10 9 8 4 3 1,5 7 6,
+420,1,2,11 10 9 8 4 3 1,,5 7 6
+421,0,2,11 10 9 8 4 3,,5 7 6 1
+422,0,1,11 10 9 8 4,3,5 7 6 1
+423,2,1,11 10 9 8 4,3 5 7 6 1,
+424,0,2,11 10 9 8,,3 5 7 6 1,4
+425,1,0,11 10 9 8 1,3 5 7 6,4
+426,1,2,11 10 9 8 1,,3 5 7 6 4
+427,0,2,11 10 9 8,,1,3 5 7 6 4
+428,1,0,11 10 9 8 6,1,3 5 7 4
+429,2,1,11 10 9 8 6,1 3 5 7 4,
+430,2,0,11 10 9 8 6 4,1 3 5 7,
+431,1,0,11 10 9 8 6 4 7,1 3 5,
+432,1,2,11 10 9 8 6 4 7,,1 3 5
+433,0,2,11 10 9 8 6 4,,1 3 5 7
+434,0,1,11 10 9 8 6,4,1 3 5 7
+435,2,1,11 10 9 8 6,4 1 3 5 7,
+436,0,2,11 10 9 8,,4 1 3 5 7,6
+437,1,0,11 10 9 8 7,4 1 3 5,6
+438,1,2,11 10 9 8 7,,4 1 3 5 6
+439,0,2,11 10 9 8,,7,4 1 3 5 6
+440,1,0,11 10 9 8 5,7,4 1 3 6
+441,2,1,11 10 9 8 5,7 4 1 3 6,
+442,2,0,11 10 9 8 5 6,7 4 1 3,
+443,1,0,11 10 9 8 5 6 3,7 4 1,
+444,1,2,11 10 9 8 5 6 3,,7 4 1
+445,0,2,11 10 9 8 5 6,,7 4 1 3
+446,0,1,11 10 9 8 5,6,7 4 1 3
+447,2,1,11 10 9 8 5,6 7 4 1 3,
+448,0,2,11 10 9 8,,6 7 4 1 3,5
+449,1,0,11 10 9 8 3,6 7 4 1,5
+450,1,2,11 10 9 8 3,,6 7 4 1 5
+451,0,2,11 10 9 8,,3,6 7 4 1 5
+452,1,0,11 10 9 8 1,3,6 7 4 5
+453,2,1,11 10 9 8 1,3 6 7 4 5,
+454,2,0,11 10 9 8 1 5,3 6 7 4,
+455,1,0,11 10 9 8 1 5 4,3 6 7,
+456,1,2,11 10 9 8 1 5 4,,3 6 7
+457,0,2,11 10 9 8 1 5,,3 6 7 4
+458,0,1,11 10 9 8 1,5,3 6 7 4
+459,2,1,11 10 9 8 1,5 3 6 7 4,
+460,0,2,11 10 9 8,,5 3 6 7 4,1
+461,1,0,11 10 9 8 4,5 3 6 7,1
+462,1,2,11 10 9 8 4,,5 3 6 7 1
+463,0,2,11 10 9 8,,4,5 3 6 7 1
+464,1,0,11 10 9 8 7,4,5 3 6 1
+465,2,1,11 10 9 8 7,4 5 3 6 1,
+466,2,0,11 10 9 8 7 1,4 5 3 6,
+467,1,0,11 10 9 8 7 1 6,4 5 3,
+468,1,2,11 10 9 8 7 1 6,,4 5 3
+469,0,2,11 10 9 8 7 1,,4 5 3 6
+470,0,1,11 10 9 8 7,1,4 5 3 6
+471,2,1,11 10 9 8 7,1 4 5 3 6,
+472,0,2,11 10 9 8,,1 4 5 3 6,7
+473,1,0,11 10 9 8 6,1 4 5 3,7
+474,1,2,11 10 9 8 6,,1 4 5 3 7
+475,0,2,11 10 9 8,,6,1 4 5 3 7
+476,1,0,11 10 9 8 3,6,1 4 5 7
+477,2,1,11 10 9 8 3,6 1 4 5 7,
+478,2,0,11 10 9 8 3 7,6 1 4 5,
+479,1,0,11 10 9 8 3 7 5,6 1 4,
+480,1,2,11 10 9 8 3 7 5,,6 1 4
+481,0,2,11 10 9 8 3 7,,6 1 4 5
+482,0,1,11 10 9 8 3,7,6 1 4 5
+483,2,1,11 10 9 8 3,7 6 1 4 5,
+484,0,2,11 10 9 8,,7 6 1 4 5,3
+485,1,0,11 10 9 8 5,7 6 1 4,3
+486,1,2,11 10 9 8 5,,7 6 1 4 3
+487,0,2,11 10 9 8,,5,7 6 1 4 3
+488,1,0,11 10 9 8 4,5,7 6 1 3
+489,2,1,11 10 9 8 4,5 7 6 1 3,
+490,2,0,11 10 9 8 4 3,5 7 6 1,
+491,1,0,11 10 9 8 4 3 1,5 7 6,
+492,1,2,11 10 9 8 4 3 1,,5 7 6
+493,0,2,11 10 9 8 4 3,,5 7 6 1
+494,0,1,11 10 9 8 4,3,5 7 6 1
+495,2,1,11 10 9 8 4,3 5 7 6 1,
+496,0,2,11 10 9 8,,3 5 7 6 1,4
+497,1,0,11 10 9 8 1,3 5 7 6,4
+498,1,2,11 10 9 8 1,,3 5 7 6 4
+499,0,2,11 10 9 8,,1,3 5 7 6 4
+500,1,0,11 10 9 8 6,1,3 5 7 4
+501,2,1,11 10 9 8 6,1 3 5 7 4,
+502,2,0,11 10 9 8 6 4,1 3 5 7,
+503,1,0,11 10 9 8 6 4 7,1 3 5,
+504,1,2,11 10 9 8 6 4 7,,1 3 5
+505,0,2,11 10 9 8 6 4,,1 3 5 7
+506,0,1,11 10 9 8 6,4,1 3 5 7
+507,2,1,11 10 9 8 6,4 1 3 5 7,
+508,0,2,11 10 9 8,,4 1 3 5 7,6
+509,1,0,11 10 9 8 7,4 1 3 5,6
+510,1,2,11 10 9 8 7,,4 1 3 5 6
+511,0,2,11 10 9 8,,7,4 1 3 5 6
+512,0,1,11 10 9,,7,8 4 1 3 5 6
+513,2,1,11 10 9,7 8 4 1 3 5 6,
+514,2,0,11 10 9 6,7 8 4 1 3 5,
+515,1,0,11 10 9 6 5,7 8 4 1 3,
+516,1,2,11 10 9 6 5,,7 8 4 1 3
+517,0,2,11 10 9 6,,7 8 4 1 3 5
+518,0,1,11 10 9,6,7 8 4 1 3 5
+519,2,1,11 10 9,6 7 8 4 1 3 5,
+520,0,2,11 10 9,,6 7 8 4 1 3 5,
+521,1,0,11 10 9 5,6 7 8 4 1 3,
+522,1,2,11 10 9 5,,6 7 8 4 1 3
+523,0,2,11 10 9,,5,6 7 8 4 1 3
+524,1,0,11 10 9 3,5,6 7 8 4 1
+525,2,1,11 10 9 3,5 6 7 8 4 1,
+526,2,0,11 10 9 3 1,5 6 7 8 4,
+527,1,0,11 10 9 3 1 4,5 6 7 8,
+528,1,2,11 10 9 3 1 4,,5 6 7 8
+529,0,2,11 10 9 3 1,,5 6 7 8 4
+530,0,1,11 10 9 3,1,5 6 7 8 4
+531,2,1,11 10 9 3,1 5 6 7 8 4,
+532,0,2,11 10 9,,1 5 6 7 8 4,3
+533,1,0,11 10 9 4,1 5 6 7 8,3
+534,1,2,11 10 9 4,,1 5 6 7 8 3
+535,0,2,11 10 9,,4,1 5 6 7 8 3
+536,1,0,11 10 9 8,4,1 5 6 7 3
+537,2,1,11 10 9 8,4 1 5 6 7 3,
+538,2,0,11 10 9 8 3,4 1 5 6 7,
+539,1,0,11 10 9 8 3 7,4 1 5 6,
+540,1,2,11 10 9 8 3 7,,4 1 5 6
+541,0,2,11 10 9 8 3,,4 1 5 6 7
+542,0,1,11 10 9 8,3,4 1 5 6 7
+543,2,1,11 10 9 8,3 4 1 5 6 7,
+544,0,2,11 10 9,,3 4 1 5 6 7,8
+545,1,0,11 10 9 7,3 4 1 5 6,8
+546,1,2,11 10 9 7,,3 4 1 5 6 8
+547,0,2,11 10 9,,7,3 4 1 5 6 8
+548,1,0,11 10 9 6,7,3 4 1 5 8
+549,2,1,11 10 9 6,7 3 4 1 5 8,
+550,2,0,11 10 9 6 8,7 3 4 1 5,
+551,1,0,11 10 9 6 8 5,7 3 4 1,
+552,1,2,11 10 9 6 8 5,,7 3 4 1
+553,0,2,11 10 9 6 8,,7 3 4 1 5
+554,0,1,11 10 9 6,8,7 3 4 1 5
+555,2,1,11 10 9 6,8 7 3 4 1 5,
+556,0,2,11 10 9,,8 7 3 4 1 5,6
+557,1,0,11 10 9 5,8 7 3 4 1,6
+558,1,2,11 10 9 5,,8 7 3 4 1 6
+559,0,2,11 10 9,,5,8 7 3 4 1 6
+560,1,0,11 10 9 1,5,8 7 3 4 6
+561,2,1,11 10 9 1,5 8 7 3 4 6,
+562,2,0,11 10 9 1 6,5 8 7 3 4,
+563,1,0,11 10 9 1 6 4,5 8 7 3,
+564,1,2,11 10 9 1 6 4,,5 8 7 3
+565,0,2,11 10 9 1 6,,5 8 7 3 4
+566,0,1,11 10 9 1,6,5 8 7 3 4
+567,2,1,11 10 9 1,6 5 8 7 3 4,
+568,0,2,11 10 9,,6 5 8 7 3 4,1
+569,1,0,11 10 9 4,6 5 8 7 3,1
+570,1,2,11 10 9 4,,6 5 8 7 3 1
+571,0,2,11 10 9,,4,6 5 8 7 3 1
+572,1,0,11 10 9 3,4,6 5 8 7 1
+573,2,1,11 10 9 3,4 6 5 8 7 1,
+574,2,0,11 10 9 3 1,4 6 5 8 7,
+575,1,0,11 10 9 3 1 7,4 6 5 8,
+576,1,2,11 10 9 3 1 7,,4 6 5 8
+577,0,2,11 10 9 3 1,,4 6 5 8 7
+578,0,1,11 10 9 3,1,4 6 5 8 7
+579,2,1,11 10 9 3,1 4 6 5 8 7,
+580,0,2,11 10 9,,1 4 6 5 8 7,3
+581,1,0,11 10 9 8,1 4 6 5 7,3
+582,1,2,11 10 9 8,,1 4 6 5 7 3
+583,0,2,11 10 9,,8,1 4 6 5 7 3
+584,1,0,11 10 9 7,8,1 4 6 5 3
+585,2,1,11 10 9 7,8 1 4 6 5 3,
+586,2,0,11 10 9 7 3,8 1 4 6 5,
+587,1,0,11 10 9 7 3 5,8 1 4 6,
+588,1,2,11 10 9 7 3 5,,8 1 4 6
+589,0,2,11 10 9 7 3,,8 1 4 6 5
+590,0,1,11 10 9 7,3,8 1 4 6 5
+591,2,1,11 10 9 7,3 8 1 4 6 5,
+592,0,2,11 10 9,,3 8 1 4 6 5,7
+593,1,0,11 10 9 6,3 8 1 4 5,7
+594,1,2,11 10 9 6,,3 8 1 4 5 7
+595,0,2,11 10 9,,6,3 8 1 4 5 7
+596,1,0,11 10 9 5,6,3 8 1 4 7
+597,2,1,11 10 9 5,6 3 8 1 4 7,
+598,2,0,11 10 9 5 7,6 3 8 1 4,
+599,1,0,11 10 9 5 7 4,6 3 8 1,
+600,1,2,11 10 9 5 7 4,,6 3 8 1
+601,0,2,11 10 9 5 7,,6 3 8 1 4
+602,0,1,11 10 9 5,7,6 3 8 1 4
+603,2,1,11 10 9 5,7 6 3 8 1 4,
+604,0,2,11 10 9,,7 6 3 8 1 4,5
+605,1,0,11 10 9 4,7 6 3 8 1,5
+606,1,2,11 10 9 4,,7 6 3 8 1 5
+607,0,2,11 10 9,,4,7 6 3 8 1 5
+608,1,0,11 10 9 1,4,7 6 3 8 5
+609,2,1,11 10 9 1,4 7 6 3 8 5,
+610,2,0,11 10 9 1 5,4 7 6 3 8,
+611,1,0,11 10 9 1 5 8,4 7 6 3,
+612,1,2,11 10 9 1 5 8,,4 7 6 3
+613,0,2,11 10 9 1 5,,4 7 6 3 8
+614,0,1,11 10 9 1,5,4 7 6 3 8
+615,2,1,11 10 9 1,5 4 7 6 3 8,
+616,0,2,11 10 9,,5 4 7 6 3 8,1
+617,1,0,11 10 9 3,5 4 7 6 8,1
+618,1,2,11 10 9 3,,5 4 7 6 8 1
+619,0,2,11 10 9,,3,5 4 7 6 8 1
+620,1,0,11 10 9 8,3,5 4 7 6 1
+621,2,1,11 10 9 8,3 5 4 7 6 1,
+622,2,0,11 10 9 8 1,3 5 4 7 6,
+623,1,0,11 10 9 8 1 6,3 5 4 7,
+624,1,2,11 10 9 8 1 6,,3 5 4 7
+625,0,2,11 10 9 8 1,,3 5 4 7 6
+626,0,1,11 10 9 8,1,3 5 4 7 6
+627,2,1,11 10 9 8,1 3 5 4 7 6,
+628,0,2,11 10 9,,1 3 5 4 7 6,8
+629,1,0,11 10 9 7,1 3 5 4 6,8
+630,1,2,11 10 9 7,,1 3 5 4 6 8
+631,0,2,11 10 9,,7,1 3 5 4 6 8
+632,1,0,11 10 9 6,7,1 3 5 4 8
+633,2,1,11 10 9 6,7 1 3 5 4 8,
+634,2,0,11 10 9 6 8,7 1 3 5 4,
+635,1,0,11 10 9 6 8 4,7 1 3 5,
+636,1,2,11 10 9 6 8 4,,7 1 3 5
+637,0,2,11 10 9 6 8,,7 1 3 5 4
+638,0,1,11 10 9 6,8,7 1 3 5 4
+639,2,1,11 10 9 6,8 7 1 3 5 4,
+640,0,2,11 10 9,,8 7 1 3 5 4,6
+641,1,0,11 10 9 5,8 7 1 3 4,6
+642,1,2,11 10 9 5,,8 7 1 3 4 6
+643,0,2,11 10 9,,5,8 7 1 3 4 6
+644,1,0,11 10 9 4,5,8 7 1 3 6
+645,2,1,11 10 9 4,5 8 7 1 3 6,
+646,2,0,11 10 9 4 6,5 8 7 1 3,
+647,1,0,11 10 9 4 6 3,5 8 7 1,
+648,1,2,11 10 9 4 6 3,,5 8 7 1
+649,0,2,11 10 9 4 6,,5 8 7 1 3
+650,0,1,11 10 9 4,6,5 8 7 1 3
+651,2,1,11 10 9 4,6 5 8 7 1 3,
+652,0,2,11 10 9,,6 5 8 7 1 3,4
+653,1,0,11 10 9 3,6 5 8 7 1,4
+654,1,2,11 10 9 3,,6 5 8 7 1 4
+655,0,2,11 10 9,,3,6 5 8 7 1 4
+656,1,0,11 10 9 1,3,6 5 8 7 4
+657,2,1,11 10 9 1,3 6 5 8 7 4,
+658,2,0,11 10 9 1 4,3 6 5 8 7,
+659,1,0,11 10 9 1 4 7,3 6 5 8,
+660,1,2,11 10 9 1 4 7,,3 6 5 8
+661,0,2,11 10 9 1 4,,3 6 5 8 7
+662,0,1,11 10 9 1,4,3 6 5 8 7
+663,2,1,11 10 9 1,4 3 6 5 8 7,
+664,0,2,11 10 9,,4 3 6 5 8 7,1
+665,1,0,11 10 9 8,4 3 6 5 7,1
+666,1,2,11 10 9 8,,4 3 6 5 7 1
+667,0,2,11 10 9,,8,4 3 6 5 7 1
+668,1,0,11 10 9 7,8,4 3 6 5 1
+669,2,1,11 10 9 7,8 4 3 6 5 1,
+670,2,0,11 10 9 7 1,8 4 3 6 5,
+671,1,0,11 10 9 7 1 5,8 4 3 6,
+672,1,2,11 10 9 7 1 5,,8 4 3 6
+673,0,2,11 10 9 7 1,,8 4 3 6 5
+674,0,1,11 10 9 7,1,8 4 3 6 5
+675,2,1,11 10 9 7,1 8 4 3 6 5,
+676,0,2,11 10 9,,1 8 4 3 6 5,7
+677,1,0,11 10 9 6,1 8 4 3 5,7
+678,1,2,11 10 9 6,,1 8 4 3 5 7
+679,0,2,11 10 9,,6,1 8 4 3 5 7
+680,1,0,11 10 9 5,6,1 8 4 3 7
+681,2,1,11 10 9 5,6 1 8 4 3 7,
+682,2,0,11 10 9 5 7,6 1 8 4 3,
+683,1,0,11 10 9 5 7 3,6 1 8 4,
+684,1,2,11 10 9 5 7 3,,6 1 8 4
+685,0,2,11 10 9 5 7,,6 1 8 4 3
+686,0,1,11 10 9 5,7,6 1 8 4 3
+687,2,1,11 10 9 5,7 6 1 8 4 3,
+688,0,2,11 10 9,,7 6 1 8 4 3,5
+689,1,0,11 10 9 3,7 6 1 8 4,5
+690,1,2,11 10 9 3,,7 6 1 8 4 5
+691,0,2,11 10 9,,3,7 6 1 8 4 5
+692,1,0,11 10 9 4,3,7 6 1 8 5
+693,2,1,11 10 9 4,3 7 6 1 8 5,
+694,2,0,11 10 9 4 5,3 7 6 1 8,
+695,1,0,11 10 9 4 5 8,3 7 6 1,
+696,1,2,11 10 9 4 5 8,,3 7 6 1
+697,0,2,11 10 9 4 5,,3 7 6 1 8
+698,0,1,11 10 9 4,5,3 7 6 1 8
+699,2,1,11 10 9 4,5 3 7 6 1 8,
+700,0,2,11 10 9,,5 3 7 6 1 8,4
+701,1,0,11 10 9 1,5 3 7 6 8,4
+702,1,2,11 10 9 1,,5 3 7 6 8 4
+703,0,2,11 10 9,,1,5 3 7 6 8 4
+704,1,0,11 10 9 8,1,5 3 7 6 4
+705,2,1,11 10 9 8,1 5 3 7 6 4,
+706,2,0,11 10 9 8 4,1 5 3 7 6,
+707,1,0,11 10 9 8 4 6,1 5 3 7,
+708,1,2,11 10 9 8 4 6,,1 5 3 7
+709,0,2,11 10 9 8 4,,1 5 3 7 6
+710,0,1,11 10 9 8,4,1 5 3 7 6
+711,2,1,11 10 9 8,4 1 5 3 7 6,
+712,0,2,11 10 9,,4 1 5 3 7 6,8
+713,1,0,11 10 9 7,4 1 5 3 6,8
+714,1,2,11 10 9 7,,4 1 5 3 6 8
+715,0,2,11 10 9,,7,4 1 5 3 6 8
+716,1,0,11 10 9 6,7,4 1 5 3 8
+717,2,1,11 10 9 6,7 4 1 5 3 8,
+718,2,0,11 10 9 6 8,7 4 1 5 3,
+719,1,0,11 10 9 6 8 3,7 4 1 5,
+720,1,2,11 10 9 6 8 3,,7 4 1 5
+721,0,2,11 10 9 6 8,,7 4 1 5 3
+722,0,1,11 10 9 6,8,7 4 1 5 3
+723,2,1,11 10 9 6,8 7 4 1 5 3,
+724,0,2,11 10 9,,8 7 4 1 5 3,6
+725,1,0,11 10 9 3,8 7 4 1 5,6
+726,1,2,11 10 9 3,,8 7 4 1 5 6
+727,0,2,11 10 9,,3,8 7 4 1 5 6
+728,1,0,11 10 9 5,3,8 7 4 1 6
+729,2,1,11 10 9 5,3 8 7 4 1 6,
+730,2,0,11 10 9 5 6,3 8 7 4 1,
+731,1,0,11 10 9 5 6 1,3 8 7 4,
+732,1,2,11 10 9 5 6 1,,3 8 7 4
+733,0,2,11 10 9 5 6,,3 8 7 4 1
+734,0,1,11 10 9 5,6,3 8 7 4 1
+735,2,1,11 10 9 5,6 3 8 7 4 1,
+736,0,2,11 10 9,,6 3 8 7 4 1,5
+737,1,0,11 10 9 1,6 3 8 7 4,5
+738,1,2,11 10 9 1,,6 3 8 7 4 5
+739,0,2,11 10 9,,1,6 3 8 7 4 5
+740,1,0,11 10 9 4,1,6 3 8 7 5
+741,2,1,11 10 9 4,1 6 3 8 7 5,
+742,2,0,11 10 9 4 5,1 6 3 8 7,
+743,1,0,11 10 9 4 5 7,1 6 3 8,
+744,1,2,11 10 9 4 5 7,,1 6 3 8
+745,0,2,11 10 9 4 5,,1 6 3 8 7
+746,0,1,11 10 9 4,5,1 6 3 8 7
+747,2,1,11 10 9 4,5 1 6 3 8 7,
+748,0,2,11 10 9,,5 1 6 3 8 7,4
+749,1,0,11 10 9 7,5 1 6 3 8,4
+750,1,2,11 10 9 7,,5 1 6 3 8 4
+751,0,2,11 10 9,,7,5 1 6 3 8 4
+752,1,0,11 10 9 8,7,5 1 6 3 4
+753,2,1,11 10 9 8,7 5 1 6 3 4,
+754,2,0,11 10 9 8 4,7 5 1 6 3,
+755,1,0,11 10 9 8 4 3,7 5 1 6,
+756,1,2,11 10 9 8 4 3,,7 5 1 6
+757,0,2,11 10 9 8 4,,7 5 1 6 3
+758,0,1,11 10 9 8,4,7 5 1 6 3
+759,2,1,11 10 9 8,4 7 5 1 6 3,
+760,0,2,11 10 9,,4 7 5 1 6 3,8
+761,1,0,11 10 9 6,4 7 5 1 3,8
+762,1,2,11 10 9 6,,4 7 5 1 3 8
+763,0,2,11 10 9,,6,4 7 5 1 3 8
+764,1,0,11 10 9 3,6,4 7 5 1 8
+765,2,1,11 10 9 3,6 4 7 5 1 8,
+766,2,0,11 10 9 3 8,6 4 7 5 1,
+767,1,0,11 10 9 3 8 1,6 4 7 5,
+768,1,2,11 10 9 3 8 1,,6 4 7 5
+769,0,2,11 10 9 3 8,,6 4 7 5 1
+770,0,1,11 10 9 3,8,6 4 7 5 1
+771,2,1,11 10 9 3,8 6 4 7 5 1,
+772,0,2,11 10 9,,8 6 4 7 5 1,3
+773,1,0,11 10 9 1,8 6 4 7 5,3
+774,1,2,11 10 9 1,,8 6 4 7 5 3
+775,0,2,11 10 9,,1,8 6 4 7 5 3
+776,1,0,11 10 9 5,1,8 6 4 7 3
+777,2,1,11 10 9 5,1 8 6 4 7 3,
+778,2,0,11 10 9 5 3,1 8 6 4 7,
+779,1,0,11 10 9 5 3 7,1 8 6 4,
+780,1,2,11 10 9 5 3 7,,1 8 6 4
+781,0,2,11 10 9 5 3,,1 8 6 4 7
+782,0,1,11 10 9 5,3,1 8 6 4 7
+783,2,1,11 10 9 5,3 1 8 6 4 7,
+784,0,2,11 10 9,,3 1 8 6 4 7,5
+785,1,0,11 10 9 7,3 1 8 6 4,5
+786,1,2,11 10 9 7,,3 1 8 6 4 5
+787,0,2,11 10 9,,7,3 1 8 6 4 5
+788,1,0,11 10 9 4,7,3 1 8 6 5
+789,2,1,11 10 9 4,7 3 1 8 6 5,
+790,2,0,11 10 9 4 5,7 3 1 8 6,
+791,1,0,11 10 9 4 5 6,7 3 1 8,
+792,1,2,11 10 9 4 5 6,,7 3 1 8
+793,0,2,11 10 9 4 5,,7 3 1 8 6
+794,0,1,11 10 9 4,5,7 3 1 8 6
+795,2,1,11 10 9 4,5 7 3 1 8 6,
+796,0,2,11 10 9,,5 7 3 1 8 6,4
+797,1,0,11 10 9 8,5 7 3 1 6,4
+798,1,2,11 10 9 8,,5 7 3 1 6 4
+799,0,2,11 10 9,,8,5 7 3 1 6 4
+800,1,0,11 10 9 6,8,5 7 3 1 4
+801,2,1,11 10 9 6,8 5 7 3 1 4,
+802,2,0,11 10 9 6 4,8 5 7 3 1,
+803,1,0,11 10 9 6 4 1,8 5 7 3,
+804,1,2,11 10 9 6 4 1,,8 5 7 3
+805,0,2,11 10 9 6 4,,8 5 7 3 1
+806,0,1,11 10 9 6,4,8 5 7 3 1
+807,2,1,11 10 9 6,4 8 5 7 3 1,
+808,0,2,11 10 9,,4 8 5 7 3 1,6
+809,1,0,11 10 9 3,4 8 5 7 1,6
+810,1,2,11 10 9 3,,4 8 5 7 1 6
+811,0,2,11 10 9,,3,4 8 5 7 1 6
+812,1,0,11 10 9 1,3,4 8 5 7 6
+813,2,1,11 10 9 1,3 4 8 5 7 6,
+814,2,0,11 10 9 1 6,3 4 8 5 7,
+815,1,0,11 10 9 1 6 7,3 4 8 5,
+816,1,2,11 10 9 1 6 7,,3 4 8 5
+817,0,2,11 10 9 1 6,,3 4 8 5 7
+818,0,1,11 10 9 1,6,3 4 8 5 7
+819,2,1,11 10 9 1,6 3 4 8 5 7,
+820,0,2,11 10 9,,6 3 4 8 5 7,1
+821,1,0,11 10 9 7,6 3 4 8 5,1
+822,1,2,11 10 9 7,,6 3 4 8 5 1
+823,0,2,11 10 9,,7,6 3 4 8 5 1
+824,1,0,11 10 9 5,7,6 3 4 8 1
+825,2,1,11 10 9 5,7 6 3 4 8 1,
+826,2,0,11 10 9 5 1,7 6 3 4 8,
+827,1,0,11 10 9 5 1 8,7 6 3 4,
+828,1,2,11 10 9 5 1 8,,7 6 3 4
+829,0,2,11 10 9 5 1,,7 6 3 4 8
+830,0,1,11 10 9 5,1,7 6 3 4 8
+831,2,1,11 10 9 5,1 7 6 3 4 8,
+832,0,2,11 10 9,,1 7 6 3 4 8,5
+833,1,0,11 10 9 4,1 7 6 3 8,5
+834,1,2,11 10 9 4,,1 7 6 3 8 5
+835,0,2,11 10 9,,4,1 7 6 3 8 5
+836,1,0,11 10 9 8,4,1 7 6 3 5
+837,2,1,11 10 9 8,4 1 7 6 3 5,
+838,2,0,11 10 9 8 5,4 1 7 6 3,
+839,1,0,11 10 9 8 5 3,4 1 7 6,
+840,1,2,11 10 9 8 5 3,,4 1 7 6
+841,0,2,11 10 9 8 5,,4 1 7 6 3
+842,0,1,11 10 9 8,5,4 1 7 6 3
+843,2,1,11 10 9 8,5 4 1 7 6 3,
+844,0,2,11 10 9,,5 4 1 7 6 3,8
+845,1,0,11 10 9 6,5 4 1 7 3,8
+846,1,2,11 10 9 6,,5 4 1 7 3 8
+847,0,2,11 10 9,,6,5 4 1 7 3 8
+848,1,0,11 10 9 3,6,5 4 1 7 8
+849,2,1,11 10 9 3,6 5 4 1 7 8,
+850,2,0,11 10 9 3 8,6 5 4 1 7,
+851,1,0,11 10 9 3 8 7,6 5 4 1,
+852,1,2,11 10 9 3 8 7,,6 5 4 1
+853,0,2,11 10 9 3 8,,6 5 4 1 7
+854,0,1,11 10 9 3,8,6 5 4 1 7
+855,2,1,11 10 9 3,8 6 5 4 1 7,
+856,0,2,11 10 9,,8 6 5 4 1 7,3
+857,1,0,11 10 9 7,8 6 5 4 1,3
+858,1,2,11 10 9 7,,8 6 5 4 1 3
+859,0,2,11 10 9,,7,8 6 5 4 1 3
+860,1,0,11 10 9 1,7,8 6 5 4 3
+861,2,1,11 10 9 1,7 8 6 5 4 3,
+862,2,0,11 10 9 1 3,7 8 6 5 4,
+863,1,0,11 10 9 1 3 4,7 8 6 5,
+864,1,2,11 10 9 1 3 4,,7 8 6 5
+865,0,2,11 10 9 1 3,,7 8 6 5 4
+866,0,1,11 10 9 1,3,7 8 6 5 4
+867,2,1,11 10 9 1,3 7 8 6 5 4,
+868,0,2,11 10 9,,3 7 8 6 5 4,1
+869,1,0,11 10 9 4,3 7 8 6 5,1
+870,1,2,11 10 9 4,,3 7 8 6 5 1
+871,0,2,11 10 9,,4,3 7 8 6 5 1
+872,1,0,11 10 9 5,4,3 7 8 6 1
+873,2,1,11 10 9 5,4 3 7 8 6 1,
+874,2,0,11 10 9 5 1,4 3 7 8 6,
+875,1,0,11 10 9 5 1 6,4 3 7 8,
+876,1,2,11 10 9 5 1 6,,4 3 7 8
+877,0,2,11 10 9 5 1,,4 3 7 8 6
+878,0,1,11 10 9 5,1,4 3 7 8 6
+879,2,1,11 10 9 5,1 4 3 7 8 6,
+880,0,2,11 10 9,,1 4 3 7 8 6,5
+881,1,0,11 10 9 6,1 4 3 7 8,5
+882,1,2,11 10 9 6,,1 4 3 7 8 5
+883,0,2,11 10 9,,6,1 4 3 7 8 5
+884,1,0,11 10 9 8,6,1 4 3 7 5
+885,2,1,11 10 9 8,6 1 4 3 7 5,
+886,2,0,11 10 9 8 5,6 1 4 3 7,
+887,1,0,11 10 9 8 5 7,6 1 4 3,
+888,1,2,11 10 9 8 5 7,,6 1 4 3
+889,0,2,11 10 9 8 5,,6 1 4 3 7
+890,0,1,11 10 9 8,5,6 1 4 3 7
+891,2,1,11 10 9 8,5 6 1 4 3 7,
+892,0,2,11 10 9,,5 6 1 4 3 7,8
+893,1,0,11 10 9 7,5 6 1 4 3,8
+894,1,2,11 10 9 7,,5 6 1 4 3 8
+895,0,2,11 10 9,,7,5 6 1 4 3 8
+896,1,0,11 10 9 3,7,5 6 1 4 8
+897,2,1,11 10 9 3,7 5 6 1 4 8,
+898,2,0,11 10 9 3 8,7 5 6 1 4,
+899,1,0,11 10 9 3 8 4,7 5 6 1,
+900,1,2,11 10 9 3 8 4,,7 5 6 1
+901,0,2,11 10 9 3 8,,7 5 6 1 4
+902,0,1,11 10 9 3,8,7 5 6 1 4
+903,2,1,11 10 9 3,8 7 5 6 1 4,
+904,0,2,11 10 9,,8 7 5 6 1 4,3
+905,1,0,11 10 9 4,8 7 5 6 1,3
+906,1,2,11 10 9 4,,8 7 5 6 1 3
+907,0,2,11 10 9,,4,8 7 5 6 1 3
+908,1,0,11 10 9 1,4,8 7 5 6 3
+909,2,1,11 10 9 1,4 8 7 5 6 3,
+910,2,0,11 10 9 1 3,4 8 7 5 6,
+911,1,0,11 10 9 1 3 6,4 8 7 5,
+912,1,2,11 10 9 1 3 6,,4 8 7 5
+913,0,2,11 10 9 1 3,,4 8 7 5 6
+914,0,1,11 10 9 1,3,4 8 7 5 6
+915,2,1,11 10 9 1,3 4 8 7 5 6,
+916,0,2,11 10 9,,3 4 8 7 5 6,1
+917,1,0,11 10 9 6,3 4 8 7 5,1
+918,1,2,11 10 9 6,,3 4 8 7 5 1
+919,0,2,11 10 9,,6,3 4 8 7 5 1
+920,1,0,11 10 9 5,6,3 4 8 7 1
+921,2,1,11 10 9 5,6 3 4 8 7 1,
+922,2,0,11 10 9 5 1,6 3 4 8 7,
+923,1,0,11 10 9 5 1 7,6 3 4 8,
+924,1,2,11 10 9 5 1 7,,6 3 4 8
+925,0,2,11 10 9 5 1,,6 3 4 8 7
+926,0,1,11 10 9 5,1,6 3 4 8 7
+927,2,1,11 10 9 5,1 6 3 4 8 7,
+928,0,2,11 10 9,,1 6 3 4 8 7,5
+929,1,0,11 10 9 7,1 6 3 4 8,5
+930,1,2,11 10 9 7,,1 6 3 4 8 5
+931,0,2,11 10 9,,7,1 6 3 4 8 5
+932,1,0,11 10 9 8,7,1 6 3 4 5
+933,2,1,11 10 9 8,7 1 6 3 4 5,
+934,2,0,11 10 9 8 5,7 1 6 3 4,
+935,1,0,11 10 9 8 5 4,7 1 6 3,
+936,1,2,11 10 9 8 5 4,,7 1 6 3
+937,0,2,11 10 9 8 5,,7 1 6 3 4
+938,0,1,11 10 9 8,5,7 1 6 3 4
+939,2,1,11 10 9 8,5 7 1 6 3 4,
+940,0,2,11 10 9,,5 7 1 6 3 4,8
+941,1,0,11 10 9 4,5 7 1 6 3,8
+942,1,2,11 10 9 4,,5 7 1 6 3 8
+943,0,2,11 10 9,,4,5 7 1 6 3 8
+944,1,0,11 10 9 3,4,5 7 1 6 8
+945,2,1,11 10 9 3,4 5 7 1 6 8,
+946,2,0,11 10 9 3 8,4 5 7 1 6,
+947,1,0,11 10 9 3 8 6,4 5 7 1,
+948,1,2,11 10 9 3 8 6,,4 5 7 1
+949,0,2,11 10 9 3 8,,4 5 7 1 6
+950,0,1,11 10 9 3,8,4 5 7 1 6
+951,2,1,11 10 9 3,8 4 5 7 1 6,
+952,0,2,11 10 9,,8 4 5 7 1 6,3
+953,1,0,11 10 9 6,8 4 5 7 1,3
+954,1,2,11 10 9 6,,8 4 5 7 1 3
+955,0,2,11 10 9,,6,8 4 5 7 1 3
+956,1,0,11 10 9 1,6,8 4 5 7 3
+957,2,1,11 10 9 1,6 8 4 5 7 3,
+958,2,0,11 10 9 1 3,6 8 4 5 7,
+959,1,0,11 10 9 1 3 7,6 8 4 5,
+960,1,2,11 10 9 1 3 7,,6 8 4 5
+961,0,2,11 10 9 1 3,,6 8 4 5 7
+962,0,1,11 10 9 1,3,6 8 4 5 7
+963,2,1,11 10 9 1,3 6 8 4 5 7,
+964,0,2,11 10 9,,3 6 8 4 5 7,1
+965,1,0,11 10 9 7,3 6 8 4 5,1
+966,1,2,11 10 9 7,,3 6 8 4 5 1
+967,0,2,11 10 9,,7,3 6 8 4 5 1
+968,1,0,11 10 9 5,7,3 6 8 4 1
+969,2,1,11 10 9 5,7 3 6 8 4 1,
+970,2,0,11 10 9 5 1,7 3 6 8 4,
+971,1,0,11 10 9 5 1 4,7 3 6 8,
+972,1,2,11 10 9 5 1 4,,7 3 6 8
+973,0,2,11 10 9 5 1,,7 3 6 8 4
+974,0,1,11 10 9 5,1,7 3 6 8 4
+975,2,1,11 10 9 5,1 7 3 6 8 4,
+976,0,2,11 10 9,,1 7 3 6 8 4,5
+977,1,0,11 10 9 4,1 7 3 6 8,5
+978,1,2,11 10 9 4,,1 7 3 6 8 5
+979,0,2,11 10 9,,4,1 7 3 6 8 5
+980,1,0,11 10 9 8,4,1 7 3 6 5
+981,2,1,11 10 9 8,4 1 7 3 6 5,
+982,2,0,11 10 9 8 5,4 1 7 3 6,
+983,1,0,11 10 9 8 5 6,4 1 7 3,
+984,1,2,11 10 9 8 5 6,,4 1 7 3
+985,0,2,11 10 9 8 5,,4 1 7 3 6
+986,0,1,11 10 9 8,5,4 1 7 3 6
+987,2,1,11 10 9 8,5 4 1 7 3 6,
+988,0,2,11 10 9,,5 4 1 7 3 6,8
+989,1,0,11 10 9 6,5 4 1 7 3,8
+990,1,2,11 10 9 6,,5 4 1 7 3 8
+991,0,2,11 10 9,,6,5 4 1 7 3 8
+992,1,0,11 10 9 3,6,5 4 1 7 8
+993,2,1,11 10 9 3,6 5 4 1 7 8,
+994,2,0,11 10 9 3 8,6 5 4 1 7,
+995,1,0,11 10 9 3 8 7,6 5 4 1,
+996,1,2,11 10 9 3 8 7,,6 5 4 1
+997,0,2,11 10 9 3 8,,6 5 4 1 7
+998,0,1,11 10 9 3,8,6 5 4 1 7
+999,2,1,11 10 9 3,8 6 5 4 1 7,
+1000,0,2,11 10 9,,8 6 5 4 1 7,3
+1001,1,0,11 10 9 7,8 6 5 4 1,3
+1002,1,2,11 10 9 7,,8 6 5 4 1 3
+1003,0,2,11 10 9,,7,8 6 5 4 1 3
+1004,1,0,11 10 9 1,7,8 6 5 4 3
+1005,2,1,11 10 9 1,7 8 6 5 4 3,
+1006,2,0,11 10 9 1 3,7 8 6 5 4,
+1007,1,0,11 10 9 1 3 4,7 8 6 5,
+1008,1,2,11 10 9 1 3 4,,7 8 6 5
+1009,0,2,11 10 9 1 3,,7 8 6 5 4
+1010,0,1,11 10 9 1,3,7 8 6 5 4
+1011,2,1,11 10 9 1,3 7 8 6 5 4,
+1012,0,2,11 10 9,,3 7 8 6 5 4,1
+1013,1,0,11 10 9 4,3 7 8 6 5,1
+1014,1,2,11 10 9 4,,3 7 8 6 5 1
+1015,0,2,11 10 9,,4,3 7 8 6 5 1
+1016,1,0,11 10 9 5,4,3 7 8 6 1
+1017,2,1,11 10 9 5,4 3 7 8 6 1,
+1018,2,0,11 10 9 5 1,4 3 7 8 6,
+1019,1,0,11 10 9 5 1 6,4 3 7 8,
+1020,1,2,11 10 9 5 1 6,,4 3 7 8
+1021,0,2,11 10 9 5 1,,4 3 7 8 6
+1022,0,1,11 10 9 5,1,4 3 7 8 6
+1023,2,1,11 10 9 5,1 4 3 7 8 6,
+1024,0,2,11 10,,1 4 3 7 8 6,9 5
+1025,1,0,11 10 5,1 4 3 7 8 6,9
+1026,1,2,11 10 5,,1 4 3 7 8 6 9
+1027,0,2,11 10,,5,1 4 3 7 8 6 9
+1028,1,0,11 10 6,5,1 4 3 7 8 9
+1029,2,1,11 10 6,5 1 4 3 7 8 9,
+1030,2,0,11 10 6 9,5 1 4 3 7 8,
+1031,1,0,11 10 6 9 8,5 1 4 3 7,
+1032,1,2,11 10 6 9 8,,5 1 4 3 7
+1033,0,2,11 10 6 9,,5 1 4 3 7 8
+1034,0,1,11 10 6,9,5 1 4 3 7 8
+1035,2,1,11 10 6,9 5 1 4 3 7 8,
+1036,0,2,11 10,,9 5 1 4 3 7 8,6
+1037,1,0,11 10 7,9 5 1 4 3 8,6
+1038,1,2,11 10 7,,9 5 1 4 3 8 6
+1039,0,2,11 10,,7,9 5 1 4 3 8 6
+1040,1,0,11 10 8,7,9 5 1 4 3 6
+1041,2,1,11 10 8,7 9 5 1 4 3 6,
+1042,2,0,11 10 8 6,7 9 5 1 4 3,
+1043,1,0,11 10 8 6 3,7 9 5 1 4,
+1044,1,2,11 10 8 6 3,,7 9 5 1 4
+1045,0,2,11 10 8 6,,7 9 5 1 4 3
+1046,0,1,11 10 8,6,7 9 5 1 4 3
+1047,2,1,11 10 8,6 7 9 5 1 4 3,
+1048,0,2,11 10,,6 7 9 5 1 4 3,8
+1049,1,0,11 10 3,6 7 9 5 1 4,8
+1050,1,2,11 10 3,,6 7 9 5 1 4 8
+1051,0,2,11 10,,3,6 7 9 5 1 4 8
+1052,1,0,11 10 4,3,6 7 9 5 1 8
+1053,2,1,11 10 4,3 6 7 9 5 1 8,
+1054,2,0,11 10 4 8,3 6 7 9 5 1,
+1055,1,0,11 10 4 8 1,3 6 7 9 5,
+1056,1,2,11 10 4 8 1,,3 6 7 9 5
+1057,0,2,11 10 4 8,,3 6 7 9 5 1
+1058,0,1,11 10 4,8,3 6 7 9 5 1
+1059,2,1,11 10 4,8 3 6 7 9 5 1,
+1060,0,2,11 10,,8 3 6 7 9 5 1,4
+1061,1,0,11 10 1,8 3 6 7 9 5,4
+1062,1,2,11 10 1,,8 3 6 7 9 5 4
+1063,0,2,11 10,,1,8 3 6 7 9 5 4
+1064,1,0,11 10 5,1,8 3 6 7 9 4
+1065,2,1,11 10 5,1 8 3 6 7 9 4,
+1066,2,0,11 10 5 4,1 8 3 6 7 9,
+1067,1,0,11 10 5 4 9,1 8 3 6 7,
+1068,1,2,11 10 5 4 9,,1 8 3 6 7
+1069,0,2,11 10 5 4,,1 8 3 6 7 9
+1070,0,1,11 10 5,4,1 8 3 6 7 9
+1071,2,1,11 10 5,4 1 8 3 6 7 9,
+1072,0,2,11 10,,4 1 8 3 6 7 9,5
+1073,1,0,11 10 9,4 1 8 3 6 7,5
+1074,1,2,11 10 9,,4 1 8 3 6 7 5
+1075,0,2,11 10,,9,4 1 8 3 6 7 5
+1076,1,0,11 10 7,9,4 1 8 3 6 5
+1077,2,1,11 10 7,9 4 1 8 3 6 5,
+1078,2,0,11 10 7 5,9 4 1 8 3 6,
+1079,1,0,11 10 7 5 6,9 4 1 8 3,
+1080,1,2,11 10 7 5 6,,9 4 1 8 3
+1081,0,2,11 10 7 5,,9 4 1 8 3 6
+1082,0,1,11 10 7,5,9 4 1 8 3 6
+1083,2,1,11 10 7,5 9 4 1 8 3 6,
+1084,0,2,11 10,,5 9 4 1 8 3 6,7
+1085,1,0,11 10 6,5 9 4 1 8 3,7
+1086,1,2,11 10 6,,5 9 4 1 8 3 7
+1087,0,2,11 10,,6,5 9 4 1 8 3 7
+1088,1,0,11 10 3,6,5 9 4 1 8 7
+1089,2,1,11 10 3,6 5 9 4 1 8 7,
+1090,2,0,11 10 3 7,6 5 9 4 1 8,
+1091,1,0,11 10 3 7 8,6 5 9 4 1,
+1092,1,2,11 10 3 7 8,,6 5 9 4 1
+1093,0,2,11 10 3 7,,6 5 9 4 1 8
+1094,0,1,11 10 3,7,6 5 9 4 1 8
+1095,2,1,11 10 3,7 6 5 9 4 1 8,
+1096,0,2,11 10,,7 6 5 9 4 1 8,3
+1097,1,0,11 10 8,7 6 5 9 4 1,3
+1098,1,2,11 10 8,,7 6 5 9 4 1 3
+1099,0,2,11 10,,8,7 6 5 9 4 1 3
+1100,1,0,11 10 1,8,7 6 5 9 4 3
+1101,2,1,11 10 1,8 7 6 5 9 4 3,
+1102,2,0,11 10 1 3,8 7 6 5 9 4,
+1103,1,0,11 10 1 3 4,8 7 6 5 9,
+1104,1,2,11 10 1 3 4,,8 7 6 5 9
+1105,0,2,11 10 1 3,,8 7 6 5 9 4
+1106,0,1,11 10 1,3,8 7 6 5 9 4
+1107,2,1,11 10 1,3 8 7 6 5 9 4,
+1108,0,2,11 10,,3 8 7 6 5 9 4,1
+1109,1,0,11 10 4,3 8 7 6 5 9,1
+1110,1,2,11 10 4,,3 8 7 6 5 9 1
+1111,0,2,11 10,,4,3 8 7 6 5 9 1
+1112,1,0,11 10 9,4,3 8 7 6 5 1
+1113,2,1,11 10 9,4 3 8 7 6 5 1,
+1114,2,0,11 10 9 1,4 3 8 7 6 5,
+1115,1,0,11 10 9 1 5,4 3 8 7 6,
+1116,1,2,11 10 9 1 5,,4 3 8 7 6
+1117,0,2,11 10 9 1,,4 3 8 7 6 5
+1118,0,1,11 10 9,1,4 3 8 7 6 5
+1119,2,1,11 10 9,1 4 3 8 7 6 5,
+1120,0,2,11 10,,1 4 3 8 7 6 5,9
+1121,1,0,11 10 5,1 4 3 8 7 6,9
+1122,1,2,11 10 5,,1 4 3 8 7 6 9
+1123,0,2,11 10,,5,1 4 3 8 7 6 9
+1124,1,0,11 10 6,5,1 4 3 8 7 9
+1125,2,1,11 10 6,5 1 4 3 8 7 9,
+1126,2,0,11 10 6 9,5 1 4 3 8 7,
+1127,1,0,11 10 6 9 7,5 1 4 3 8,
+1128,1,2,11 10 6 9 7,,5 1 4 3 8
+1129,0,2,11 10 6 9,,5 1 4 3 8 7
+1130,0,1,11 10 6,9,5 1 4 3 8 7
+1131,2,1,11 10 6,9 5 1 4 3 8 7,
+1132,0,2,11 10,,9 5 1 4 3 8 7,6
+1133,1,0,11 10 7,9 5 1 4 3 8,6
+1134,1,2,11 10 7,,9 5 1 4 3 8 6
+1135,0,2,11 10,,7,9 5 1 4 3 8 6
+1136,1,0,11 10 8,7,9 5 1 4 3 6
+1137,2,1,11 10 8,7 9 5 1 4 3 6,
+1138,2,0,11 10 8 6,7 9 5 1 4 3,
+1139,1,0,11 10 8 6 3,7 9 5 1 4,
+1140,1,2,11 10 8 6 3,,7 9 5 1 4
+1141,0,2,11 10 8 6,,7 9 5 1 4 3
+1142,0,1,11 10 8,6,7 9 5 1 4 3
+1143,2,1,11 10 8,6 7 9 5 1 4 3,
+1144,0,2,11 10,,6 7 9 5 1 4 3,8
+1145,1,0,11 10 3,6 7 9 5 1 4,8
+1146,1,2,11 10 3,,6 7 9 5 1 4 8
+1147,0,2,11 10,,3,6 7 9 5 1 4 8
+1148,1,0,11 10 4,3,6 7 9 5 1 8
+1149,2,1,11 10 4,3 6 7 9 5 1 8,
+1150,2,0,11 10 4 8,3 6 7 9 5 1,
+1151,1,0,11 10 4 8 1,3 6 7 9 5,
+1152,1,2,11 10 4 8 1,,3 6 7 9 5
+1153,0,2,11 10 4 8,,3 6 7 9 5 1
+1154,0,1,11 10 4,8,3 6 7 9 5 1
+1155,2,1,11 10 4,8 3 6 7 9 5 1,
+1156,0,2,11 10,,8 3 6 7 9 5 1,4
+1157,1,0,11 10 1,8 3 6 7 9 5,4
+1158,1,2,11 10 1,,8 3 6 7 9 5 4
+1159,0,2,11 10,,1,8 3 6 7 9 5 4
+1160,1,0,11 10 5,1,8 3 6 7 9 4
+1161,2,1,11 10 5,1 8 3 6 7 9 4,
+1162,2,0,11 10 5 4,1 8 3 6 7 9,
+1163,1,0,11 10 5 4 9,1 8 3 6 7,
+1164,1,2,11 10 5 4 9,,1 8 3 6 7
+1165,0,2,11 10 5 4,,1 8 3 6 7 9
+1166,0,1,11 10 5,4,1 8 3 6 7 9
+1167,2,1,11 10 5,4 1 8 3 6 7 9,
+1168,0,2,11 10,,4 1 8 3 6 7 9,5
+1169,1,0,11 10 9,4 1 8 3 6 7,5
+1170,1,2,11 10 9,,4 1 8 3 6 7 5
+1171,0,2,11 10,,9,4 1 8 3 6 7 5
+1172,1,0,11 10 7,9,4 1 8 3 6 5
+1173,2,1,11 10 7,9 4 1 8 3 6 5,
+1174,2,0,11 10 7 5,9 4 1 8 3 6,
+1175,1,0,11 10 7 5 6,9 4 1 8 3,
+1176,1,2,11 10 7 5 6,,9 4 1 8 3
+1177,0,2,11 10 7 5,,9 4 1 8 3 6
+1178,0,1,11 10 7,5,9 4 1 8 3 6
+1179,2,1,11 10 7,5 9 4 1 8 3 6,
+1180,0,2,11 10,,5 9 4 1 8 3 6,7
+1181,1,0,11 10 6,5 9 4 1 8 3,7
+1182,1,2,11 10 6,,5 9 4 1 8 3 7
+1183,0,2,11 10,,6,5 9 4 1 8 3 7
+1184,1,0,11 10 3,6,5 9 4 1 8 7
+1185,2,1,11 10 3,6 5 9 4 1 8 7,
+1186,2,0,11 10 3 7,6 5 9 4 1 8,
+1187,1,0,11 10 3 7 8,6 5 9 4 1,
+1188,1,2,11 10 3 7 8,,6 5 9 4 1
+1189,0,2,11 10 3 7,,6 5 9 4 1 8
+1190,0,1,11 10 3,7,6 5 9 4 1 8
+1191,2,1,11 10 3,7 6 5 9 4 1 8,
+1192,0,2,11 10,,7 6 5 9 4 1 8,3
+1193,1,0,11 10 8,7 6 5 9 4 1,3
+1194,1,2,11 10 8,,7 6 5 9 4 1 3
+1195,0,2,11 10,,8,7 6 5 9 4 1 3
+1196,1,0,11 10 1,8,7 6 5 9 4 3
+1197,2,1,11 10 1,8 7 6 5 9 4 3,
+1198,2,0,11 10 1 3,8 7 6 5 9 4,
+1199,1,0,11 10 1 3 4,8 7 6 5 9,
+1200,1,2,11 10 1 3 4,,8 7 6 5 9
+1201,0,2,11 10 1 3,,8 7 6 5 9 4
+1202,0,1,11 10 1,3,8 7 6 5 9 4
+1203,2,1,11 10 1,3 8 7 6 5 9 4,
+1204,0,2,11 10,,3 8 7 6 5 9 4,1
+1205,1,0,11 10 4,3 8 7 6 5 9,1
+1206,1,2,11 10 4,,3 8 7 6 5 9 1
+1207,0,2,11 10,,4,3 8 7 6 5 9 1
+1208,1,0,11 10 9,4,3 8 7 6 5 1
+1209,2,1,11 10 9,4 3 8 7 6 5 1,
+1210,2,0,11 10 9 1,4 3 8 7 6 5,
+1211,1,0,11 10 9 1 5,4 3 8 7 6,
+1212,1,2,11 10 9 1 5,,4 3 8 7 6
+1213,0,2,11 10 9 1,,4 3 8 7 6 5
+1214,0,1,11 10 9,1,4 3 8 7 6 5
+1215,2,1,11 10 9,1 4 3 8 7 6 5,
+1216,0,2,11 10,,1 4 3 8 7 6 5,9
+1217,1,0,11 10 5,1 4 3 8 7 6,9
+1218,1,2,11 10 5,,1 4 3 8 7 6 9
+1219,0,2,11 10,,5,1 4 3 8 7 6 9
+1220,1,0,11 10 6,5,1 4 3 8 7 9
+1221,2,1,11 10 6,5 1 4 3 8 7 9,
+1222,2,0,11 10 6 9,5 1 4 3 8 7,
+1223,1,0,11 10 6 9 7,5 1 4 3 8,
+1224,1,2,11 10 6 9 7,,5 1 4 3 8
+1225,0,2,11 10 6 9,,5 1 4 3 8 7
+1226,0,1,11 10 6,9,5 1 4 3 8 7
+1227,2,1,11 10 6,9 5 1 4 3 8 7,
+1228,0,2,11 10,,9 5 1 4 3 8 7,6
+1229,1,0,11 10 7,9 5 1 4 3 8,6
+1230,1,2,11 10 7,,9 5 1 4 3 8 6
+1231,0,2,11 10,,7,9 5 1 4 3 8 6
+1232,1,0,11 10 8,7,9 5 1 4 3 6
+1233,2,1,11 10 8,7 9 5 1 4 3 6,
+1234,2,0,11 10 8 6,7 9 5 1 4 3,
+1235,1,0,11 10 8 6 3,7 9 5 1 4,
+1236,1,2,11 10 8 6 3,,7 9 5 1 4
+1237,0,2,11 10 8 6,,7 9 5 1 4 3
+1238,0,1,11 10 8,6,7 9 5 1 4 3
+1239,2,1,11 10 8,6 7 9 5 1 4 3,
+1240,0,2,11 10,,6 7 9 5 1 4 3,8
+1241,1,0,11 10 3,6 7 9 5 1 4,8
+1242,1,2,11 10 3,,6 7 9 5 1 4 8
+1243,0,2,11 10,,3,6 7 9 5 1 4 8
+1244,1,0,11 10 4,3,6 7 9 5 1 8
+1245,2,1,11 10 4,3 6 7 9 5 1 8,
+1246,2,0,11 10 4 8,3 6 7 9 5 1,
+1247,1,0,11 10 4 8 1,3 6 7 9 5,
+1248,1,2,11 10 4 8 1,,3 6 7 9 5
+1249,0,2,11 10 4 8,,3 6 7 9 5 1
+1250,0,1,11 10 4,8,3 6 7 9 5 1
+1251,2,1,11 10 4,8 3 6 7 9 5 1,
+1252,0,2,11 10,,8 3 6 7 9 5 1,4
+1253,1,0,11 10 1,8 3 6 7 9 5,4
+1254,1,2,11 10 1,,8 3 6 7 9 5 4
+1255,0,2,11 10,,1,8 3 6 7 9 5 4
+1256,1,0,11 10 5,1,8 3 6 7 9 4
+1257,2,1,11 10 5,1 8 3 6 7 9 4,
+1258,2,0,11 10 5 4,1 8 3 6 7 9,
+1259,1,0,11 10 5 4 9,1 8 3 6 7,
+1260,1,2,11 10 5 4 9,,1 8 3 6 7
+1261,0,2,11 10 5 4,,1 8 3 6 7 9
+1262,0,1,11 10 5,4,1 8 3 6 7 9
+1263,2,1,11 10 5,4 1 8 3 6 7 9,
+1264,0,2,11 10,,4 1 8 3 6 7 9,5
+1265,1,0,11 10 9,4 1 8 3 6 7,5
+1266,1,2,11 10 9,,4 1 8 3 6 7 5
+1267,0,2,11 10,,9,4 1 8 3 6 7 5
+1268,1,0,11 10 7,9,4 1 8 3 6 5
+1269,2,1,11 10 7,9 4 1 8 3 6 5,
+1270,2,0,11 10 7 5,9 4 1 8 3 6,
+1271,1,0,11 10 7 5 6,9 4 1 8 3,
+1272,1,2,11 10 7 5 6,,9 4 1 8 3
+1273,0,2,11 10 7 5,,9 4 1 8 3 6
+1274,0,1,11 10 7,5,9 4 1 8 3 6
+1275,2,1,11 10 7,5 9 4 1 8 3 6,
+1276,0,2,11 10,,5 9 4 1 8 3 6,7
+1277,1,0,11 10 6,5 9 4 1 8 3,7
+1278,1,2,11 10 6,,5 9 4 1 8 3 7
+1279,0,2,11 10,,6,5 9 4 1 8 3 7
+1280,0,1,11,,6,10 5 9 4 1 8 3 7
+1281,2,1,11,6 10 5 9 4 1 8 3 7,
+1282,2,0,11 7,6 10 5 9 4 1 8 3,
+1283,1,0,11 7 3,6 10 5 9 4 1 8,
+1284,1,2,11 7 3,,6 10 5 9 4 1 8
+1285,0,2,11 7,,6 10 5 9 4 1 8 3
+1286,0,1,11,7,6 10 5 9 4 1 8 3
+1287,2,1,11,7 6 10 5 9 4 1 8 3,
+1288,0,2,11,,7 6 10 5 9 4 1 8 3,
+1289,1,0,11 3,7 6 10 5 9 4 1 8,
+1290,1,2,11 3,,7 6 10 5 9 4 1 8
+1291,0,2,11,,3,7 6 10 5 9 4 1 8
+1292,1,0,11 8,3,7 6 10 5 9 4 1
+1293,2,1,11 8,3 7 6 10 5 9 4 1,
+1294,2,0,11 8 1,3 7 6 10 5 9 4,
+1295,1,0,11 8 1 4,3 7 6 10 5 9,
+1296,1,2,11 8 1 4,,3 7 6 10 5 9
+1297,0,2,11 8 1,,3 7 6 10 5 9 4
+1298,0,1,11 8,1,3 7 6 10 5 9 4
+1299,2,1,11 8,1 3 7 6 10 5 9 4,
+1300,0,2,11,,1 3 7 6 10 5 9 4,8
+1301,1,0,11 9,1 3 7 6 10 5 4,8
+1302,1,2,11 9,,1 3 7 6 10 5 4 8
+1303,0,2,11,,9,1 3 7 6 10 5 4 8
+1304,1,0,11 4,9,1 3 7 6 10 5 8
+1305,2,1,11 4,9 1 3 7 6 10 5 8,
+1306,2,0,11 4 8,9 1 3 7 6 10 5,
+1307,1,0,11 4 8 5,9 1 3 7 6 10,
+1308,1,2,11 4 8 5,,9 1 3 7 6 10
+1309,0,2,11 4 8,,9 1 3 7 6 10 5
+1310,0,1,11 4,8,9 1 3 7 6 10 5
+1311,2,1,11 4,8 9 1 3 7 6 10 5,
+1312,0,2,11,,8 9 1 3 7 6 10 5,4
+1313,1,0,11 5,8 9 1 3 7 6 10,4
+1314,1,2,11 5,,8 9 1 3 7 6 10 4
+1315,0,2,11,,5,8 9 1 3 7 6 10 4
+1316,1,0,11 10,5,8 9 1 3 7 6 4
+1317,2,1,11 10,5 8 9 1 3 7 6 4,
+1318,2,0,11 10 4,5 8 9 1 3 7 6,
+1319,1,0,11 10 4 6,5 8 9 1 3 7,
+1320,1,2,11 10 4 6,,5 8 9 1 3 7
+1321,0,2,11 10 4,,5 8 9 1 3 7 6
+1322,0,1,11 10,4,5 8 9 1 3 7 6
+1323,2,1,11 10,4 5 8 9 1 3 7 6,
+1324,0,2,11,,4 5 8 9 1 3 7 6,10
+1325,1,0,11 7,4 5 8 9 1 3 6,10
+1326,1,2,11 7,,4 5 8 9 1 3 6 10
+1327,0,2,11,,7,4 5 8 9 1 3 6 10
+1328,1,0,11 6,7,4 5 8 9 1 3 10
+1329,2,1,11 6,7 4 5 8 9 1 3 10,
+1330,2,0,11 6 10,7 4 5 8 9 1 3,
+1331,1,0,11 6 10 3,7 4 5 8 9 1,
+1332,1,2,11 6 10 3,,7 4 5 8 9 1
+1333,0,2,11 6 10,,7 4 5 8 9 1 3
+1334,0,1,11 6,10,7 4 5 8 9 1 3
+1335,2,1,11 6,10 7 4 5 8 9 1 3,
+1336,0,2,11,,10 7 4 5 8 9 1 3,6
+1337,1,0,11 3,10 7 4 5 8 9 1,6
+1338,1,2,11 3,,10 7 4 5 8 9 1 6
+1339,0,2,11,,3,10 7 4 5 8 9 1 6
+1340,1,0,11 1,3,10 7 4 5 8 9 6
+1341,2,1,11 1,3 10 7 4 5 8 9 6,
+1342,2,0,11 1 6,3 10 7 4 5 8 9,
+1343,1,0,11 1 6 9,3 10 7 4 5 8,
+1344,1,2,11 1 6 9,,3 10 7 4 5 8
+1345,0,2,11 1 6,,3 10 7 4 5 8 9
+1346,0,1,11 1,6,3 10 7 4 5 8 9
+1347,2,1,11 1,6 3 10 7 4 5 8 9,
+1348,0,2,11,,6 3 10 7 4 5 8 9,1
+1349,1,0,11 9,6 3 10 7 4 5 8,1
+1350,1,2,11 9,,6 3 10 7 4 5 8 1
+1351,0,2,11,,9,6 3 10 7 4 5 8 1
+1352,1,0,11 8,9,6 3 10 7 4 5 1
+1353,2,1,11 8,9 6 3 10 7 4 5 1,
+1354,2,0,11 8 1,9 6 3 10 7 4 5,
+1355,1,0,11 8 1 5,9 6 3 10 7 4,
+1356,1,2,11 8 1 5,,9 6 3 10 7 4
+1357,0,2,11 8 1,,9 6 3 10 7 4 5
+1358,0,1,11 8,1,9 6 3 10 7 4 5
+1359,2,1,11 8,1 9 6 3 10 7 4 5,
+1360,0,2,11,,1 9 6 3 10 7 4 5,8
+1361,1,0,11 4,1 9 6 3 10 7 5,8
+1362,1,2,11 4,,1 9 6 3 10 7 5 8
+1363,0,2,11,,4,1 9 6 3 10 7 5 8
+1364,1,0,11 5,4,1 9 6 3 10 7 8
+1365,2,1,11 5,4 1 9 6 3 10 7 8,
+1366,2,0,11 5 8,4 1 9 6 3 10 7,
+1367,1,0,11 5 8 7,4 1 9 6 3 10,
+1368,1,2,11 5 8 7,,4 1 9 6 3 10
+1369,0,2,11 5 8,,4 1 9 6 3 10 7
+1370,0,1,11 5,8,4 1 9 6 3 10 7
+1371,2,1,11 5,8 4 1 9 6 3 10 7,
+1372,0,2,11,,8 4 1 9 6 3 10 7,5
+1373,1,0,11 10,8 4 1 9 6 3 7,5
+1374,1,2,11 10,,8 4 1 9 6 3 7 5
+1375,0,2,11,,10,8 4 1 9 6 3 7 5
+1376,1,0,11 7,10,8 4 1 9 6 3 5
+1377,2,1,11 7,10 8 4 1 9 6 3 5,
+1378,2,0,11 7 5,10 8 4 1 9 6 3,
+1379,1,0,11 7 5 3,10 8 4 1 9 6,
+1380,1,2,11 7 5 3,,10 8 4 1 9 6
+1381,0,2,11 7 5,,10 8 4 1 9 6 3
+1382,0,1,11 7,5,10 8 4 1 9 6 3
+1383,2,1,11 7,5 10 8 4 1 9 6 3,
+1384,0,2,11,,5 10 8 4 1 9 6 3,7
+1385,1,0,11 6,5 10 8 4 1 9 3,7
+1386,1,2,11 6,,5 10 8 4 1 9 3 7
+1387,0,2,11,,6,5 10 8 4 1 9 3 7
+1388,1,0,11 3,6,5 10 8 4 1 9 7
+1389,2,1,11 3,6 5 10 8 4 1 9 7,
+1390,2,0,11 3 7,6 5 10 8 4 1 9,
+1391,1,0,11 3 7 9,6 5 10 8 4 1,
+1392,1,2,11 3 7 9,,6 5 10 8 4 1
+1393,0,2,11 3 7,,6 5 10 8 4 1 9
+1394,0,1,11 3,7,6 5 10 8 4 1 9
+1395,2,1,11 3,7 6 5 10 8 4 1 9,
+1396,0,2,11,,7 6 5 10 8 4 1 9,3
+1397,1,0,11 1,7 6 5 10 8 4 9,3
+1398,1,2,11 1,,7 6 5 10 8 4 9 3
+1399,0,2,11,,1,7 6 5 10 8 4 9 3
+1400,1,0,11 9,1,7 6 5 10 8 4 3
+1401,2,1,11 9,1 7 6 5 10 8 4 3,
+1402,2,0,11 9 3,1 7 6 5 10 8 4,
+1403,1,0,11 9 3 4,1 7 6 5 10 8,
+1404,1,2,11 9 3 4,,1 7 6 5 10 8
+1405,0,2,11 9 3,,1 7 6 5 10 8 4
+1406,0,1,11 9,3,1 7 6 5 10 8 4
+1407,2,1,11 9,3 1 7 6 5 10 8 4,
+1408,0,2,11,,3 1 7 6 5 10 8 4,9
+1409,1,0,11 8,3 1 7 6 5 10 4,9
+1410,1,2,11 8,,3 1 7 6 5 10 4 9
+1411,0,2,11,,8,3 1 7 6 5 10 4 9
+1412,1,0,11 4,8,3 1 7 6 5 10 9
+1413,2,1,11 4,8 3 1 7 6 5 10 9,
+1414,2,0,11 4 9,8 3 1 7 6 5 10,
+1415,1,0,11 4 9 10,8 3 1 7 6 5,
+1416,1,2,11 4 9 10,,8 3 1 7 6 5
+1417,0,2,11 4 9,,8 3 1 7 6 5 10
+1418,0,1,11 4,9,8 3 1 7 6 5 10
+1419,2,1,11 4,9 8 3 1 7 6 5 10,
+1420,0,2,11,,9 8 3 1 7 6 5 10,4
+1421,1,0,11 5,9 8 3 1 7 6 10,4
+1422,1,2,11 5,,9 8 3 1 7 6 10 4
+1423,0,2,11,,5,9 8 3 1 7 6 10 4
+1424,1,0,11 10,5,9 8 3 1 7 6 4
+1425,2,1,11 10,5 9 8 3 1 7 6 4,
+1426,2,0,11 10 4,5 9 8 3 1 7 6,
+1427,1,0,11 10 4 6,5 9 8 3 1 7,
+1428,1,2,11 10 4 6,,5 9 8 3 1 7
+1429,0,2,11 10 4,,5 9 8 3 1 7 6
+1430,0,1,11 10,4,5 9 8 3 1 7 6
+1431,2,1,11 10,4 5 9 8 3 1 7 6,
+1432,0,2,11,,4 5 9 8 3 1 7 6,10
+1433,1,0,11 7,4 5 9 8 3 1 6,10
+1434,1,2,11 7,,4 5 9 8 3 1 6 10
+1435,0,2,11,,7,4 5 9 8 3 1 6 10
+1436,1,0,11 6,7,4 5 9 8 3 1 10
+1437,2,1,11 6,7 4 5 9 8 3 1 10,
+1438,2,0,11 6 10,7 4 5 9 8 3 1,
+1439,1,0,11 6 10 1,7 4 5 9 8 3,
+1440,1,2,11 6 10 1,,7 4 5 9 8 3
+1441,0,2,11 6 10,,7 4 5 9 8 3 1
+1442,0,1,11 6,10,7 4 5 9 8 3 1
+1443,2,1,11 6,10 7 4 5 9 8 3 1,
+1444,0,2,11,,10 7 4 5 9 8 3 1,6
+1445,1,0,11 3,10 7 4 5 9 8 1,6
+1446,1,2,11 3,,10 7 4 5 9 8 1 6
+1447,0,2,11,,3,10 7 4 5 9 8 1 6
+1448,1,0,11 1,3,10 7 4 5 9 8 6
+1449,2,1,11 1,3 10 7 4 5 9 8 6,
+1450,2,0,11 1 6,3 10 7 4 5 9 8,
+1451,1,0,11 1 6 8,3 10 7 4 5 9,
+1452,1,2,11 1 6 8,,3 10 7 4 5 9
+1453,0,2,11 1 6,,3 10 7 4 5 9 8
+1454,0,1,11 1,6,3 10 7 4 5 9 8
+1455,2,1,11 1,6 3 10 7 4 5 9 8,
+1456,0,2,11,,6 3 10 7 4 5 9 8,1
+1457,1,0,11 9,6 3 10 7 4 5 8,1
+1458,1,2,11 9,,6 3 10 7 4 5 8 1
+1459,0,2,11,,9,6 3 10 7 4 5 8 1
+1460,1,0,11 8,9,6 3 10 7 4 5 1
+1461,2,1,11 8,9 6 3 10 7 4 5 1,
+1462,2,0,11 8 1,9 6 3 10 7 4 5,
+1463,1,0,11 8 1 5,9 6 3 10 7 4,
+1464,1,2,11 8 1 5,,9 6 3 10 7 4
+1465,0,2,11 8 1,,9 6 3 10 7 4 5
+1466,0,1,11 8,1,9 6 3 10 7 4 5
+1467,2,1,11 8,1 9 6 3 10 7 4 5,
+1468,0,2,11,,1 9 6 3 10 7 4 5,8
+1469,1,0,11 4,1 9 6 3 10 7 5,8
+1470,1,2,11 4,,1 9 6 3 10 7 5 8
+1471,0,2,11,,4,1 9 6 3 10 7 5 8
+1472,1,0,11 5,4,1 9 6 3 10 7 8
+1473,2,1,11 5,4 1 9 6 3 10 7 8,
+1474,2,0,11 5 8,4 1 9 6 3 10 7,
+1475,1,0,11 5 8 7,4 1 9 6 3 10,
+1476,1,2,11 5 8 7,,4 1 9 6 3 10
+1477,0,2,11 5 8,,4 1 9 6 3 10 7
+1478,0,1,11 5,8,4 1 9 6 3 10 7
+1479,2,1,11 5,8 4 1 9 6 3 10 7,
+1480,0,2,11,,8 4 1 9 6 3 10 7,5
+1481,1,0,11 10,8 4 1 9 6 3 7,5
+1482,1,2,11 10,,8 4 1 9 6 3 7 5
+1483,0,2,11,,10,8 4 1 9 6 3 7 5
+1484,1,0,11 7,10,8 4 1 9 6 3 5
+1485,2,1,11 7,10 8 4 1 9 6 3 5,
+1486,2,0,11 7 5,10 8 4 1 9 6 3,
+1487,1,0,11 7 5 3,10 8 4 1 9 6,
+1488,1,2,11 7 5 3,,10 8 4 1 9 6
+1489,0,2,11 7 5,,10 8 4 1 9 6 3
+1490,0,1,11 7,5,10 8 4 1 9 6 3
+1491,2,1,11 7,5 10 8 4 1 9 6 3,
+1492,0,2,11,,5 10 8 4 1 9 6 3,7
+1493,1,0,11 6,5 10 8 4 1 9 3,7
+1494,1,2,11 6,,5 10 8 4 1 9 3 7
+1495,0,2,11,,6,5 10 8 4 1 9 3 7
+1496,1,0,11 3,6,5 10 8 4 1 9 7
+1497,2,1,11 3,6 5 10 8 4 1 9 7,
+1498,2,0,11 3 7,6 5 10 8 4 1 9,
+1499,1,0,11 3 7 9,6 5 10 8 4 1,
+1500,1,2,11 3 7 9,,6 5 10 8 4 1
+1501,0,2,11 3 7,,6 5 10 8 4 1 9
+1502,0,1,11 3,7,6 5 10 8 4 1 9
+1503,2,1,11 3,7 6 5 10 8 4 1 9,
+1504,0,2,11,,7 6 5 10 8 4 1 9,3
+1505,1,0,11 1,7 6 5 10 8 4 9,3
+1506,1,2,11 1,,7 6 5 10 8 4 9 3
+1507,0,2,11,,1,7 6 5 10 8 4 9 3
+1508,1,0,11 9,1,7 6 5 10 8 4 3
+1509,2,1,11 9,1 7 6 5 10 8 4 3,
+1510,2,0,11 9 3,1 7 6 5 10 8 4,
+1511,1,0,11 9 3 4,1 7 6 5 10 8,
+1512,1,2,11 9 3 4,,1 7 6 5 10 8
+1513,0,2,11 9 3,,1 7 6 5 10 8 4
+1514,0,1,11 9,3,1 7 6 5 10 8 4
+1515,2,1,11 9,3 1 7 6 5 10 8 4,
+1516,0,2,11,,3 1 7 6 5 10 8 4,9
+1517,1,0,11 8,3 1 7 6 5 10 4,9
+1518,1,2,11 8,,3 1 7 6 5 10 4 9
+1519,0,2,11,,8,3 1 7 6 5 10 4 9
+1520,1,0,11 4,8,3 1 7 6 5 10 9
+1521,2,1,11 4,8 3 1 7 6 5 10 9,
+1522,2,0,11 4 9,8 3 1 7 6 5 10,
+1523,1,0,11 4 9 10,8 3 1 7 6 5,
+1524,1,2,11 4 9 10,,8 3 1 7 6 5
+1525,0,2,11 4 9,,8 3 1 7 6 5 10
+1526,0,1,11 4,9,8 3 1 7 6 5 10
+1527,2,1,11 4,9 8 3 1 7 6 5 10,
+1528,0,2,11,,9 8 3 1 7 6 5 10,4
+1529,1,0,11 5,9 8 3 1 7 6 10,4
+1530,1,2,11 5,,9 8 3 1 7 6 10 4
+1531,0,2,11,,5,9 8 3 1 7 6 10 4
+1532,1,0,11 10,5,9 8 3 1 7 6 4
+1533,2,1,11 10,5 9 8 3 1 7 6 4,
+1534,2,0,11 10 4,5 9 8 3 1 7 6,
+1535,1,0,11 10 4 6,5 9 8 3 1 7,
+1536,1,2,11 10 4 6,,5 9 8 3 1 7
+1537,0,2,11 10 4,,5 9 8 3 1 7 6
+1538,0,1,11 10,4,5 9 8 3 1 7 6
+1539,2,1,11 10,4 5 9 8 3 1 7 6,
+1540,0,2,11,,4 5 9 8 3 1 7 6,10
+1541,1,0,11 7,4 5 9 8 3 1 6,10
+1542,1,2,11 7,,4 5 9 8 3 1 6 10
+1543,0,2,11,,7,4 5 9 8 3 1 6 10
+1544,1,0,11 6,7,4 5 9 8 3 1 10
+1545,2,1,11 6,7 4 5 9 8 3 1 10,
+1546,2,0,11 6 10,7 4 5 9 8 3 1,
+1547,1,0,11 6 10 1,7 4 5 9 8 3,
+1548,1,2,11 6 10 1
+

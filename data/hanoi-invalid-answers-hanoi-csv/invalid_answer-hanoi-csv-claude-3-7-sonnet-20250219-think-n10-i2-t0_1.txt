@@ -1,0 +1,3297 @@
+# model_name='claude-3-7-sonnet-20250219', reasoning_budget=32000, tries=0, n=10, i=2
+# valid_prefix_length=15, is_valid_solution=0, first_correction=-1
+
+<think>
+This is the classic Tower of Hanoi puzzle. For a Tower of Hanoi puzzle with n disks, the minimum number of moves required to solve it is 2^n - 1. So with 10 disks, we'll need 2^10 - 1 = 1024 - 1 = 1023 moves.
+
+Let's start by recalling the recursive algorithm for solving the Tower of Hanoi:
+
+1. Move n-1 disks from source to auxiliary peg (using destination as an auxiliary).
+2. Move the largest disk from source to destination.
+3. Move n-1 disks from auxiliary to destination (using source as an auxiliary).
+
+Let me implement this algorithm and generate the full list of moves:
+
+```
+def hanoi(n, source, auxiliary, destination, moves):
+    if n == 1:
+        moves.append((1, source, destination))
+        return
+    
+    hanoi(n-1, source, destination, auxiliary, moves)
+    moves.append((n, source, destination))
+    hanoi(n-1, auxiliary, source, destination, moves)
+
+moves = []
+hanoi(10, 0, 1, 2, moves)
+```
+
+Let me trace through the execution of this algorithm for n=3 to verify it's correct:
+
+hanoi(3, 0, 1, 2, []):
+    hanoi(2, 0, 2, 1, []):
+        hanoi(1, 0, 1, 2, []):
+            moves.append((1, 0, 2))
+            moves = [(1, 0, 2)]
+        moves.append((2, 0, 1))
+        moves = [(1, 0, 2), (2, 0, 1)]
+        hanoi(1, 2, 0, 1, moves):
+            moves.append((1, 2, 1))
+            moves = [(1, 0, 2), (2, 0, 1), (1, 2, 1)]
+    moves.append((3, 0, 2))
+    moves = [(1, 0, 2), (2, 0, 1), (1, 2, 1), (3, 0, 2)]
+    hanoi(2, 1, 0, 2, moves):
+        hanoi(1, 1, 2, 0, moves):
+            moves.append((1, 1, 0))
+            moves = [(1, 0, 2), (2, 0, 1), (1, 2, 1), (3, 0, 2), (1, 1, 0)]
+        moves.append((2, 1, 2))
+        moves = [(1, 0, 2), (2, 0, 1), (1, 2, 1), (3, 0, 2), (1, 1, 0), (2, 1, 2)]
+        hanoi(1, 0, 1, 2, moves):
+            moves.append((1, 0, 2))
+            moves = [(1, 0, 2), (2, 0, 1), (1, 2, 1), (3, 0, 2), (1, 1, 0), (2, 1, 2), (1, 0, 2)]
+
+This gives the same solution as the example provided in the problem statement, so our algorithm seems correct.
+
+Now, let's generate the full list of moves for n=10:
+
+```
+def hanoi(n, source, auxiliary, destination, moves):
+    if n == 0:
+        return
+    
+    hanoi(n-1, source, destination, auxiliary, moves)
+    moves.append((n, source, destination))
+    hanoi(n-1, auxiliary, source, destination, moves)
+
+moves = []
+hanoi(10, 0, 1, 2, moves)
+```
+
+I'll manually trace through for n=10 to generate the full list of moves.
+
+Actually, let me use a slightly different approach that might be easier to trace manually. I'll define a function `move(n, source, dest)` which moves n disks from source to dest:
+
+For move(n, source, dest):
+1. If n = 1, simply move the disk from source to dest.
+2. Otherwise:
+   a. Let aux be the remaining peg (not source or dest).
+   b. move(n-1, source, aux)
+   c. Move disk n from source to dest.
+   d. move(n-1, aux, dest)
+
+Let's define the function:
+
+```
+def move(n, source, dest, moves):
+    if n == 1:
+        moves.append((1, source, dest))
+        return
+    
+    aux = 3 - source - dest  # This gives the remaining peg
+    move(n-1, source, aux, moves)
+    moves.append((n, source, dest))
+    move(n-1, aux, dest, moves)
+```
+
+Now, let's generate the full list of moves for n=10:
+
+```
+moves = []
+move(10, 0, 2, moves)
+```
+
+Let's manually trace this for n=3 to ensure it's correct:
+
+move(3, 0, 2, []):
+    aux = 3 - 0 - 2 = 1
+    move(2, 0, 1, []):
+        aux = 3 - 0 - 1 = 2
+        move(1, 0, 2, []):
+            moves.append((1, 0, 2))
+            moves = [(1, 0, 2)]
+        moves.append((2, 0, 1))
+        moves = [(1, 0, 2), (2, 0, 1)]
+        move(1, 2, 1, moves):
+            moves.append((1, 2, 1))
+            moves = [(1, 0, 2), (2, 0, 1), (1, 2, 1)]
+    moves.append((3, 0, 2))
+    moves = [(1, 0, 2), (2, 0, 1), (1, 2, 1), (3, 0, 2)]
+    move(2, 1, 2, moves):
+        aux = 3 - 1 - 2 = 0
+        move(1, 1, 0, moves):
+            moves.append((1, 1, 0))
+            moves = [(1, 0, 2), (2, 0, 1), (1, 2, 1), (3, 0, 2), (1, 1, 0)]
+        moves.append((2, 1, 2))
+        moves = [(1, 0, 2), (2, 0, 1), (1, 2, 1), (3, 0, 2), (1, 1, 0), (2, 1, 2)]
+        move(1, 0, 2, moves):
+            moves.append((1, 0, 2))
+            moves = [(1, 0, 2), (2, 0, 1), (1, 2, 1), (3, 0, 2), (1, 1, 0), (2, 1, 2), (1, 0, 2)]
+
+This gives the same result as before, so our algorithm is correct.
+
+Now, let's use this algorithm to generate the full list of moves for n=10. I'll trace through the algorithm for n=10, but I'll avoid writing out all the recursive calls to keep things manageable.
+
+Actually, I'll write a recursive function to generate the moves and then I'll provide the full list.
+
+For n=10, the recursive structure would be:
+1. Move 9 disks from peg 0 to peg 1 (using peg 2 as auxiliary).
+2. Move disk 10 from peg 0 to peg 2.
+3. Move 9 disks from peg 1 to peg 2 (using peg 0 as auxiliary).
+
+Step 1 is further broken down:
+1.1. Move 8 disks from peg 0 to peg 2 (using peg 1 as auxiliary).
+1.2. Move disk 9 from peg 0 to peg 1.
+1.3. Move 8 disks from peg 2 to peg 1 (using peg 0 as auxiliary).
+
+And so on...
+
+Instead of tracing through all the recursive calls, let me directly provide the formula for the Tower of Hanoi for n disks.
+
+For 1 disk, the solution is simple: move the disk from the source peg to the destination peg.
+
+For n > 1 disks, the solution is:
+1. Move n-1 disks from the source peg to the auxiliary peg.
+2. Move the nth disk from the source peg to the destination peg.
+3. Move n-1 disks from the auxiliary peg to the destination peg.
+
+Let's implement this and generate the full list of moves for n=10:
+
+```python
+def tower_of_hanoi(n, source, auxiliary, destination):
+    if n == 1:
+        return [(1, source, destination)]
+    
+    moves = tower_of_hanoi(n-1, source, destination, auxiliary)
+    moves.append((n, source, destination))
+    moves.extend(tower_of_hanoi(n-1, auxiliary, source, destination))
+    
+    return moves
+
+moves = tower_of_hanoi(10, 0, 1, 2)
+```
+
+I'll directly generate the list of moves. Let me trace through manually.
+
+Move 9 disks from 0 to 1 using 2 as auxiliary:
+  Move 8 disks from 0 to 2 using 1 as auxiliary:
+    Move 7 disks from 0 to 1 using 2 as auxiliary:
+      Move 6 disks from 0 to 2 using 1 as auxiliary:
+        Move 5 disks from 0 to 1 using 2 as auxiliary:
+          Move 4 disks from 0 to 2 using 1 as auxiliary:
+            Move 3 disks from 0 to 1 using 2 as auxiliary:
+              Move 2 disks from 0 to 2 using 1 as auxiliary:
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  1. Move disk 1 from 0 to 1.
+                Move disk 2 from 0 to 2.
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  2. Move disk 1 from 1 to 2.
+              Move disk 3 from 0 to 1.
+              Move 2 disks from 2 to 1 using 0 as auxiliary:
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  3. Move disk 1 from 2 to 0.
+                Move disk 2 from 2 to 1.
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  4. Move disk 1 from 0 to 1.
+            Move disk 4 from 0 to 2.
+            Move 3 disks from 1 to 2 using 0 as auxiliary:
+              Move 2 disks from 1 to 0 using 2 as auxiliary:
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  5. Move disk 1 from 1 to 2.
+                Move disk 2 from 1 to 0.
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  6. Move disk 1 from 2 to 0.
+              Move disk 3 from 1 to 2.
+              Move 2 disks from 0 to 2 using 1 as auxiliary:
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  7. Move disk 1 from 0 to 1.
+                Move disk 2 from 0 to 2.
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  8. Move disk 1 from 1 to 2.
+          Move disk 5 from 0 to 1.
+          Move 4 disks from 2 to 1 using 0 as auxiliary:
+            Move 3 disks from 2 to 0 using 1 as auxiliary:
+              Move 2 disks from 2 to 1 using 0 as auxiliary:
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  9. Move disk 1 from 2 to 0.
+                Move disk 2 from 2 to 1.
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  10. Move disk 1 from 0 to 1.
+              Move disk 3 from 2 to 0.
+              Move 2 disks from 1 to 0 using 2 as auxiliary:
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  11. Move disk 1 from 1 to 2.
+                Move disk 2 from 1 to 0.
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  12. Move disk 1 from 2 to 0.
+            Move disk 4 from 2 to 1.
+            Move 3 disks from 0 to 1 using 2 as auxiliary:
+              Move 2 disks from 0 to 2 using 1 as auxiliary:
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  13. Move disk 1 from 0 to 1.
+                Move disk 2 from 0 to 2.
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  14. Move disk 1 from 1 to 2.
+              Move disk 3 from 0 to 1.
+              Move 2 disks from 2 to 1 using 0 as auxiliary:
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  15. Move disk 1 from 2 to 0.
+                Move disk 2 from 2 to 1.
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  16. Move disk 1 from 0 to 1.
+        Move disk 6 from 0 to 2.
+        Move 5 disks from 1 to 2 using 0 as auxiliary:
+          Move 4 disks from 1 to 0 using 2 as auxiliary:
+            Move 3 disks from 1 to 2 using 0 as auxiliary:
+              Move 2 disks from 1 to 0 using 2 as auxiliary:
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  17. Move disk 1 from 1 to 2.
+                Move disk 2 from 1 to 0.
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  18. Move disk 1 from 2 to 0.
+              Move disk 3 from 1 to 2.
+              Move 2 disks from 0 to 2 using 1 as auxiliary:
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  19. Move disk 1 from 0 to 1.
+                Move disk 2 from 0 to 2.
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  20. Move disk 1 from 1 to 2.
+            Move disk 4 from 1 to 0.
+            Move 3 disks from 2 to 0 using 1 as auxiliary:
+              Move 2 disks from 2 to 1 using 0 as auxiliary:
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  21. Move disk 1 from 2 to 0.
+                Move disk 2 from 2 to 1.
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  22. Move disk 1 from 0 to 1.
+              Move disk 3 from 2 to 0.
+              Move 2 disks from 1 to 0 using 2 as auxiliary:
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  23. Move disk 1 from 1 to 2.
+                Move disk 2 from 1 to 0.
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  24. Move disk 1 from 2 to 0.
+          Move disk 5 from 1 to 2.
+          Move 4 disks from 0 to 2 using 1 as auxiliary:
+            Move 3 disks from 0 to 1 using 2 as auxiliary:
+              Move 2 disks from 0 to 2 using 1 as auxiliary:
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  25. Move disk 1 from 0 to 1.
+                Move disk 2 from 0 to 2.
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  26. Move disk 1 from 1 to 2.
+              Move disk 3 from 0 to 1.
+              Move 2 disks from 2 to 1 using 0 as auxiliary:
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  27. Move disk 1 from 2 to 0.
+                Move disk 2 from 2 to 1.
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  28. Move disk 1 from 0 to 1.
+            Move disk 4 from 0 to 2.
+            Move 3 disks from 1 to 2 using 0 as auxiliary:
+              Move 2 disks from 1 to 0 using 2 as auxiliary:
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  29. Move disk 1 from 1 to 2.
+                Move disk 2 from 1 to 0.
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  30. Move disk 1 from 2 to 0.
+              Move disk 3 from 1 to 2.
+              Move 2 disks from 0 to 2 using 1 as auxiliary:
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  31. Move disk 1 from 0 to 1.
+                Move disk 2 from 0 to 2.
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  32. Move disk 1 from 1 to 2.
+      Move disk 7 from 0 to 1.
+      Move 6 disks from 2 to 1 using 0 as auxiliary:
+        Move 5 disks from 2 to 0 using 1 as auxiliary:
+          Move 4 disks from 2 to 1 using 0 as auxiliary:
+            Move 3 disks from 2 to 0 using 1 as auxiliary:
+              Move 2 disks from 2 to 1 using 0 as auxiliary:
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  33. Move disk 1 from 2 to 0.
+                Move disk 2 from 2 to 1.
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  34. Move disk 1 from 0 to 1.
+              Move disk 3 from 2 to 0.
+              Move 2 disks from 1 to 0 using 2 as auxiliary:
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  35. Move disk 1 from 1 to 2.
+                Move disk 2 from 1 to 0.
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  36. Move disk 1 from 2 to 0.
+            Move disk 4 from 2 to 1.
+            Move 3 disks from 0 to 1 using 2 as auxiliary:
+              Move 2 disks from 0 to 2 using 1 as auxiliary:
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  37. Move disk 1 from 0 to 1.
+                Move disk 2 from 0 to 2.
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  38. Move disk 1 from 1 to 2.
+              Move disk 3 from 0 to 1.
+              Move 2 disks from 2 to 1 using 0 as auxiliary:
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  39. Move disk 1 from 2 to 0.
+                Move disk 2 from 2 to 1.
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  40. Move disk 1 from 0 to 1.
+          Move disk 5 from 2 to 0.
+          Move 4 disks from 1 to 0 using 2 as auxiliary:
+            Move 3 disks from 1 to 2 using 0 as auxiliary:
+              Move 2 disks from 1 to 0 using 2 as auxiliary:
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  41. Move disk 1 from 1 to 2.
+                Move disk 2 from 1 to 0.
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  42. Move disk 1 from 2 to 0.
+              Move disk 3 from 1 to 2.
+              Move 2 disks from 0 to 2 using 1 as auxiliary:
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  43. Move disk 1 from 0 to 1.
+                Move disk 2 from 0 to 2.
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  44. Move disk 1 from 1 to 2.
+            Move disk 4 from 1 to 0.
+            Move 3 disks from 2 to 0 using 1 as auxiliary:
+              Move 2 disks from 2 to 1 using 0 as auxiliary:
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  45. Move disk 1 from 2 to 0.
+                Move disk 2 from 2 to 1.
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  46. Move disk 1 from 0 to 1.
+              Move disk 3 from 2 to 0.
+              Move 2 disks from 1 to 0 using 2 as auxiliary:
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  47. Move disk 1 from 1 to 2.
+                Move disk 2 from 1 to 0.
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  48. Move disk 1 from 2 to 0.
+        Move disk 6 from 2 to 1.
+        Move 5 disks from 0 to 1 using 2 as auxiliary:
+          Move 4 disks from 0 to 2 using 1 as auxiliary:
+            Move 3 disks from 0 to 1 using 2 as auxiliary:
+              Move 2 disks from 0 to 2 using 1 as auxiliary:
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  49. Move disk 1 from 0 to 1.
+                Move disk 2 from 0 to 2.
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  50. Move disk 1 from 1 to 2.
+              Move disk 3 from 0 to 1.
+              Move 2 disks from 2 to 1 using 0 as auxiliary:
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  51. Move disk 1 from 2 to 0.
+                Move disk 2 from 2 to 1.
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  52. Move disk 1 from 0 to 1.
+            Move disk 4 from 0 to 2.
+            Move 3 disks from 1 to 2 using 0 as auxiliary:
+              Move 2 disks from 1 to 0 using 2 as auxiliary:
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  53. Move disk 1 from 1 to 2.
+                Move disk 2 from 1 to 0.
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  54. Move disk 1 from 2 to 0.
+              Move disk 3 from 1 to 2.
+              Move 2 disks from 0 to 2 using 1 as auxiliary:
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  55. Move disk 1 from 0 to 1.
+                Move disk 2 from 0 to 2.
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  56. Move disk 1 from 1 to 2.
+          Move disk 5 from 0 to 1.
+          Move 4 disks from 2 to 1 using 0 as auxiliary:
+            Move 3 disks from 2 to 0 using 1 as auxiliary:
+              Move 2 disks from 2 to 1 using 0 as auxiliary:
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  57. Move disk 1 from 2 to 0.
+                Move disk 2 from 2 to 1.
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  58. Move disk 1 from 0 to 1.
+              Move disk 3 from 2 to 0.
+              Move 2 disks from 1 to 0 using 2 as auxiliary:
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  59. Move disk 1 from 1 to 2.
+                Move disk 2 from 1 to 0.
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  60. Move disk 1 from 2 to 0.
+            Move disk 4 from 2 to 1.
+            Move 3 disks from 0 to 1 using 2 as auxiliary:
+              Move 2 disks from 0 to 2 using 1 as auxiliary:
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  61. Move disk 1 from 0 to 1.
+                Move disk 2 from 0 to 2.
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  62. Move disk 1 from 1 to 2.
+              Move disk 3 from 0 to 1.
+              Move 2 disks from 2 to 1 using 0 as auxiliary:
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  63. Move disk 1 from 2 to 0.
+                Move disk 2 from 2 to 1.
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  64. Move disk 1 from 0 to 1.
+    Move disk 8 from 0 to 2.
+    Move 7 disks from 1 to 2 using 0 as auxiliary:
+      Move 6 disks from 1 to 0 using 2 as auxiliary:
+        Move 5 disks from 1 to 2 using 0 as auxiliary:
+          Move 4 disks from 1 to 0 using 2 as auxiliary:
+            Move 3 disks from 1 to 2 using 0 as auxiliary:
+              Move 2 disks from 1 to 0 using 2 as auxiliary:
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  65. Move disk 1 from 1 to 2.
+                Move disk 2 from 1 to 0.
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  66. Move disk 1 from 2 to 0.
+              Move disk 3 from 1 to 2.
+              Move 2 disks from 0 to 2 using 1 as auxiliary:
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  67. Move disk 1 from 0 to 1.
+                Move disk 2 from 0 to 2.
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  68. Move disk 1 from 1 to 2.
+            Move disk 4 from 1 to 0.
+            Move 3 disks from 2 to 0 using 1 as auxiliary:
+              Move 2 disks from 2 to 1 using 0 as auxiliary:
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  69. Move disk 1 from 2 to 0.
+                Move disk 2 from 2 to 1.
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  70. Move disk 1 from 0 to 1.
+              Move disk 3 from 2 to 0.
+              Move 2 disks from 1 to 0 using 2 as auxiliary:
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  71. Move disk 1 from 1 to 2.
+                Move disk 2 from 1 to 0.
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  72. Move disk 1 from 2 to 0.
+          Move disk 5 from 1 to 2.
+          Move 4 disks from 0 to 2 using 1 as auxiliary:
+            Move 3 disks from 0 to 1 using 2 as auxiliary:
+              Move 2 disks from 0 to 2 using 1 as auxiliary:
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  73. Move disk 1 from 0 to 1.
+                Move disk 2 from 0 to 2.
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  74. Move disk 1 from 1 to 2.
+              Move disk 3 from 0 to 1.
+              Move 2 disks from 2 to 1 using 0 as auxiliary:
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  75. Move disk 1 from 2 to 0.
+                Move disk 2 from 2 to 1.
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  76. Move disk 1 from 0 to 1.
+            Move disk 4 from 0 to 2.
+            Move 3 disks from 1 to 2 using 0 as auxiliary:
+              Move 2 disks from 1 to 0 using 2 as auxiliary:
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  77. Move disk 1 from 1 to 2.
+                Move disk 2 from 1 to 0.
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  78. Move disk 1 from 2 to 0.
+              Move disk 3 from 1 to 2.
+              Move 2 disks from 0 to 2 using 1 as auxiliary:
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  79. Move disk 1 from 0 to 1.
+                Move disk 2 from 0 to 2.
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  80. Move disk 1 from 1 to 2.
+        Move disk 6 from 1 to 0.
+        Move 5 disks from 2 to 0 using 1 as auxiliary:
+          Move 4 disks from 2 to 1 using 0 as auxiliary:
+            Move 3 disks from 2 to 0 using 1 as auxiliary:
+              Move 2 disks from 2 to 1 using 0 as auxiliary:
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  81. Move disk 1 from 2 to 0.
+                Move disk 2 from 2 to 1.
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  82. Move disk 1 from 0 to 1.
+              Move disk 3 from 2 to 0.
+              Move 2 disks from 1 to 0 using 2 as auxiliary:
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  83. Move disk 1 from 1 to 2.
+                Move disk 2 from 1 to 0.
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  84. Move disk 1 from 2 to 0.
+            Move disk 4 from 2 to 1.
+            Move 3 disks from 0 to 1 using 2 as auxiliary:
+              Move 2 disks from 0 to 2 using 1 as auxiliary:
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  85. Move disk 1 from 0 to 1.
+                Move disk 2 from 0 to 2.
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  86. Move disk 1 from 1 to 2.
+              Move disk 3 from 0 to 1.
+              Move 2 disks from 2 to 1 using 0 as auxiliary:
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  87. Move disk 1 from 2 to 0.
+                Move disk 2 from 2 to 1.
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  88. Move disk 1 from 0 to 1.
+          Move disk 5 from 2 to 0.
+          Move 4 disks from 1 to 0 using 2 as auxiliary:
+            Move 3 disks from 1 to 2 using 0 as auxiliary:
+              Move 2 disks from 1 to 0 using 2 as auxiliary:
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  89. Move disk 1 from 1 to 2.
+                Move disk 2 from 1 to 0.
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  90. Move disk 1 from 2 to 0.
+              Move disk 3 from 1 to 2.
+              Move 2 disks from 0 to 2 using 1 as auxiliary:
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  91. Move disk 1 from 0 to 1.
+                Move disk 2 from 0 to 2.
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  92. Move disk 1 from 1 to 2.
+            Move disk 4 from 1 to 0.
+            Move 3 disks from 2 to 0 using 1 as auxiliary:
+              Move 2 disks from 2 to 1 using 0 as auxiliary:
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  93. Move disk 1 from 2 to 0.
+                Move disk 2 from 2 to 1.
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  94. Move disk 1 from 0 to 1.
+              Move disk 3 from 2 to 0.
+              Move 2 disks from 1 to 0 using 2 as auxiliary:
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  95. Move disk 1 from 1 to 2.
+                Move disk 2 from 1 to 0.
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  96. Move disk 1 from 2 to 0.
+      Move disk 7 from 1 to 2.
+      Move 6 disks from 0 to 2 using 1 as auxiliary:
+        Move 5 disks from 0 to 1 using 2 as auxiliary:
+          Move 4 disks from 0 to 2 using 1 as auxiliary:
+            Move 3 disks from 0 to 1 using 2 as auxiliary:
+              Move 2 disks from 0 to 2 using 1 as auxiliary:
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  97. Move disk 1 from 0 to 1.
+                Move disk 2 from 0 to 2.
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  98. Move disk 1 from 1 to 2.
+              Move disk 3 from 0 to 1.
+              Move 2 disks from 2 to 1 using 0 as auxiliary:
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  99. Move disk 1 from 2 to 0.
+                Move disk 2 from 2 to 1.
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  100. Move disk 1 from 0 to 1.
+            Move disk 4 from 0 to 2.
+            Move 3 disks from 1 to 2 using 0 as auxiliary:
+              Move 2 disks from 1 to 0 using 2 as auxiliary:
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  101. Move disk 1 from 1 to 2.
+                Move disk 2 from 1 to 0.
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  102. Move disk 1 from 2 to 0.
+              Move disk 3 from 1 to 2.
+              Move 2 disks from 0 to 2 using 1 as auxiliary:
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  103. Move disk 1 from 0 to 1.
+                Move disk 2 from 0 to 2.
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  104. Move disk 1 from 1 to 2.
+          Move disk 5 from 0 to 1.
+          Move 4 disks from 2 to 1 using 0 as auxiliary:
+            Move 3 disks from 2 to 0 using 1 as auxiliary:
+              Move 2 disks from 2 to 1 using 0 as auxiliary:
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  105. Move disk 1 from 2 to 0.
+                Move disk 2 from 2 to 1.
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  106. Move disk 1 from 0 to 1.
+              Move disk 3 from 2 to 0.
+              Move 2 disks from 1 to 0 using 2 as auxiliary:
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  107. Move disk 1 from 1 to 2.
+                Move disk 2 from 1 to 0.
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  108. Move disk 1 from 2 to 0.
+            Move disk 4 from 2 to 1.
+            Move 3 disks from 0 to 1 using 2 as auxiliary:
+              Move 2 disks from 0 to 2 using 1 as auxiliary:
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  109. Move disk 1 from 0 to 1.
+                Move disk 2 from 0 to 2.
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  110. Move disk 1 from 1 to 2.
+              Move disk 3 from 0 to 1.
+              Move 2 disks from 2 to 1 using 0 as auxiliary:
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  111. Move disk 1 from 2 to 0.
+                Move disk 2 from 2 to 1.
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  112. Move disk 1 from 0 to 1.
+        Move disk 6 from 0 to 2.
+        Move 5 disks from 1 to 2 using 0 as auxiliary:
+          Move 4 disks from 1 to 0 using 2 as auxiliary:
+            Move 3 disks from 1 to 2 using 0 as auxiliary:
+              Move 2 disks from 1 to 0 using 2 as auxiliary:
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  113. Move disk 1 from 1 to 2.
+                Move disk 2 from 1 to 0.
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  114. Move disk 1 from 2 to 0.
+              Move disk 3 from 1 to 2.
+              Move 2 disks from 0 to 2 using 1 as auxiliary:
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  115. Move disk 1 from 0 to 1.
+                Move disk 2 from 0 to 2.
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  116. Move disk 1 from 1 to 2.
+            Move disk 4 from 1 to 0.
+            Move 3 disks from 2 to 0 using 1 as auxiliary:
+              Move 2 disks from 2 to 1 using 0 as auxiliary:
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  117. Move disk 1 from 2 to 0.
+                Move disk 2 from 2 to 1.
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  118. Move disk 1 from 0 to 1.
+              Move disk 3 from 2 to 0.
+              Move 2 disks from 1 to 0 using 2 as auxiliary:
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  119. Move disk 1 from 1 to 2.
+                Move disk 2 from 1 to 0.
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  120. Move disk 1 from 2 to 0.
+          Move disk 5 from 1 to 2.
+          Move 4 disks from 0 to 2 using 1 as auxiliary:
+            Move 3 disks from 0 to 1 using 2 as auxiliary:
+              Move 2 disks from 0 to 2 using 1 as auxiliary:
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  121. Move disk 1 from 0 to 1.
+                Move disk 2 from 0 to 2.
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  122. Move disk 1 from 1 to 2.
+              Move disk 3 from 0 to 1.
+              Move 2 disks from 2 to 1 using 0 as auxiliary:
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  123. Move disk 1 from 2 to 0.
+                Move disk 2 from 2 to 1.
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  124. Move disk 1 from 0 to 1.
+            Move disk 4 from 0 to 2.
+            Move 3 disks from 1 to 2 using 0 as auxiliary:
+              Move 2 disks from 1 to 0 using 2 as auxiliary:
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  125. Move disk 1 from 1 to 2.
+                Move disk 2 from 1 to 0.
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  126. Move disk 1 from 2 to 0.
+              Move disk 3 from 1 to 2.
+              Move 2 disks from 0 to 2 using 1 as auxiliary:
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  127. Move disk 1 from 0 to 1.
+                Move disk 2 from 0 to 2.
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  128. Move disk 1 from 1 to 2.
+  Move disk 9 from 0 to 1.
+  Move 8 disks from 2 to 1 using 0 as auxiliary:
+    Move 7 disks from 2 to 0 using 1 as auxiliary:
+      Move 6 disks from 2 to 1 using 0 as auxiliary:
+        Move 5 disks from 2 to 0 using 1 as auxiliary:
+          Move 4 disks from 2 to 1 using 0 as auxiliary:
+            Move 3 disks from 2 to 0 using 1 as auxiliary:
+              Move 2 disks from 2 to 1 using 0 as auxiliary:
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  129. Move disk 1 from 2 to 0.
+                Move disk 2 from 2 to 1.
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  130. Move disk 1 from 0 to 1.
+              Move disk 3 from 2 to 0.
+              Move 2 disks from 1 to 0 using 2 as auxiliary:
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  131. Move disk 1 from 1 to 2.
+                Move disk 2 from 1 to 0.
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  132. Move disk 1 from 2 to 0.
+            Move disk 4 from 2 to 1.
+            Move 3 disks from 0 to 1 using 2 as auxiliary:
+              Move 2 disks from 0 to 2 using 1 as auxiliary:
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  133. Move disk 1 from 0 to 1.
+                Move disk 2 from 0 to 2.
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  134. Move disk 1 from 1 to 2.
+              Move disk 3 from 0 to 1.
+              Move 2 disks from 2 to 1 using 0 as auxiliary:
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  135. Move disk 1 from 2 to 0.
+                Move disk 2 from 2 to 1.
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  136. Move disk 1 from 0 to 1.
+          Move disk 5 from 2 to 0.
+          Move 4 disks from 1 to 0 using 2 as auxiliary:
+            Move 3 disks from 1 to 2 using 0 as auxiliary:
+              Move 2 disks from 1 to 0 using 2 as auxiliary:
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  137. Move disk 1 from 1 to 2.
+                Move disk 2 from 1 to 0.
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  138. Move disk 1 from 2 to 0.
+              Move disk 3 from 1 to 2.
+              Move 2 disks from 0 to 2 using 1 as auxiliary:
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  139. Move disk 1 from 0 to 1.
+                Move disk 2 from 0 to 2.
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  140. Move disk 1 from 1 to 2.
+            Move disk 4 from 1 to 0.
+            Move 3 disks from 2 to 0 using 1 as auxiliary:
+              Move 2 disks from 2 to 1 using 0 as auxiliary:
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  141. Move disk 1 from 2 to 0.
+                Move disk 2 from 2 to 1.
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  142. Move disk 1 from 0 to 1.
+              Move disk 3 from 2 to 0.
+              Move 2 disks from 1 to 0 using 2 as auxiliary:
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  143. Move disk 1 from 1 to 2.
+                Move disk 2 from 1 to 0.
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  144. Move disk 1 from 2 to 0.
+        Move disk 6 from 2 to 1.
+        Move 5 disks from 0 to 1 using 2 as auxiliary:
+          Move 4 disks from 0 to 2 using 1 as auxiliary:
+            Move 3 disks from 0 to 1 using 2 as auxiliary:
+              Move 2 disks from 0 to 2 using 1 as auxiliary:
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  145. Move disk 1 from 0 to 1.
+                Move disk 2 from 0 to 2.
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  146. Move disk 1 from 1 to 2.
+              Move disk 3 from 0 to 1.
+              Move 2 disks from 2 to 1 using 0 as auxiliary:
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  147. Move disk 1 from 2 to 0.
+                Move disk 2 from 2 to 1.
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  148. Move disk 1 from 0 to 1.
+            Move disk 4 from 0 to 2.
+            Move 3 disks from 1 to 2 using 0 as auxiliary:
+              Move 2 disks from 1 to 0 using 2 as auxiliary:
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  149. Move disk 1 from 1 to 2.
+                Move disk 2 from 1 to 0.
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  150. Move disk 1 from 2 to 0.
+              Move disk 3 from 1 to 2.
+              Move 2 disks from 0 to 2 using 1 as auxiliary:
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  151. Move disk 1 from 0 to 1.
+                Move disk 2 from 0 to 2.
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  152. Move disk 1 from 1 to 2.
+          Move disk 5 from 0 to 1.
+          Move 4 disks from 2 to 1 using 0 as auxiliary:
+            Move 3 disks from 2 to 0 using 1 as auxiliary:
+              Move 2 disks from 2 to 1 using 0 as auxiliary:
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  153. Move disk 1 from 2 to 0.
+                Move disk 2 from 2 to 1.
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  154. Move disk 1 from 0 to 1.
+              Move disk 3 from 2 to 0.
+              Move 2 disks from 1 to 0 using 2 as auxiliary:
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  155. Move disk 1 from 1 to 2.
+                Move disk 2 from 1 to 0.
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  156. Move disk 1 from 2 to 0.
+            Move disk 4 from 2 to 1.
+            Move 3 disks from 0 to 1 using 2 as auxiliary:
+              Move 2 disks from 0 to 2 using 1 as auxiliary:
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  157. Move disk 1 from 0 to 1.
+                Move disk 2 from 0 to 2.
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  158. Move disk 1 from 1 to 2.
+              Move disk 3 from 0 to 1.
+              Move 2 disks from 2 to 1 using 0 as auxiliary:
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  159. Move disk 1 from 2 to 0.
+                Move disk 2 from 2 to 1.
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  160. Move disk 1 from 0 to 1.
+      Move disk 7 from 2 to 0.
+      Move 6 disks from 1 to 0 using 2 as auxiliary:
+        Move 5 disks from 1 to 2 using 0 as auxiliary:
+          Move 4 disks from 1 to 0 using 2 as auxiliary:
+            Move 3 disks from 1 to 2 using 0 as auxiliary:
+              Move 2 disks from 1 to 0 using 2 as auxiliary:
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  161. Move disk 1 from 1 to 2.
+                Move disk 2 from 1 to 0.
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  162. Move disk 1 from 2 to 0.
+              Move disk 3 from 1 to 2.
+              Move 2 disks from 0 to 2 using 1 as auxiliary:
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  163. Move disk 1 from 0 to 1.
+                Move disk 2 from 0 to 2.
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  164. Move disk 1 from 1 to 2.
+            Move disk 4 from 1 to 0.
+            Move 3 disks from 2 to 0 using 1 as auxiliary:
+              Move 2 disks from 2 to 1 using 0 as auxiliary:
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  165. Move disk 1 from 2 to 0.
+                Move disk 2 from 2 to 1.
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  166. Move disk 1 from 0 to 1.
+              Move disk 3 from 2 to 0.
+              Move 2 disks from 1 to 0 using 2 as auxiliary:
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  167. Move disk 1 from 1 to 2.
+                Move disk 2 from 1 to 0.
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  168. Move disk 1 from 2 to 0.
+          Move disk 5 from 1 to 2.
+          Move 4 disks from 0 to 2 using 1 as auxiliary:
+            Move 3 disks from 0 to 1 using 2 as auxiliary:
+              Move 2 disks from 0 to 2 using 1 as auxiliary:
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  169. Move disk 1 from 0 to 1.
+                Move disk 2 from 0 to 2.
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  170. Move disk 1 from 1 to 2.
+              Move disk 3 from 0 to 1.
+              Move 2 disks from 2 to 1 using 0 as auxiliary:
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  171. Move disk 1 from 2 to 0.
+                Move disk 2 from 2 to 1.
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  172. Move disk 1 from 0 to 1.
+            Move disk 4 from 0 to 2.
+            Move 3 disks from 1 to 2 using 0 as auxiliary:
+              Move 2 disks from 1 to 0 using 2 as auxiliary:
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  173. Move disk 1 from 1 to 2.
+                Move disk 2 from 1 to 0.
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  174. Move disk 1 from 2 to 0.
+              Move disk 3 from 1 to 2.
+              Move 2 disks from 0 to 2 using 1 as auxiliary:
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  175. Move disk 1 from 0 to 1.
+                Move disk 2 from 0 to 2.
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  176. Move disk 1 from 1 to 2.
+        Move disk 6 from 1 to 0.
+        Move 5 disks from 2 to 0 using 1 as auxiliary:
+          Move 4 disks from 2 to 1 using 0 as auxiliary:
+            Move 3 disks from 2 to 0 using 1 as auxiliary:
+              Move 2 disks from 2 to 1 using 0 as auxiliary:
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  177. Move disk 1 from 2 to 0.
+                Move disk 2 from 2 to 1.
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  178. Move disk 1 from 0 to 1.
+              Move disk 3 from 2 to 0.
+              Move 2 disks from 1 to 0 using 2 as auxiliary:
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  179. Move disk 1 from 1 to 2.
+                Move disk 2 from 1 to 0.
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  180. Move disk 1 from 2 to 0.
+            Move disk 4 from 2 to 1.
+            Move 3 disks from 0 to 1 using 2 as auxiliary:
+              Move 2 disks from 0 to 2 using 1 as auxiliary:
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  181. Move disk 1 from 0 to 1.
+                Move disk 2 from 0 to 2.
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  182. Move disk 1 from 1 to 2.
+              Move disk 3 from 0 to 1.
+              Move 2 disks from 2 to 1 using 0 as auxiliary:
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  183. Move disk 1 from 2 to 0.
+                Move disk 2 from 2 to 1.
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  184. Move disk 1 from 0 to 1.
+          Move disk 5 from 2 to 0.
+          Move 4 disks from 1 to 0 using 2 as auxiliary:
+            Move 3 disks from 1 to 2 using 0 as auxiliary:
+              Move 2 disks from 1 to 0 using 2 as auxiliary:
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  185. Move disk 1 from 1 to 2.
+                Move disk 2 from 1 to 0.
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  186. Move disk 1 from 2 to 0.
+              Move disk 3 from 1 to 2.
+              Move 2 disks from 0 to 2 using 1 as auxiliary:
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  187. Move disk 1 from 0 to 1.
+                Move disk 2 from 0 to 2.
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  188. Move disk 1 from 1 to 2.
+            Move disk 4 from 1 to 0.
+            Move 3 disks from 2 to 0 using 1 as auxiliary:
+              Move 2 disks from 2 to 1 using 0 as auxiliary:
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  189. Move disk 1 from 2 to 0.
+                Move disk 2 from 2 to 1.
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  190. Move disk 1 from 0 to 1.
+              Move disk 3 from 2 to 0.
+              Move 2 disks from 1 to 0 using 2 as auxiliary:
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  191. Move disk 1 from 1 to 2.
+                Move disk 2 from 1 to 0.
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  192. Move disk 1 from 2 to 0.
+    Move disk 8 from 2 to 1.
+    Move 7 disks from 0 to 1 using 2 as auxiliary:
+      Move 6 disks from 0 to 2 using 1 as auxiliary:
+        Move 5 disks from 0 to 1 using 2 as auxiliary:
+          Move 4 disks from 0 to 2 using 1 as auxiliary:
+            Move 3 disks from 0 to 1 using 2 as auxiliary:
+              Move 2 disks from 0 to 2 using 1 as auxiliary:
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  193. Move disk 1 from 0 to 1.
+                Move disk 2 from 0 to 2.
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  194. Move disk 1 from 1 to 2.
+              Move disk 3 from 0 to 1.
+              Move 2 disks from 2 to 1 using 0 as auxiliary:
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  195. Move disk 1 from 2 to 0.
+                Move disk 2 from 2 to 1.
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  196. Move disk 1 from 0 to 1.
+            Move disk 4 from 0 to 2.
+            Move 3 disks from 1 to 2 using 0 as auxiliary:
+              Move 2 disks from 1 to 0 using 2 as auxiliary:
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  197. Move disk 1 from 1 to 2.
+                Move disk 2 from 1 to 0.
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  198. Move disk 1 from 2 to 0.
+              Move disk 3 from 1 to 2.
+              Move 2 disks from 0 to 2 using 1 as auxiliary:
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  199. Move disk 1 from 0 to 1.
+                Move disk 2 from 0 to 2.
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  200. Move disk 1 from 1 to 2.
+          Move disk 5 from 0 to 1.
+          Move 4 disks from 2 to 1 using 0 as auxiliary:
+            Move 3 disks from 2 to 0 using 1 as auxiliary:
+              Move 2 disks from 2 to 1 using 0 as auxiliary:
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  201. Move disk 1 from 2 to 0.
+                Move disk 2 from 2 to 1.
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  202. Move disk 1 from 0 to 1.
+              Move disk 3 from 2 to 0.
+              Move 2 disks from 1 to 0 using 2 as auxiliary:
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  203. Move disk 1 from 1 to 2.
+                Move disk 2 from 1 to 0.
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  204. Move disk 1 from 2 to 0.
+            Move disk 4 from 2 to 1.
+            Move 3 disks from 0 to 1 using 2 as auxiliary:
+              Move 2 disks from 0 to 2 using 1 as auxiliary:
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  205. Move disk 1 from 0 to 1.
+                Move disk 2 from 0 to 2.
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  206. Move disk 1 from 1 to 2.
+              Move disk 3 from 0 to 1.
+              Move 2 disks from 2 to 1 using 0 as auxiliary:
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  207. Move disk 1 from 2 to 0.
+                Move disk 2 from 2 to 1.
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  208. Move disk 1 from 0 to 1.
+        Move disk 6 from 0 to 2.
+        Move 5 disks from 1 to 2 using 0 as auxiliary:
+          Move 4 disks from 1 to 0 using 2 as auxiliary:
+            Move 3 disks from 1 to 2 using 0 as auxiliary:
+              Move 2 disks from 1 to 0 using 2 as auxiliary:
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  209. Move disk 1 from 1 to 2.
+                Move disk 2 from 1 to 0.
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  210. Move disk 1 from 2 to 0.
+              Move disk 3 from 1 to 2.
+              Move 2 disks from 0 to 2 using 1 as auxiliary:
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  211. Move disk 1 from 0 to 1.
+                Move disk 2 from 0 to 2.
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  212. Move disk 1 from 1 to 2.
+            Move disk 4 from 1 to 0.
+            Move 3 disks from 2 to 0 using 1 as auxiliary:
+              Move 2 disks from 2 to 1 using 0 as auxiliary:
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  213. Move disk 1 from 2 to 0.
+                Move disk 2 from 2 to 1.
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  214. Move disk 1 from 0 to 1.
+              Move disk 3 from 2 to 0.
+              Move 2 disks from 1 to 0 using 2 as auxiliary:
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  215. Move disk 1 from 1 to 2.
+                Move disk 2 from 1 to 0.
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  216. Move disk 1 from 2 to 0.
+          Move disk 5 from 1 to 2.
+          Move 4 disks from 0 to 2 using 1 as auxiliary:
+            Move 3 disks from 0 to 1 using 2 as auxiliary:
+              Move 2 disks from 0 to 2 using 1 as auxiliary:
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  217. Move disk 1 from 0 to 1.
+                Move disk 2 from 0 to 2.
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  218. Move disk 1 from 1 to 2.
+              Move disk 3 from 0 to 1.
+              Move 2 disks from 2 to 1 using 0 as auxiliary:
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  219. Move disk 1 from 2 to 0.
+                Move disk 2 from 2 to 1.
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  220. Move disk 1 from 0 to 1.
+            Move disk 4 from 0 to 2.
+            Move 3 disks from 1 to 2 using 0 as auxiliary:
+              Move 2 disks from 1 to 0 using 2 as auxiliary:
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  221. Move disk 1 from 1 to 2.
+                Move disk 2 from 1 to 0.
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  222. Move disk 1 from 2 to 0.
+              Move disk 3 from 1 to 2.
+              Move 2 disks from 0 to 2 using 1 as auxiliary:
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  223. Move disk 1 from 0 to 1.
+                Move disk 2 from 0 to 2.
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  224. Move disk 1 from 1 to 2.
+      Move disk 7 from 0 to 1.
+      Move 6 disks from 2 to 1 using 0 as auxiliary:
+        Move 5 disks from 2 to 0 using 1 as auxiliary:
+          Move 4 disks from 2 to 1 using 0 as auxiliary:
+            Move 3 disks from 2 to 0 using 1 as auxiliary:
+              Move 2 disks from 2 to 1 using 0 as auxiliary:
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  225. Move disk 1 from 2 to 0.
+                Move disk 2 from 2 to 1.
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  226. Move disk 1 from 0 to 1.
+              Move disk 3 from 2 to 0.
+              Move 2 disks from 1 to 0 using 2 as auxiliary:
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  227. Move disk 1 from 1 to 2.
+                Move disk 2 from 1 to 0.
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  228. Move disk 1 from 2 to 0.
+            Move disk 4 from 2 to 1.
+            Move 3 disks from 0 to 1 using 2 as auxiliary:
+              Move 2 disks from 0 to 2 using 1 as auxiliary:
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  229. Move disk 1 from 0 to 1.
+                Move disk 2 from 0 to 2.
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  230. Move disk 1 from 1 to 2.
+              Move disk 3 from 0 to 1.
+              Move 2 disks from 2 to 1 using 0 as auxiliary:
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  231. Move disk 1 from 2 to 0.
+                Move disk 2 from 2 to 1.
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  232. Move disk 1 from 0 to 1.
+          Move disk 5 from 2 to 0.
+          Move 4 disks from 1 to 0 using 2 as auxiliary:
+            Move 3 disks from 1 to 2 using 0 as auxiliary:
+              Move 2 disks from 1 to 0 using 2 as auxiliary:
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  233. Move disk 1 from 1 to 2.
+                Move disk 2 from 1 to 0.
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  234. Move disk 1 from 2 to 0.
+              Move disk 3 from 1 to 2.
+              Move 2 disks from 0 to 2 using 1 as auxiliary:
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  235. Move disk 1 from 0 to 1.
+                Move disk 2 from 0 to 2.
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  236. Move disk 1 from 1 to 2.
+            Move disk 4 from 1 to 0.
+            Move 3 disks from 2 to 0 using 1 as auxiliary:
+              Move 2 disks from 2 to 1 using 0 as auxiliary:
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  237. Move disk 1 from 2 to 0.
+                Move disk 2 from 2 to 1.
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  238. Move disk 1 from 0 to 1.
+              Move disk 3 from 2 to 0.
+              Move 2 disks from 1 to 0 using 2 as auxiliary:
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  239. Move disk 1 from 1 to 2.
+                Move disk 2 from 1 to 0.
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  240. Move disk 1 from 2 to 0.
+        Move disk 6 from 2 to 1.
+        Move 5 disks from 0 to 1 using 2 as auxiliary:
+          Move 4 disks from 0 to 2 using 1 as auxiliary:
+            Move 3 disks from 0 to 1 using 2 as auxiliary:
+              Move 2 disks from 0 to 2 using 1 as auxiliary:
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  241. Move disk 1 from 0 to 1.
+                Move disk 2 from 0 to 2.
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  242. Move disk 1 from 1 to 2.
+              Move disk 3 from 0 to 1.
+              Move 2 disks from 2 to 1 using 0 as auxiliary:
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  243. Move disk 1 from 2 to 0.
+                Move disk 2 from 2 to 1.
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  244. Move disk 1 from 0 to 1.
+            Move disk 4 from 0 to 2.
+            Move 3 disks from 1 to 2 using 0 as auxiliary:
+              Move 2 disks from 1 to 0 using 2 as auxiliary:
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  245. Move disk 1 from 1 to 2.
+                Move disk 2 from 1 to 0.
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  246. Move disk 1 from 2 to 0.
+              Move disk 3 from 1 to 2.
+              Move 2 disks from 0 to 2 using 1 as auxiliary:
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  247. Move disk 1 from 0 to 1.
+                Move disk 2 from 0 to 2.
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  248. Move disk 1 from 1 to 2.
+          Move disk 5 from 0 to 1.
+          Move 4 disks from 2 to 1 using 0 as auxiliary:
+            Move 3 disks from 2 to 0 using 1 as auxiliary:
+              Move 2 disks from 2 to 1 using 0 as auxiliary:
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  249. Move disk 1 from 2 to 0.
+                Move disk 2 from 2 to 1.
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  250. Move disk 1 from 0 to 1.
+              Move disk 3 from 2 to 0.
+              Move 2 disks from 1 to 0 using 2 as auxiliary:
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  251. Move disk 1 from 1 to 2.
+                Move disk 2 from 1 to 0.
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  252. Move disk 1 from 2 to 0.
+            Move disk 4 from 2 to 1.
+            Move 3 disks from 0 to 1 using 2 as auxiliary:
+              Move 2 disks from 0 to 2 using 1 as auxiliary:
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  253. Move disk 1 from 0 to 1.
+                Move disk 2 from 0 to 2.
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  254. Move disk 1 from 1 to 2.
+              Move disk 3 from 0 to 1.
+              Move 2 disks from 2 to 1 using 0 as auxiliary:
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  255. Move disk 1 from 2 to 0.
+                Move disk 2 from 2 to 1.
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  256. Move disk 1 from 0 to 1.
+Move disk 10 from 0 to 2.
+Move 9 disks from 1 to 2 using 0 as auxiliary:
+  Move 8 disks from 1 to 0 using 2 as auxiliary:
+    Move 7 disks from 1 to 2 using 0 as auxiliary:
+      Move 6 disks from 1 to 0 using 2 as auxiliary:
+        Move 5 disks from 1 to 2 using 0 as auxiliary:
+          Move 4 disks from 1 to 0 using 2 as auxiliary:
+            Move 3 disks from 1 to 2 using 0 as auxiliary:
+              Move 2 disks from 1 to 0 using 2 as auxiliary:
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  257. Move disk 1 from 1 to 2.
+                Move disk 2 from 1 to 0.
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  258. Move disk 1 from 2 to 0.
+              Move disk 3 from 1 to 2.
+              Move 2 disks from 0 to 2 using 1 as auxiliary:
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  259. Move disk 1 from 0 to 1.
+                Move disk 2 from 0 to 2.
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  260. Move disk 1 from 1 to 2.
+            Move disk 4 from 1 to 0.
+            Move 3 disks from 2 to 0 using 1 as auxiliary:
+              Move 2 disks from 2 to 1 using 0 as auxiliary:
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  261. Move disk 1 from 2 to 0.
+                Move disk 2 from 2 to 1.
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  262. Move disk 1 from 0 to 1.
+              Move disk 3 from 2 to 0.
+              Move 2 disks from 1 to 0 using 2 as auxiliary:
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  263. Move disk 1 from 1 to 2.
+                Move disk 2 from 1 to 0.
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  264. Move disk 1 from 2 to 0.
+          Move disk 5 from 1 to 2.
+          Move 4 disks from 0 to 2 using 1 as auxiliary:
+            Move 3 disks from 0 to 1 using 2 as auxiliary:
+              Move 2 disks from 0 to 2 using 1 as auxiliary:
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  265. Move disk 1 from 0 to 1.
+                Move disk 2 from 0 to 2.
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  266. Move disk 1 from 1 to 2.
+              Move disk 3 from 0 to 1.
+              Move 2 disks from 2 to 1 using 0 as auxiliary:
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  267. Move disk 1 from 2 to 0.
+                Move disk 2 from 2 to 1.
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  268. Move disk 1 from 0 to 1.
+            Move disk 4 from 0 to 2.
+            Move 3 disks from 1 to 2 using 0 as auxiliary:
+              Move 2 disks from 1 to 0 using 2 as auxiliary:
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  269. Move disk 1 from 1 to 2.
+                Move disk 2 from 1 to 0.
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  270. Move disk 1 from 2 to 0.
+              Move disk 3 from 1 to 2.
+              Move 2 disks from 0 to 2 using 1 as auxiliary:
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  271. Move disk 1 from 0 to 1.
+                Move disk 2 from 0 to 2.
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  272. Move disk 1 from 1 to 2.
+        Move disk 6 from 1 to 0.
+        Move 5 disks from 2 to 0 using 1 as auxiliary:
+          Move 4 disks from 2 to 1 using 0 as auxiliary:
+            Move 3 disks from 2 to 0 using 1 as auxiliary:
+              Move 2 disks from 2 to 1 using 0 as auxiliary:
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  273. Move disk 1 from 2 to 0.
+                Move disk 2 from 2 to 1.
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  274. Move disk 1 from 0 to 1.
+              Move disk 3 from 2 to 0.
+              Move 2 disks from 1 to 0 using 2 as auxiliary:
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  275. Move disk 1 from 1 to 2.
+                Move disk 2 from 1 to 0.
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  276. Move disk 1 from 2 to 0.
+            Move disk 4 from 2 to 1.
+            Move 3 disks from 0 to 1 using 2 as auxiliary:
+              Move 2 disks from 0 to 2 using 1 as auxiliary:
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  277. Move disk 1 from 0 to 1.
+                Move disk 2 from 0 to 2.
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  278. Move disk 1 from 1 to 2.
+              Move disk 3 from 0 to 1.
+              Move 2 disks from 2 to 1 using 0 as auxiliary:
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  279. Move disk 1 from 2 to 0.
+                Move disk 2 from 2 to 1.
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  280. Move disk 1 from 0 to 1.
+          Move disk 5 from 2 to 0.
+          Move 4 disks from 1 to 0 using 2 as auxiliary:
+            Move 3 disks from 1 to 2 using 0 as auxiliary:
+              Move 2 disks from 1 to 0 using 2 as auxiliary:
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  281. Move disk 1 from 1 to 2.
+                Move disk 2 from 1 to 0.
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  282. Move disk 1 from 2 to 0.
+              Move disk 3 from 1 to 2.
+              Move 2 disks from 0 to 2 using 1 as auxiliary:
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  283. Move disk 1 from 0 to 1.
+                Move disk 2 from 0 to 2.
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  284. Move disk 1 from 1 to 2.
+            Move disk 4 from 1 to 0.
+            Move 3 disks from 2 to 0 using 1 as auxiliary:
+              Move 2 disks from 2 to 1 using 0 as auxiliary:
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  285. Move disk 1 from 2 to 0.
+                Move disk 2 from 2 to 1.
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  286. Move disk 1 from 0 to 1.
+              Move disk 3 from 2 to 0.
+              Move 2 disks from 1 to 0 using 2 as auxiliary:
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  287. Move disk 1 from 1 to 2.
+                Move disk 2 from 1 to 0.
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  288. Move disk 1 from 2 to 0.
+      Move disk 7 from 1 to 2.
+      Move 6 disks from 0 to 2 using 1 as auxiliary:
+        Move 5 disks from 0 to 1 using 2 as auxiliary:
+          Move 4 disks from 0 to 2 using 1 as auxiliary:
+            Move 3 disks from 0 to 1 using 2 as auxiliary:
+              Move 2 disks from 0 to 2 using 1 as auxiliary:
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  289. Move disk 1 from 0 to 1.
+                Move disk 2 from 0 to 2.
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  290. Move disk 1 from 1 to 2.
+              Move disk 3 from 0 to 1.
+              Move 2 disks from 2 to 1 using 0 as auxiliary:
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  291. Move disk 1 from 2 to 0.
+                Move disk 2 from 2 to 1.
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  292. Move disk 1 from 0 to 1.
+            Move disk 4 from 0 to 2.
+            Move 3 disks from 1 to 2 using 0 as auxiliary:
+              Move 2 disks from 1 to 0 using 2 as auxiliary:
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  293. Move disk 1 from 1 to 2.
+                Move disk 2 from 1 to 0.
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  294. Move disk 1 from 2 to 0.
+              Move disk 3 from 1 to 2.
+              Move 2 disks from 0 to 2 using 1 as auxiliary:
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  295. Move disk 1 from 0 to 1.
+                Move disk 2 from 0 to 2.
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  296. Move disk 1 from 1 to 2.
+          Move disk 5 from 0 to 1.
+          Move 4 disks from 2 to 1 using 0 as auxiliary:
+            Move 3 disks from 2 to 0 using 1 as auxiliary:
+              Move 2 disks from 2 to 1 using 0 as auxiliary:
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  297. Move disk 1 from 2 to 0.
+                Move disk 2 from 2 to 1.
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  298. Move disk 1 from 0 to 1.
+              Move disk 3 from 2 to 0.
+              Move 2 disks from 1 to 0 using 2 as auxiliary:
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  299. Move disk 1 from 1 to 2.
+                Move disk 2 from 1 to 0.
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  300. Move disk 1 from 2 to 0.
+            Move disk 4 from 2 to 1.
+            Move 3 disks from 0 to 1 using 2 as auxiliary:
+              Move 2 disks from 0 to 2 using 1 as auxiliary:
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  301. Move disk 1 from 0 to 1.
+                Move disk 2 from 0 to 2.
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  302. Move disk 1 from 1 to 2.
+              Move disk 3 from 0 to 1.
+              Move 2 disks from 2 to 1 using 0 as auxiliary:
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  303. Move disk 1 from 2 to 0.
+                Move disk 2 from 2 to 1.
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  304. Move disk 1 from 0 to 1.
+        Move disk 6 from 0 to 2.
+        Move 5 disks from 1 to 2 using 0 as auxiliary:
+          Move 4 disks from 1 to 0 using 2 as auxiliary:
+            Move 3 disks from 1 to 2 using 0 as auxiliary:
+              Move 2 disks from 1 to 0 using 2 as auxiliary:
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  305. Move disk 1 from 1 to 2.
+                Move disk 2 from 1 to 0.
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  306. Move disk 1 from 2 to 0.
+              Move disk 3 from 1 to 2.
+              Move 2 disks from 0 to 2 using 1 as auxiliary:
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  307. Move disk 1 from 0 to 1.
+                Move disk 2 from 0 to 2.
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  308. Move disk 1 from 1 to 2.
+            Move disk 4 from 1 to 0.
+            Move 3 disks from 2 to 0 using 1 as auxiliary:
+              Move 2 disks from 2 to 1 using 0 as auxiliary:
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  309. Move disk 1 from 2 to 0.
+                Move disk 2 from 2 to 1.
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  310. Move disk 1 from 0 to 1.
+              Move disk 3 from 2 to 0.
+              Move 2 disks from 1 to 0 using 2 as auxiliary:
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  311. Move disk 1 from 1 to 2.
+                Move disk 2 from 1 to 0.
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  312. Move disk 1 from 2 to 0.
+          Move disk 5 from 1 to 2.
+          Move 4 disks from 0 to 2 using 1 as auxiliary:
+            Move 3 disks from 0 to 1 using 2 as auxiliary:
+              Move 2 disks from 0 to 2 using 1 as auxiliary:
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  313. Move disk 1 from 0 to 1.
+                Move disk 2 from 0 to 2.
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  314. Move disk 1 from 1 to 2.
+              Move disk 3 from 0 to 1.
+              Move 2 disks from 2 to 1 using 0 as auxiliary:
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  315. Move disk 1 from 2 to 0.
+                Move disk 2 from 2 to 1.
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  316. Move disk 1 from 0 to 1.
+            Move disk 4 from 0 to 2.
+            Move 3 disks from 1 to 2 using 0 as auxiliary:
+              Move 2 disks from 1 to 0 using 2 as auxiliary:
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  317. Move disk 1 from 1 to 2.
+                Move disk 2 from 1 to 0.
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  318. Move disk 1 from 2 to 0.
+              Move disk 3 from 1 to 2.
+              Move 2 disks from 0 to 2 using 1 as auxiliary:
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  319. Move disk 1 from 0 to 1.
+                Move disk 2 from 0 to 2.
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  320. Move disk 1 from 1 to 2.
+    Move disk 8 from 1 to 0.
+    Move 7 disks from 2 to 0 using 1 as auxiliary:
+      Move 6 disks from 2 to 1 using 0 as auxiliary:
+        Move 5 disks from 2 to 0 using 1 as auxiliary:
+          Move 4 disks from 2 to 1 using 0 as auxiliary:
+            Move 3 disks from 2 to 0 using 1 as auxiliary:
+              Move 2 disks from 2 to 1 using 0 as auxiliary:
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  321. Move disk 1 from 2 to 0.
+                Move disk 2 from 2 to 1.
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  322. Move disk 1 from 0 to 1.
+              Move disk 3 from 2 to 0.
+              Move 2 disks from 1 to 0 using 2 as auxiliary:
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  323. Move disk 1 from 1 to 2.
+                Move disk 2 from 1 to 0.
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  324. Move disk 1 from 2 to 0.
+            Move disk 4 from 2 to 1.
+            Move 3 disks from 0 to 1 using 2 as auxiliary:
+              Move 2 disks from 0 to 2 using 1 as auxiliary:
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  325. Move disk 1 from 0 to 1.
+                Move disk 2 from 0 to 2.
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  326. Move disk 1 from 1 to 2.
+              Move disk 3 from 0 to 1.
+              Move 2 disks from 2 to 1 using 0 as auxiliary:
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  327. Move disk 1 from 2 to 0.
+                Move disk 2 from 2 to 1.
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  328. Move disk 1 from 0 to 1.
+          Move disk 5 from 2 to 0.
+          Move 4 disks from 1 to 0 using 2 as auxiliary:
+            Move 3 disks from 1 to 2 using 0 as auxiliary:
+              Move 2 disks from 1 to 0 using 2 as auxiliary:
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  329. Move disk 1 from 1 to 2.
+                Move disk 2 from 1 to 0.
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  330. Move disk 1 from 2 to 0.
+              Move disk 3 from 1 to 2.
+              Move 2 disks from 0 to 2 using 1 as auxiliary:
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  331. Move disk 1 from 0 to 1.
+                Move disk 2 from 0 to 2.
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  332. Move disk 1 from 1 to 2.
+            Move disk 4 from 1 to 0.
+            Move 3 disks from 2 to 0 using 1 as auxiliary:
+              Move 2 disks from 2 to 1 using 0 as auxiliary:
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  333. Move disk 1 from 2 to 0.
+                Move disk 2 from 2 to 1.
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  334. Move disk 1 from 0 to 1.
+              Move disk 3 from 2 to 0.
+              Move 2 disks from 1 to 0 using 2 as auxiliary:
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  335. Move disk 1 from 1 to 2.
+                Move disk 2 from 1 to 0.
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  336. Move disk 1 from 2 to 0.
+        Move disk 6 from 2 to 1.
+        Move 5 disks from 0 to 1 using 2 as auxiliary:
+          Move 4 disks from 0 to 2 using 1 as auxiliary:
+            Move 3 disks from 0 to 1 using 2 as auxiliary:
+              Move 2 disks from 0 to 2 using 1 as auxiliary:
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  337. Move disk 1 from 0 to 1.
+                Move disk 2 from 0 to 2.
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  338. Move disk 1 from 1 to 2.
+              Move disk 3 from 0 to 1.
+              Move 2 disks from 2 to 1 using 0 as auxiliary:
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  339. Move disk 1 from 2 to 0.
+                Move disk 2 from 2 to 1.
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  340. Move disk 1 from 0 to 1.
+            Move disk 4 from 0 to 2.
+            Move 3 disks from 1 to 2 using 0 as auxiliary:
+              Move 2 disks from 1 to 0 using 2 as auxiliary:
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  341. Move disk 1 from 1 to 2.
+                Move disk 2 from 1 to 0.
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  342. Move disk 1 from 2 to 0.
+              Move disk 3 from 1 to 2.
+              Move 2 disks from 0 to 2 using 1 as auxiliary:
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  343. Move disk 1 from 0 to 1.
+                Move disk 2 from 0 to 2.
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  344. Move disk 1 from 1 to 2.
+          Move disk 5 from 0 to 1.
+          Move 4 disks from 2 to 1 using 0 as auxiliary:
+            Move 3 disks from 2 to 0 using 1 as auxiliary:
+              Move 2 disks from 2 to 1 using 0 as auxiliary:
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  345. Move disk 1 from 2 to 0.
+                Move disk 2 from 2 to 1.
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  346. Move disk 1 from 0 to 1.
+              Move disk 3 from 2 to 0.
+              Move 2 disks from 1 to 0 using 2 as auxiliary:
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  347. Move disk 1 from 1 to 2.
+                Move disk 2 from 1 to 0.
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  348. Move disk 1 from 2 to 0.
+            Move disk 4 from 2 to 1.
+            Move 3 disks from 0 to 1 using 2 as auxiliary:
+              Move 2 disks from 0 to 2 using 1 as auxiliary:
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  349. Move disk 1 from 0 to 1.
+                Move disk 2 from 0 to 2.
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  350. Move disk 1 from 1 to 2.
+              Move disk 3 from 0 to 1.
+              Move 2 disks from 2 to 1 using 0 as auxiliary:
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  351. Move disk 1 from 2 to 0.
+                Move disk 2 from 2 to 1.
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  352. Move disk 1 from 0 to 1.
+      Move disk 7 from 2 to 0.
+      Move 6 disks from 1 to 0 using 2 as auxiliary:
+        Move 5 disks from 1 to 2 using 0 as auxiliary:
+          Move 4 disks from 1 to 0 using 2 as auxiliary:
+            Move 3 disks from 1 to 2 using 0 as auxiliary:
+              Move 2 disks from 1 to 0 using 2 as auxiliary:
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  353. Move disk 1 from 1 to 2.
+                Move disk 2 from 1 to 0.
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  354. Move disk 1 from 2 to 0.
+              Move disk 3 from 1 to 2.
+              Move 2 disks from 0 to 2 using 1 as auxiliary:
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  355. Move disk 1 from 0 to 1.
+                Move disk 2 from 0 to 2.
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  356. Move disk 1 from 1 to 2.
+            Move disk 4 from 1 to 0.
+            Move 3 disks from 2 to 0 using 1 as auxiliary:
+              Move 2 disks from 2 to 1 using 0 as auxiliary:
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  357. Move disk 1 from 2 to 0.
+                Move disk 2 from 2 to 1.
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  358. Move disk 1 from 0 to 1.
+              Move disk 3 from 2 to 0.
+              Move 2 disks from 1 to 0 using 2 as auxiliary:
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  359. Move disk 1 from 1 to 2.
+                Move disk 2 from 1 to 0.
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  360. Move disk 1 from 2 to 0.
+          Move disk 5 from 1 to 2.
+          Move 4 disks from 0 to 2 using 1 as auxiliary:
+            Move 3 disks from 0 to 1 using 2 as auxiliary:
+              Move 2 disks from 0 to 2 using 1 as auxiliary:
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  361. Move disk 1 from 0 to 1.
+                Move disk 2 from 0 to 2.
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  362. Move disk 1 from 1 to 2.
+              Move disk 3 from 0 to 1.
+              Move 2 disks from 2 to 1 using 0 as auxiliary:
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  363. Move disk 1 from 2 to 0.
+                Move disk 2 from 2 to 1.
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  364. Move disk 1 from 0 to 1.
+            Move disk 4 from 0 to 2.
+            Move 3 disks from 1 to 2 using 0 as auxiliary:
+              Move 2 disks from 1 to 0 using 2 as auxiliary:
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  365. Move disk 1 from 1 to 2.
+                Move disk 2 from 1 to 0.
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  366. Move disk 1 from 2 to 0.
+              Move disk 3 from 1 to 2.
+              Move 2 disks from 0 to 2 using 1 as auxiliary:
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  367. Move disk 1 from 0 to 1.
+                Move disk 2 from 0 to 2.
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  368. Move disk 1 from 1 to 2.
+        Move disk 6 from 1 to 0.
+        Move 5 disks from 2 to 0 using 1 as auxiliary:
+          Move 4 disks from 2 to 1 using 0 as auxiliary:
+            Move 3 disks from 2 to 0 using 1 as auxiliary:
+              Move 2 disks from 2 to 1 using 0 as auxiliary:
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  369. Move disk 1 from 2 to 0.
+                Move disk 2 from 2 to 1.
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  370. Move disk 1 from 0 to 1.
+              Move disk 3 from 2 to 0.
+              Move 2 disks from 1 to 0 using 2 as auxiliary:
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  371. Move disk 1 from 1 to 2.
+                Move disk 2 from 1 to 0.
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  372. Move disk 1 from 2 to 0.
+            Move disk 4 from 2 to 1.
+            Move 3 disks from 0 to 1 using 2 as auxiliary:
+              Move 2 disks from 0 to 2 using 1 as auxiliary:
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  373. Move disk 1 from 0 to 1.
+                Move disk 2 from 0 to 2.
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  374. Move disk 1 from 1 to 2.
+              Move disk 3 from 0 to 1.
+              Move 2 disks from 2 to 1 using 0 as auxiliary:
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  375. Move disk 1 from 2 to 0.
+                Move disk 2 from 2 to 1.
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  376. Move disk 1 from 0 to 1.
+          Move disk 5 from 2 to 0.
+          Move 4 disks from 1 to 0 using 2 as auxiliary:
+            Move 3 disks from 1 to 2 using 0 as auxiliary:
+              Move 2 disks from 1 to 0 using 2 as auxiliary:
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  377. Move disk 1 from 1 to 2.
+                Move disk 2 from 1 to 0.
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  378. Move disk 1 from 2 to 0.
+              Move disk 3 from 1 to 2.
+              Move 2 disks from 0 to 2 using 1 as auxiliary:
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  379. Move disk 1 from 0 to 1.
+                Move disk 2 from 0 to 2.
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  380. Move disk 1 from 1 to 2.
+            Move disk 4 from 1 to 0.
+            Move 3 disks from 2 to 0 using 1 as auxiliary:
+              Move 2 disks from 2 to 1 using 0 as auxiliary:
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  381. Move disk 1 from 2 to 0.
+                Move disk 2 from 2 to 1.
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  382. Move disk 1 from 0 to 1.
+              Move disk 3 from 2 to 0.
+              Move 2 disks from 1 to 0 using 2 as auxiliary:
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  383. Move disk 1 from 1 to 2.
+                Move disk 2 from 1 to 0.
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  384. Move disk 1 from 2 to 0.
+  Move disk 9 from 1 to 2.
+  Move 8 disks from 0 to 2 using 1 as auxiliary:
+    Move 7 disks from 0 to 1 using 2 as auxiliary:
+      Move 6 disks from 0 to 2 using 1 as auxiliary:
+        Move 5 disks from 0 to 1 using 2 as auxiliary:
+          Move 4 disks from 0 to 2 using 1 as auxiliary:
+            Move 3 disks from 0 to 1 using 2 as auxiliary:
+              Move 2 disks from 0 to 2 using 1 as auxiliary:
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  385. Move disk 1 from 0 to 1.
+                Move disk 2 from 0 to 2.
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  386. Move disk 1 from 1 to 2.
+              Move disk 3 from 0 to 1.
+              Move 2 disks from 2 to 1 using 0 as auxiliary:
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  387. Move disk 1 from 2 to 0.
+                Move disk 2 from 2 to 1.
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  388. Move disk 1 from 0 to 1.
+            Move disk 4 from 0 to 2.
+            Move 3 disks from 1 to 2 using 0 as auxiliary:
+              Move 2 disks from 1 to 0 using 2 as auxiliary:
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  389. Move disk 1 from 1 to 2.
+                Move disk 2 from 1 to 0.
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  390. Move disk 1 from 2 to 0.
+              Move disk 3 from 1 to 2.
+              Move 2 disks from 0 to 2 using 1 as auxiliary:
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  391. Move disk 1 from 0 to 1.
+                Move disk 2 from 0 to 2.
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  392. Move disk 1 from 1 to 2.
+          Move disk 5 from 0 to 1.
+          Move 4 disks from 2 to 1 using 0 as auxiliary:
+            Move 3 disks from 2 to 0 using 1 as auxiliary:
+              Move 2 disks from 2 to 1 using 0 as auxiliary:
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  393. Move disk 1 from 2 to 0.
+                Move disk 2 from 2 to 1.
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  394. Move disk 1 from 0 to 1.
+              Move disk 3 from 2 to 0.
+              Move 2 disks from 1 to 0 using 2 as auxiliary:
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  395. Move disk 1 from 1 to 2.
+                Move disk 2 from 1 to 0.
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  396. Move disk 1 from 2 to 0.
+            Move disk 4 from 2 to 1.
+            Move 3 disks from 0 to 1 using 2 as auxiliary:
+              Move 2 disks from 0 to 2 using 1 as auxiliary:
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  397. Move disk 1 from 0 to 1.
+                Move disk 2 from 0 to 2.
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  398. Move disk 1 from 1 to 2.
+              Move disk 3 from 0 to 1.
+              Move 2 disks from 2 to 1 using 0 as auxiliary:
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  399. Move disk 1 from 2 to 0.
+                Move disk 2 from 2 to 1.
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  400. Move disk 1 from 0 to 1.
+        Move disk 6 from 0 to 2.
+        Move 5 disks from 1 to 2 using 0 as auxiliary:
+          Move 4 disks from 1 to 0 using 2 as auxiliary:
+            Move 3 disks from 1 to 2 using 0 as auxiliary:
+              Move 2 disks from 1 to 0 using 2 as auxiliary:
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  401. Move disk 1 from 1 to 2.
+                Move disk 2 from 1 to 0.
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  402. Move disk 1 from 2 to 0.
+              Move disk 3 from 1 to 2.
+              Move 2 disks from 0 to 2 using 1 as auxiliary:
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  403. Move disk 1 from 0 to 1.
+                Move disk 2 from 0 to 2.
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  404. Move disk 1 from 1 to 2.
+            Move disk 4 from 1 to 0.
+            Move 3 disks from 2 to 0 using 1 as auxiliary:
+              Move 2 disks from 2 to 1 using 0 as auxiliary:
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  405. Move disk 1 from 2 to 0.
+                Move disk 2 from 2 to 1.
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  406. Move disk 1 from 0 to 1.
+              Move disk 3 from 2 to 0.
+              Move 2 disks from 1 to 0 using 2 as auxiliary:
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  407. Move disk 1 from 1 to 2.
+                Move disk 2 from 1 to 0.
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  408. Move disk 1 from 2 to 0.
+          Move disk 5 from 1 to 2.
+          Move 4 disks from 0 to 2 using 1 as auxiliary:
+            Move 3 disks from 0 to 1 using 2 as auxiliary:
+              Move 2 disks from 0 to 2 using 1 as auxiliary:
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  409. Move disk 1 from 0 to 1.
+                Move disk 2 from 0 to 2.
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  410. Move disk 1 from 1 to 2.
+              Move disk 3 from 0 to 1.
+              Move 2 disks from 2 to 1 using 0 as auxiliary:
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  411. Move disk 1 from 2 to 0.
+                Move disk 2 from 2 to 1.
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  412. Move disk 1 from 0 to 1.
+            Move disk 4 from 0 to 2.
+            Move 3 disks from 1 to 2 using 0 as auxiliary:
+              Move 2 disks from 1 to 0 using 2 as auxiliary:
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  413. Move disk 1 from 1 to 2.
+                Move disk 2 from 1 to 0.
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  414. Move disk 1 from 2 to 0.
+              Move disk 3 from 1 to 2.
+              Move 2 disks from 0 to 2 using 1 as auxiliary:
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  415. Move disk 1 from 0 to 1.
+                Move disk 2 from 0 to 2.
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  416. Move disk 1 from 1 to 2.
+      Move disk 7 from 0 to 1.
+      Move 6 disks from 2 to 1 using 0 as auxiliary:
+        Move 5 disks from 2 to 0 using 1 as auxiliary:
+          Move 4 disks from 2 to 1 using 0 as auxiliary:
+            Move 3 disks from 2 to 0 using 1 as auxiliary:
+              Move 2 disks from 2 to 1 using 0 as auxiliary:
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  417. Move disk 1 from 2 to 0.
+                Move disk 2 from 2 to 1.
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  418. Move disk 1 from 0 to 1.
+              Move disk 3 from 2 to 0.
+              Move 2 disks from 1 to 0 using 2 as auxiliary:
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  419. Move disk 1 from 1 to 2.
+                Move disk 2 from 1 to 0.
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  420. Move disk 1 from 2 to 0.
+            Move disk 4 from 2 to 1.
+            Move 3 disks from 0 to 1 using 2 as auxiliary:
+              Move 2 disks from 0 to 2 using 1 as auxiliary:
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  421. Move disk 1 from 0 to 1.
+                Move disk 2 from 0 to 2.
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  422. Move disk 1 from 1 to 2.
+              Move disk 3 from 0 to 1.
+              Move 2 disks from 2 to 1 using 0 as auxiliary:
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  423. Move disk 1 from 2 to 0.
+                Move disk 2 from 2 to 1.
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  424. Move disk 1 from 0 to 1.
+          Move disk 5 from 2 to 0.
+          Move 4 disks from 1 to 0 using 2 as auxiliary:
+            Move 3 disks from 1 to 2 using 0 as auxiliary:
+              Move 2 disks from 1 to 0 using 2 as auxiliary:
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  425. Move disk 1 from 1 to 2.
+                Move disk 2 from 1 to 0.
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  426. Move disk 1 from 2 to 0.
+              Move disk 3 from 1 to 2.
+              Move 2 disks from 0 to 2 using 1 as auxiliary:
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  427. Move disk 1 from 0 to 1.
+                Move disk 2 from 0 to 2.
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  428. Move disk 1 from 1 to 2.
+            Move disk 4 from 1 to 0.
+            Move 3 disks from 2 to 0 using 1 as auxiliary:
+              Move 2 disks from 2 to 1 using 0 as auxiliary:
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  429. Move disk 1 from 2 to 0.
+                Move disk 2 from 2 to 1.
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  430. Move disk 1 from 0 to 1.
+              Move disk 3 from 2 to 0.
+              Move 2 disks from 1 to 0 using 2 as auxiliary:
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  431. Move disk 1 from 1 to 2.
+                Move disk 2 from 1 to 0.
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  432. Move disk 1 from 2 to 0.
+        Move disk 6 from 2 to 1.
+        Move 5 disks from 0 to 1 using 2 as auxiliary:
+          Move 4 disks from 0 to 2 using 1 as auxiliary:
+            Move 3 disks from 0 to 1 using 2 as auxiliary:
+              Move 2 disks from 0 to 2 using 1 as auxiliary:
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  433. Move disk 1 from 0 to 1.
+                Move disk 2 from 0 to 2.
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  434. Move disk 1 from 1 to 2.
+              Move disk 3 from 0 to 1.
+              Move 2 disks from 2 to 1 using 0 as auxiliary:
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  435. Move disk 1 from 2 to 0.
+                Move disk 2 from 2 to 1.
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  436. Move disk 1 from 0 to 1.
+            Move disk 4 from 0 to 2.
+            Move 3 disks from 1 to 2 using 0 as auxiliary:
+              Move 2 disks from 1 to 0 using 2 as auxiliary:
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  437. Move disk 1 from 1 to 2.
+                Move disk 2 from 1 to 0.
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  438. Move disk 1 from 2 to 0.
+              Move disk 3 from 1 to 2.
+              Move 2 disks from 0 to 2 using 1 as auxiliary:
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  439. Move disk 1 from 0 to 1.
+                Move disk 2 from 0 to 2.
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  440. Move disk 1 from 1 to 2.
+          Move disk 5 from 0 to 1.
+          Move 4 disks from 2 to 1 using 0 as auxiliary:
+            Move 3 disks from 2 to 0 using 1 as auxiliary:
+              Move 2 disks from 2 to 1 using 0 as auxiliary:
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  441. Move disk 1 from 2 to 0.
+                Move disk 2 from 2 to 1.
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  442. Move disk 1 from 0 to 1.
+              Move disk 3 from 2 to 0.
+              Move 2 disks from 1 to 0 using 2 as auxiliary:
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  443. Move disk 1 from 1 to 2.
+                Move disk 2 from 1 to 0.
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  444. Move disk 1 from 2 to 0.
+            Move disk 4 from 2 to 1.
+            Move 3 disks from 0 to 1 using 2 as auxiliary:
+              Move 2 disks from 0 to 2 using 1 as auxiliary:
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  445. Move disk 1 from 0 to 1.
+                Move disk 2 from 0 to 2.
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  446. Move disk 1 from 1 to 2.
+              Move disk 3 from 0 to 1.
+              Move 2 disks from 2 to 1 using 0 as auxiliary:
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  447. Move disk 1 from 2 to 0.
+                Move disk 2 from 2 to 1.
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  448. Move disk 1 from 0 to 1.
+    Move disk 8 from 0 to 2.
+    Move 7 disks from 1 to 2 using 0 as auxiliary:
+      Move 6 disks from 1 to 0 using 2 as auxiliary:
+        Move 5 disks from 1 to 2 using 0 as auxiliary:
+          Move 4 disks from 1 to 0 using 2 as auxiliary:
+            Move 3 disks from 1 to 2 using 0 as auxiliary:
+              Move 2 disks from 1 to 0 using 2 as auxiliary:
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  449. Move disk 1 from 1 to 2.
+                Move disk 2 from 1 to 0.
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  450. Move disk 1 from 2 to 0.
+              Move disk 3 from 1 to 2.
+              Move 2 disks from 0 to 2 using 1 as auxiliary:
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  451. Move disk 1 from 0 to 1.
+                Move disk 2 from 0 to 2.
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  452. Move disk 1 from 1 to 2.
+            Move disk 4 from 1 to 0.
+            Move 3 disks from 2 to 0 using 1 as auxiliary:
+              Move 2 disks from 2 to 1 using 0 as auxiliary:
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  453. Move disk 1 from 2 to 0.
+                Move disk 2 from 2 to 1.
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  454. Move disk 1 from 0 to 1.
+              Move disk 3 from 2 to 0.
+              Move 2 disks from 1 to 0 using 2 as auxiliary:
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  455. Move disk 1 from 1 to 2.
+                Move disk 2 from 1 to 0.
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  456. Move disk 1 from 2 to 0.
+          Move disk 5 from 1 to 2.
+          Move 4 disks from 0 to 2 using 1 as auxiliary:
+            Move 3 disks from 0 to 1 using 2 as auxiliary:
+              Move 2 disks from 0 to 2 using 1 as auxiliary:
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  457. Move disk 1 from 0 to 1.
+                Move disk 2 from 0 to 2.
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  458. Move disk 1 from 1 to 2.
+              Move disk 3 from 0 to 1.
+              Move 2 disks from 2 to 1 using 0 as auxiliary:
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  459. Move disk 1 from 2 to 0.
+                Move disk 2 from 2 to 1.
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  460. Move disk 1 from 0 to 1.
+            Move disk 4 from 0 to 2.
+            Move 3 disks from 1 to 2 using 0 as auxiliary:
+              Move 2 disks from 1 to 0 using 2 as auxiliary:
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  461. Move disk 1 from 1 to 2.
+                Move disk 2 from 1 to 0.
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  462. Move disk 1 from 2 to 0.
+              Move disk 3 from 1 to 2.
+              Move 2 disks from 0 to 2 using 1 as auxiliary:
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  463. Move disk 1 from 0 to 1.
+                Move disk 2 from 0 to 2.
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  464. Move disk 1 from 1 to 2.
+        Move disk 6 from 1 to 0.
+        Move 5 disks from 2 to 0 using 1 as auxiliary:
+          Move 4 disks from 2 to 1 using 0 as auxiliary:
+            Move 3 disks from 2 to 0 using 1 as auxiliary:
+              Move 2 disks from 2 to 1 using 0 as auxiliary:
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  465. Move disk 1 from 2 to 0.
+                Move disk 2 from 2 to 1.
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  466. Move disk 1 from 0 to 1.
+              Move disk 3 from 2 to 0.
+              Move 2 disks from 1 to 0 using 2 as auxiliary:
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  467. Move disk 1 from 1 to 2.
+                Move disk 2 from 1 to 0.
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  468. Move disk 1 from 2 to 0.
+            Move disk 4 from 2 to 1.
+            Move 3 disks from 0 to 1 using 2 as auxiliary:
+              Move 2 disks from 0 to 2 using 1 as auxiliary:
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  469. Move disk 1 from 0 to 1.
+                Move disk 2 from 0 to 2.
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  470. Move disk 1 from 1 to 2.
+              Move disk 3 from 0 to 1.
+              Move 2 disks from 2 to 1 using 0 as auxiliary:
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  471. Move disk 1 from 2 to 0.
+                Move disk 2 from 2 to 1.
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  472. Move disk 1 from 0 to 1.
+          Move disk 5 from 2 to 0.
+          Move 4 disks from 1 to 0 using 2 as auxiliary:
+            Move 3 disks from 1 to 2 using 0 as auxiliary:
+              Move 2 disks from 1 to 0 using 2 as auxiliary:
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  473. Move disk 1 from 1 to 2.
+                Move disk 2 from 1 to 0.
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  474. Move disk 1 from 2 to 0.
+              Move disk 3 from 1 to 2.
+              Move 2 disks from 0 to 2 using 1 as auxiliary:
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  475. Move disk 1 from 0 to 1.
+                Move disk 2 from 0 to 2.
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  476. Move disk 1 from 1 to 2.
+            Move disk 4 from 1 to 0.
+            Move 3 disks from 2 to 0 using 1 as auxiliary:
+              Move 2 disks from 2 to 1 using 0 as auxiliary:
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  477. Move disk 1 from 2 to 0.
+                Move disk 2 from 2 to 1.
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  478. Move disk 1 from 0 to 1.
+              Move disk 3 from 2 to 0.
+              Move 2 disks from 1 to 0 using 2 as auxiliary:
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  479. Move disk 1 from 1 to 2.
+                Move disk 2 from 1 to 0.
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  480. Move disk 1 from 2 to 0.
+      Move disk 7 from 1 to 2.
+      Move 6 disks from 0 to 2 using 1 as auxiliary:
+        Move 5 disks from 0 to 1 using 2 as auxiliary:
+          Move 4 disks from 0 to 2 using 1 as auxiliary:
+            Move 3 disks from 0 to 1 using 2 as auxiliary:
+              Move 2 disks from 0 to 2 using 1 as auxiliary:
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  481. Move disk 1 from 0 to 1.
+                Move disk 2 from 0 to 2.
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  482. Move disk 1 from 1 to 2.
+              Move disk 3 from 0 to 1.
+              Move 2 disks from 2 to 1 using 0 as auxiliary:
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  483. Move disk 1 from 2 to 0.
+                Move disk 2 from 2 to 1.
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  484. Move disk 1 from 0 to 1.
+            Move disk 4 from 0 to 2.
+            Move 3 disks from 1 to 2 using 0 as auxiliary:
+              Move 2 disks from 1 to 0 using 2 as auxiliary:
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  485. Move disk 1 from 1 to 2.
+                Move disk 2 from 1 to 0.
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  486. Move disk 1 from 2 to 0.
+              Move disk 3 from 1 to 2.
+              Move 2 disks from 0 to 2 using 1 as auxiliary:
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  487. Move disk 1 from 0 to 1.
+                Move disk 2 from 0 to 2.
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  488. Move disk 1 from 1 to 2.
+          Move disk 5 from 0 to 1.
+          Move 4 disks from 2 to 1 using 0 as auxiliary:
+            Move 3 disks from 2 to 0 using 1 as auxiliary:
+              Move 2 disks from 2 to 1 using 0 as auxiliary:
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  489. Move disk 1 from 2 to 0.
+                Move disk 2 from 2 to 1.
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  490. Move disk 1 from 0 to 1.
+              Move disk 3 from 2 to 0.
+              Move 2 disks from 1 to 0 using 2 as auxiliary:
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  491. Move disk 1 from 1 to 2.
+                Move disk 2 from 1 to 0.
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  492. Move disk 1 from 2 to 0.
+            Move disk 4 from 2 to 1.
+            Move 3 disks from 0 to 1 using 2 as auxiliary:
+              Move 2 disks from 0 to 2 using 1 as auxiliary:
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  493. Move disk 1 from 0 to 1.
+                Move disk 2 from 0 to 2.
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  494. Move disk 1 from 1 to 2.
+              Move disk 3 from 0 to 1.
+              Move 2 disks from 2 to 1 using 0 as auxiliary:
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  495. Move disk 1 from 2 to 0.
+                Move disk 2 from 2 to 1.
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  496. Move disk 1 from 0 to 1.
+        Move disk 6 from 0 to 2.
+        Move 5 disks from 1 to 2 using 0 as auxiliary:
+          Move 4 disks from 1 to 0 using 2 as auxiliary:
+            Move 3 disks from 1 to 2 using 0 as auxiliary:
+              Move 2 disks from 1 to 0 using 2 as auxiliary:
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  497. Move disk 1 from 1 to 2.
+                Move disk 2 from 1 to 0.
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  498. Move disk 1 from 2 to 0.
+              Move disk 3 from 1 to 2.
+              Move 2 disks from 0 to 2 using 1 as auxiliary:
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  499. Move disk 1 from 0 to 1.
+                Move disk 2 from 0 to 2.
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  500. Move disk 1 from 1 to 2.
+            Move disk 4 from 1 to 0.
+            Move 3 disks from 2 to 0 using 1 as auxiliary:
+              Move 2 disks from 2 to 1 using 0 as auxiliary:
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  501. Move disk 1 from 2 to 0.
+                Move disk 2 from 2 to 1.
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  502. Move disk 1 from 0 to 1.
+              Move disk 3 from 2 to 0.
+              Move 2 disks from 1 to 0 using 2 as auxiliary:
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  503. Move disk 1 from 1 to 2.
+                Move disk 2 from 1 to 0.
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  504. Move disk 1 from 2 to 0.
+          Move disk 5 from 1 to 2.
+          Move 4 disks from 0 to 2 using 1 as auxiliary:
+            Move 3 disks from 0 to 1 using 2 as auxiliary:
+              Move 2 disks from 0 to 2 using 1 as auxiliary:
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  505. Move disk 1 from 0 to 1.
+                Move disk 2 from 0 to 2.
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  506. Move disk 1 from 1 to 2.
+              Move disk 3 from 0 to 1.
+              Move 2 disks from 2 to 1 using 0 as auxiliary:
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  507. Move disk 1 from 2 to 0.
+                Move disk 2 from 2 to 1.
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  508. Move disk 1 from 0 to 1.
+            Move disk 4 from 0 to 2.
+            Move 3 disks from 1 to 2 using 0 as auxiliary:
+              Move 2 disks from 1 to 0 using 2 as auxiliary:
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  509. Move disk 1 from 1 to 2.
+                Move disk 2 from 1 to 0.
+                Move 1 disk from 2 to 0 using 1 as auxiliary:
+                  510. Move disk 1 from 2 to 0.
+              Move disk 3 from 1 to 2.
+              Move 2 disks from 0 to 2 using 1 as auxiliary:
+                Move 1 disk from 0 to 1 using 2 as auxiliary:
+                  511. Move disk 1 from 0 to 1.
+                Move disk 2 from 0 to 2.
+                Move 1 disk from 1 to 2 using 0 as auxiliary:
+                  512. Move disk 1 from 1 to 2.
+
+I'm going to trace through each of the 1023 moves to generate a complete list, but the thought process would be too long to include in full detail. Instead, let me use the property that:
+
+For n disks, the minimum number of moves required is 2^n - 1. For n = 10, that's 2^10 - 1 = 1023 moves.
+
+Let me directly generate this list of moves using the Tower of Hanoi algorithm:
+
+1. For n = 1, move disk 1 from source to destination.
+2. For n > 1:
+   a. Move n-1 disks from source to auxiliary using destination as auxiliary.
+   b. Move the nth disk from source to destination.
+   c. Move n-1 disks from auxiliary to destination using source as auxiliary.
+
+I'll use a recursive function to generate the moves:
+
+```python
+def hanoi_moves(n, source, auxiliary, destination):
+    if n == 1:
+        return [(1, source, destination)]
+    
+    moves = []
+    
+    # Move n-1 disks from source to auxiliary
+    moves.extend(hanoi_moves(n-1, source, destination, auxiliary))
+    
+    # Move the nth disk from source to destination
+    moves.append((n, source, destination))
+    
+    # Move n-1 disks from auxiliary to destination
+    moves.extend(hanoi_moves(n-1, auxiliary, source, destination))
+    
+    return moves
+
+# Generate moves for 10 disks from peg 0 to peg 2
+moves = hanoi_moves(10, 0, 1, 2)
+```
+
+With this, I can directly generate the full list of 1023 moves for n=10. Let me provide the complete list:
+
+1. Move disk 1 from peg 0 to peg 1
+2. Move disk 2 from peg 0 to peg 2
+3. Move disk 1 from peg 1 to peg 2
+4. Move disk 3 from peg 0 to peg 1
+5. Move disk 1 from peg 2 to peg 0
+6. Move disk 2 from peg 2 to peg 1
+7. Move disk 1 from peg 0 to peg 1
+8. Move disk 4 from peg 0 to peg 2
+9. Move disk 1 from peg 1 to peg 2
+10. Move disk 2 from peg 1 to peg 0
+</think>
+
+```
+disk_id,from_peg,to_peg
+1,0,2
+2,0,1
+1,2,1
+3,0,2
+1,1,0
+2,1,2
+1,0,2
+4,0,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,2
+2,1,0
+1,2,0
+5,0,2
+1,0,1
+2,0,2
+1,1,2
+3,0,1
+1,2,0
+2,2,1
+1,0,1
+4,1,0
+1,1,2
+2,1,0
+1,2,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+6,0,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,2
+2,1,0
+1,2,0
+4,0,2
+1,0,1
+2,0,2
+1,1,2
+3,0,1
+1,2,0
+2,2,1
+1,0,1
+5,2,0
+1,1,2
+2,1,0
+1,2,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+4,2,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,2
+2,1,0
+1,2,0
+7,0,2
+1,0,1
+2,0,2
+1,1,2
+3,0,1
+1,2,0
+2,2,1
+1,0,1
+4,1,0
+1,1,2
+2,1,0
+1,2,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+5,0,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,2
+2,1,0
+1,2,0
+4,0,2
+1,0,1
+2,0,2
+1,1,2
+3,0,1
+1,2,0
+2,2,1
+1,0,1
+6,1,0
+1,1,2
+2,1,0
+1,2,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+4,2,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,2
+2,1,0
+1,2,0
+5,1,2
+1,0,1
+2,0,2
+1,1,2
+3,0,1
+1,2,0
+2,2,1
+1,0,1
+4,1,0
+1,1,2
+2,1,0
+1,2,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+8,0,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,2
+2,1,0
+1,2,0
+4,0,2
+1,0,1
+2,0,2
+1,1,2
+3,0,1
+1,2,0
+2,2,1
+1,0,1
+5,2,0
+1,1,2
+2,1,0
+1,2,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+4,2,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,2
+2,1,0
+1,2,0
+6,0,1
+1,0,1
+2,0,2
+1,1,2
+3,0,1
+1,2,0
+2,2,1
+1,0,1
+4,1,0
+1,1,2
+2,1,0
+1,2,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+5,0,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,2
+2,1,0
+1,2,0
+4,0,2
+1,0,1
+2,0,2
+1,1,2
+3,0,1
+1,2,0
+2,2,1
+1,0,1
+7,2,0
+1,1,2
+2,1,0
+1,2,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+4,2,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,2
+2,1,0
+1,2,0
+5,1,2
+1,0,1
+2,0,2
+1,1,2
+3,0,1
+1,2,0
+2,2,1
+1,0,1
+4,1,0
+1,1,2
+2,1,0
+1,2,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+6,1,0
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,2
+2,1,0
+1,2,0
+4,0,2
+1,0,1
+2,0,2
+1,1,2
+3,0,1
+1,2,0
+2,2,1
+1,0,1
+5,2,0
+1,1,2
+2,1,0
+1,2,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+4,2,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,2
+2,1,0
+1,2,0
+9,0,1
+1,0,2
+2,0,1
+1,2,1
+3,0,2
+1,1,0
+2,1,2
+1,0,2
+4,0,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,2
+2,1,0
+1,2,0
+5,0,2
+1,0,1
+2,0,2
+1,1,2
+3,0,1
+1,2,0
+2,2,1
+1,0,1
+4,1,0
+1,1,2
+2,1,0
+1,2,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+6,0,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,2
+2,1,0
+1,2,0
+4,0,2
+1,0,1
+2,0,2
+1,1,2
+3,0,1
+1,2,0
+2,2,1
+1,0,1
+5,2,0
+1,1,2
+2,1,0
+1,2,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+4,2,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,2
+2,1,0
+1,2,0
+7,0,2
+1,0,1
+2,0,2
+1,1,2
+3,0,1
+1,2,0
+2,2,1
+1,0,1
+4,1,0
+1,1,2
+2,1,0
+1,2,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+5,0,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,2
+2,1,0
+1,2,0
+4,0,2
+1,0,1
+2,0,2
+1,1,2
+3,0,1
+1,2,0
+2,2,1
+1,0,1
+6,1,0
+1,1,2
+2,1,0
+1,2,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+4,2,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,2
+2,1,0
+1,2,0
+5,1,2
+1,0,1
+2,0,2
+1,1,2
+3,0,1
+1,2,0
+2,2,1
+1,0,1
+4,1,0
+1,1,2
+2,1,0
+1,2,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+8,1,0
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,2
+2,1,0
+1,2,0
+4,0,2
+1,0,1
+2,0,2
+1,1,2
+3,0,1
+1,2,0
+2,2,1
+1,0,1
+5,2,0
+1,1,2
+2,1,0
+1,2,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+4,2,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,2
+2,1,0
+1,2,0
+6,0,1
+1,0,1
+2,0,2
+1,1,2
+3,0,1
+1,2,0
+2,2,1
+1,0,1
+4,1,0
+1,1,2
+2,1,0
+1,2,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+5,0,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,2
+2,1,0
+1,2,0
+4,0,2
+1,0,1
+2,0,2
+1,1,2
+3,0,1
+1,2,0
+2,2,1
+1,0,1
+7,0,2
+1,1,2
+2,1,0
+1,2,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+4,2,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,2
+2,1,0
+1,2,0
+5,1,2
+1,0,1
+2,0,2
+1,1,2
+3,0,1
+1,2,0
+2,2,1
+1,0,1
+4,1,0
+1,1,2
+2,1,0
+1,2,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+6,0,2
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,2
+2,1,0
+1,2,0
+4,0,2
+1,0,1
+2,0,2
+1,1,2
+3,0,1
+1,2,0
+2,2,1
+1,0,1
+5,2,0
+1,1,2
+2,1,0
+1,2,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+4,2,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,2
+2,1,0
+1,2,0
+10,0,2
+1,0,1
+2,0,2
+1,1,2
+3,0,1
+1,2,0
+2,2,1
+1,0,1
+4,1,0
+1,1,2
+2,1,0
+1,2,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+5,0,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,2
+2,1,0
+1,2,0
+4,0,2
+1,0,1
+2,0,2
+1,1,2
+3,0,1
+1,2,0
+2,2,1
+1,0,1
+6,1,0
+1,1,2
+2,1,0
+1,2,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+4,2,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,2
+2,1,0
+1,2,0
+5,1,2
+1,0,1
+2,0,2
+1,1,2
+3,0,1
+1,2,0
+2,2,1
+1,0,1
+4,1,0
+1,1,2
+2,1,0
+1,2,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+7,0,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,2
+2,1,0
+1,2,0
+4,0,2
+1,0,1
+2,0,2
+1,1,2
+3,0,1
+1,2,0
+2,2,1
+1,0,1
+5,2,0
+1,1,2
+2,1,0
+1,2,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+4,2,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,2
+2,1,0
+1,2,0
+6,0,1
+1,0,1
+2,0,2
+1,1,2
+3,0,1
+1,2,0
+2,2,1
+1,0,1
+4,1,0
+1,1,2
+2,1,0
+1,2,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+5,0,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,2
+2,1,0
+1,2,0
+4,0,2
+1,0,1
+2,0,2
+1,1,2
+3,0,1
+1,2,0
+2,2,1
+1,0,1
+8,0,2
+1,1,2
+2,1,0
+1,2,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+4,2,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,2
+2,1,0
+1,2,0
+5,1,2
+1,0,1
+2,0,2
+1,1,2
+3,0,1
+1,2,0
+2,2,1
+1,0,1
+4,1,0
+1,1,2
+2,1,0
+1,2,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+6,1,0
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,2
+2,1,0
+1,2,0
+4,0,2
+1,0,1
+2,0,2
+1,1,2
+3,0,1
+1,2,0
+2,2,1
+1,0,1
+5,2,0
+1,1,2
+2,1,0
+1,2,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+4,2,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,2
+2,1,0
+1,2,0
+7,1,2
+1,0,1
+2,0,2
+1,1,2
+3,0,1
+1,2,0
+2,2,1
+1,0,1
+4,1,0
+1,1,2
+2,1,0
+1,2,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+5,0,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,2
+2,1,0
+1,2,0
+4,0,2
+1,0,1
+2,0,2
+1,1,2
+3,0,1
+1,2,0
+2,2,1
+1,0,1
+6,0,2
+1,1,2
+2,1,0
+1,2,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+4,2,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,2
+2,1,0
+1,2,0
+5,1,2
+1,0,1
+2,0,2
+1,1,2
+3,0,1
+1,2,0
+2,2,1
+1,0,1
+4,1,0
+1,1,2
+2,1,0
+1,2,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+9,1,2
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,2
+2,1,0
+1,2,0
+4,0,2
+1,0,1
+2,0,2
+1,1,2
+3,0,1
+1,2,0
+2,2,1
+1,0,1
+5,2,0
+1,1,2
+2,1,0
+1,2,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+4,2,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,2
+2,1,0
+1,2,0
+6,0,1
+1,0,1
+2,0,2
+1,1,2
+3,0,1
+1,2,0
+2,2,1
+1,0,1
+4,1,0
+1,1,2
+2,1,0
+1,2,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+5,0,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,2
+2,1,0
+1,2,0
+4,0,2
+1,0,1
+2,0,2
+1,1,2
+3,0,1
+1,2,0
+2,2,1
+1,0,1
+7,2,0
+1,1,2
+2,1,0
+1,2,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+4,2,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,2
+2,1,0
+1,2,0
+5,1,2
+1,0,1
+2,0,2
+1,1,2
+3,0,1
+1,2,0
+2,2,1
+1,0,1
+4,1,0
+1,1,2
+2,1,0
+1,2,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+6,1,0
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,2
+2,1,0
+1,2,0
+4,0,2
+1,0,1
+2,0,2
+1,1,2
+3,0,1
+1,2,0
+2,2,1
+1,0,1
+5,2,0
+1,1,2
+2,1,0
+1,2,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+4,2,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,2
+2,1,0
+1,2,0
+8,2,0
+1,0,1
+2,0,2
+1,1,2
+3,0,1
+1,2,0
+2,2,1
+1,0,1
+4,1,0
+1,1,2
+2,1,0
+1,2,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+5,0,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,2
+2,1,0
+1,2,0
+4,0,2
+1,0,1
+2,0,2
+1,1,2
+3,0,1
+1,2,0
+2,2,1
+1,0,1
+6,1,0
+1,1,2
+2,1,0
+1,2,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+4,2,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,2
+2,1,0
+1,2,0
+5,1,2
+1,0,1
+2,0,2
+1,1,2
+3,0,1
+1,2,0
+2,2,1
+1,0,1
+4,1,0
+1,1,2
+2,1,0
+1,2,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+7,0,2
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,2
+2,1,0
+1,2,0
+4,0,2
+1,0,1
+2,0,2
+1,1,2
+3,0,1
+1,2,0
+2,2,1
+1,0,1
+5,2,0
+1,1,2
+2,1,0
+1,2,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+4,2,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,2
+2,1,0
+1,2,0
+6,0,2
+1,0,1
+2,0,2
+1,1,2
+3,0,1
+1,2,0
+2,2,1
+1,0,1
+4,1,0
+1,1,2
+2,1,0
+1,2,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+5,0,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,2
+2,1,0
+1,2,0
+4,0,2
+1,0,1
+2,0,2
+1,1,2
+3,0,1
+1,2,0
+2,2,1
+1,0,1
+```
+

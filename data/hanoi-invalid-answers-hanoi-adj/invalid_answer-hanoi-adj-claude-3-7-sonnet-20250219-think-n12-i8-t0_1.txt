@@ -1,0 +1,868 @@
+# model_name='claude-3-7-sonnet-20250219', reasoning_budget=32000, tries=0, n=12, i=8
+# valid_prefix_length=0, is_valid_solution=0, first_correction=-1
+
+<think>
+I need to solve the Tower of Hanoi puzzle with 12 disks. The Tower of Hanoi puzzle has a well-known recursive solution:
+
+To move n disks from peg A to peg C, using peg B as an auxiliary:
+1. Move n-1 disks from A to B using C as auxiliary
+2. Move the largest disk (disk n) from A to C
+3. Move n-1 disks from B to C using A as auxiliary
+
+For n=12, this will require 2^12 - 1 = 4095 moves. That's quite a few moves, but I need to enumerate all of them.
+
+Let's implement the solution recursively:
+
+```
+function hanoi(n, source, auxiliary, target, moves) {
+    if (n === 1) {
+        moves.push([1, source, target]);
+        return;
+    }
+    
+    hanoi(n-1, source, target, auxiliary, moves);
+    moves.push([n, source, target]);
+    hanoi(n-1, auxiliary, source, target, moves);
+}
+
+let moves = [];
+hanoi(12, 0, 1, 2, moves);
+```
+
+Let me trace this algorithm for a small example first, like n=3, to make sure I understand it correctly:
+
+hanoi(3, 0, 1, 2, [])
+  hanoi(2, 0, 2, 1, [])
+    hanoi(1, 0, 1, 2, [])
+      moves = [[1, 0, 2]]
+    moves = [[1, 0, 2], [2, 0, 1]]
+    hanoi(1, 2, 0, 1, [[1, 0, 2], [2, 0, 1]])
+      moves = [[1, 0, 2], [2, 0, 1], [1, 2, 1]]
+  moves = [[1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2]]
+  hanoi(2, 1, 0, 2, [[1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2]])
+    hanoi(1, 1, 2, 0, [[1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2]])
+      moves = [[1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0]]
+    moves = [[1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2]]
+    hanoi(1, 0, 1, 2, [[1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2]])
+      moves = [[1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2]]
+
+So for n=3, the moves are:
+[[1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2]]
+
+But wait, this doesn't match the example provided. Let me trace through the example solution to understand it better:
+```
+moves=[[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2]]
+```
+
+1. Move disk 1 from peg 0 to peg 2: [[3,2],  [], [1]]
+2. Move disk 2 from peg 0 to peg 1: [[3],    [2], [1]]
+3. Move disk 1 from peg 2 to peg 1: [[3],    [2,1], []]
+4. Move disk 3 from peg 0 to peg 2: [[],     [2,1], [3]]
+5. Move disk 1 from peg 1 to peg 0: [[1],    [2], [3]]
+6. Move disk 2 from peg 1 to peg 2: [[1],    [], [3,2]]
+7. Move disk 1 from peg 0 to peg 2: [[],     [], [3,2,1]]
+
+Hmm, I think there might be a misunderstanding in how I'm interpreting the moves or implementing the algorithm. Let me reconsider the solution.
+
+In the Tower of Hanoi, the disks are numbered from 1 (smallest) to n (largest). When a move is specified as [disk_id, from_peg, to_peg], the disk_id refers to the size of the disk being moved, not its position in the stack.
+
+Let me try to implement the solution again with this understanding:
+
+```
+function hanoi(n, source, auxiliary, target, moves) {
+    if (n === 0) {
+        return;
+    }
+    
+    hanoi(n-1, source, target, auxiliary, moves);
+    moves.push([n, source, target]);
+    hanoi(n-1, auxiliary, source, target, moves);
+}
+
+let moves = [];
+hanoi(12, 0, 1, 2, moves);
+```
+
+Let me trace this for n=3 again:
+
+hanoi(3, 0, 1, 2, [])
+  hanoi(2, 0, 2, 1, [])
+    hanoi(1, 0, 1, 2, [])
+      hanoi(0, 0, 2, 1, []) (base case, do nothing)
+      moves = [[1, 0, 2]]
+      hanoi(0, 1, 0, 2, [[1, 0, 2]]) (base case, do nothing)
+    moves = [[1, 0, 2], [2, 0, 1]]
+    hanoi(1, 2, 0, 1, [[1, 0, 2], [2, 0, 1]])
+      hanoi(0, 2, 1, 0, [[1, 0, 2], [2, 0, 1]]) (base case, do nothing)
+      moves = [[1, 0, 2], [2, 0, 1], [1, 2, 1]]
+      hanoi(0, 0, 2, 1, [[1, 0, 2], [2, 0, 1], [1, 2, 1]]) (base case, do nothing)
+  moves = [[1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2]]
+  hanoi(2, 1, 0, 2, [[1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2]])
+    hanoi(1, 1, 2, 0, [[1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2]])
+      hanoi(0, 1, 0, 2, [[1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2]]) (base case, do nothing)
+      moves = [[1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0]]
+      hanoi(0, 2, 1, 0, [[1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0]]) (base case, do nothing)
+    moves = [[1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2]]
+    hanoi(1, 0, 1, 2, [[1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2]])
+      hanoi(0, 0, 2, 1, [[1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2]]) (base case, do nothing)
+      moves = [[1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2]]
+      hanoi(0, 1, 0, 2, [[1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2]]) (base case, do nothing)
+
+This now matches the example solution:
+```
+moves=[[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2]]
+```
+
+Now let's solve the Tower of Hanoi with 12 disks:
+
+```
+function hanoi(n, source, auxiliary, target, moves) {
+    if (n === 0) {
+        return;
+    }
+    
+    hanoi(n-1, source, target, auxiliary, moves);
+    moves.push([n, source, target]);
+    hanoi(n-1, auxiliary, source, target, moves);
+}
+
+let moves = [];
+hanoi(12, 0, 1, 2, moves);
+```
+
+For n=12, the list of moves will be extremely long (2^12 - 1 = 4095 moves), so instead of tracing it step by step, let's compute the full list:
+
+I'm going to implement the function and run it to get the full list of moves:
+
+```javascript
+function hanoi(n, source, auxiliary, target, moves) {
+    if (n === 0) {
+        return;
+    }
+    
+    hanoi(n-1, source, target, auxiliary, moves);
+    moves.push([n, source, target]);
+    hanoi(n-1, auxiliary, source, target, moves);
+}
+
+let moves = [];
+hanoi(12, 0, 1, 2, moves);
+console.log(moves);
+```
+
+Due to the recursive nature, I'll need to compute this list step by step:
+
+For n=1, there's 1 move: [[1, 0, 2]]
+For n=2, there are 3 moves: [[1, 0, 1], [2, 0, 2], [1, 1, 2]]
+For n=3, there are 7 moves: [[1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2]]
+
+Hmm, for n=2, my calculation doesn't match what I expect. Let me trace through it again:
+
+hanoi(2, 0, 1, 2, [])
+  hanoi(1, 0, 2, 1, [])
+    hanoi(0, 0, 1, 2, []) (base case, do nothing)
+    moves = [[1, 0, 1]]
+    hanoi(0, 2, 0, 1, [[1, 0, 1]]) (base case, do nothing)
+  moves = [[1, 0, 1], [2, 0, 2]]
+  hanoi(1, 1, 0, 2, [[1, 0, 1], [2, 0, 2]])
+    hanoi(0, 1, 2, 0, [[1, 0, 1], [2, 0, 2]]) (base case, do nothing)
+    moves = [[1, 0, 1], [2, 0, 2], [1, 1, 2]]
+    hanoi(0, 0, 1, 2, [[1, 0, 1], [2, 0, 2], [1, 1, 2]]) (base case, do nothing)
+
+I think I've been tracing incorrectly. Let me rewrite the hanoi function and trace it step by step for n=2:
+
+```javascript
+function hanoi(n, source, auxiliary, target, moves) {
+    if (n === 0) {
+        return;
+    }
+    
+    hanoi(n-1, source, target, auxiliary, moves);
+    moves.push([n, source, target]);
+    hanoi(n-1, auxiliary, source, target, moves);
+}
+```
+
+Now, let me trace this function for n=2, source=0, auxiliary=1, target=2:
+
+hanoi(2, 0, 1, 2, [])
+  Call hanoi(1, 0, 2, 1, [])
+    Call hanoi(0, 0, 1, 2, []) (base case, return)
+    Push [1, 0, 1] to moves: moves = [[1, 0, 1]]
+    Call hanoi(0, 2, 0, 1, [[1, 0, 1]]) (base case, return)
+  Now moves = [[1, 0, 1]]
+  Push [2, 0, 2] to moves: moves = [[1, 0, 1], [2, 0, 2]]
+  Call hanoi(1, 1, 0, 2, [[1, 0, 1], [2, 0, 2]])
+    Call hanoi(0, 1, 2, 0, [[1, 0, 1], [2, 0, 2]]) (base case, return)
+    Push [1, 1, 2] to moves: moves = [[1, 0, 1], [2, 0, 2], [1, 1, 2]]
+    Call hanoi(0, 0, 1, 2, [[1, 0, 1], [2, 0, 2], [1, 1, 2]]) (base case, return)
+  Now moves = [[1, 0, 1], [2, 0, 2], [1, 1, 2]]
+
+So for n=2, the moves are: [[1, 0, 1], [2, 0, 2], [1, 1, 2]]
+
+Wait, that doesn't match what I would expect for the Tower of Hanoi. Let me reconsider the algorithm:
+
+To move n disks from peg A to peg C, using peg B as an auxiliary:
+1. Move n-1 disks from A to B using C as auxiliary
+2. Move the largest disk (disk n) from A to C
+3. Move n-1 disks from B to C using A as auxiliary
+
+So for the first step, we're moving n-1 disks from source to auxiliary using target as a temporary storage. Let me revise the function:
+
+```javascript
+function hanoi(n, source, auxiliary, target, moves) {
+    if (n === 0) {
+        return;
+    }
+    
+    hanoi(n-1, source, target, auxiliary, moves);
+    moves.push([n, source, target]);
+    hanoi(n-1, auxiliary, source, target, moves);
+}
+```
+
+Let me trace it again for n=2, source=0, auxiliary=1, target=2:
+
+hanoi(2, 0, 1, 2, [])
+  Call hanoi(1, 0, 2, 1, [])
+    Call hanoi(0, 0, 1, 2, []) (base case, return)
+    Push [1, 0, 1] to moves: moves = [[1, 0, 1]]
+    Call hanoi(0, 2, 0, 1, [[1, 0, 1]]) (base case, return)
+  Now moves = [[1, 0, 1]]
+  Push [2, 0, 2] to moves: moves = [[1, 0, 1], [2, 0, 2]]
+  Call hanoi(1, 1, 0, 2, [[1, 0, 1], [2, 0, 2]])
+    Call hanoi(0, 1, 2, 0, [[1, 0, 1], [2, 0, 2]]) (base case, return)
+    Push [1, 1, 2] to moves: moves = [[1, 0, 1], [2, 0, 2], [1, 1, 2]]
+    Call hanoi(0, 0, 1, 2, [[1, 0, 1], [2, 0, 2], [1, 1, 2]]) (base case, return)
+  Now moves = [[1, 0, 1], [2, 0, 2], [1, 1, 2]]
+
+So for n=2, the moves are: [[1, 0, 1], [2, 0, 2], [1, 1, 2]]
+
+This still doesn't match what I would expect for the Tower of Hanoi. Let me re-read the problem and make sure I understand it correctly.
+
+I'm suspecting there might be an error in my understanding of the parameters in the hanoi function. The Tower of Hanoi algorithm should be:
+
+To move n disks from peg A to peg C, using peg B as an auxiliary:
+1. Move n-1 disks from A to B using C as auxiliary
+2. Move the largest disk (disk n) from A to C
+3. Move n-1 disks from B to C using A as auxiliary
+
+Let me rewrite the function with this understanding:
+
+```javascript
+function hanoi(n, source, auxiliary, target, moves) {
+    if (n === 0) {
+        return;
+    }
+    
+    hanoi(n-1, source, auxiliary, target, moves);
+    moves.push([n, source, target]);
+    hanoi(n-1, auxiliary, source, target, moves);
+}
+```
+
+Wait, I think I misunderstood the parameters in my previous tracing. Let me trace it again for n=2, source=0, auxiliary=1, target=2:
+
+hanoi(2, 0, 1, 2, [])
+  Call hanoi(1, 0, 1, 2, [])
+    Call hanoi(0, 0, 1, 2, []) (base case, return)
+    Push [1, 0, 2] to moves: moves = [[1, 0, 2]]
+    Call hanoi(0, 1, 0, 2, [[1, 0, 2]]) (base case, return)
+  Now moves = [[1, 0, 2]]
+  Push [2, 0, 2] to moves: moves = [[1, 0, 2], [2, 0, 2]]
+  Call hanoi(1, 1, 0, 2, [[1, 0, 2], [2, 0, 2]])
+    Call hanoi(0, 1, 0, 2, [[1, 0, 2], [2, 0, 2]]) (base case, return)
+    Push [1, 1, 2] to moves: moves = [[1, 0, 2], [2, 0, 2], [1, 1, 2]]
+    Call hanoi(0, 0, 1, 2, [[1, 0, 2], [2, 0, 2], [1, 1, 2]]) (base case, return)
+  Now moves = [[1, 0, 2], [2, 0, 2], [1, 1, 2]]
+
+Actually, let's step back and write the algorithm from scratch, to make sure I understand it correctly.
+
+To move n disks from source to target, using auxiliary as a temporary storage:
+1. Move n-1 disks from source to auxiliary using target as a temporary storage.
+2. Move disk n from source to target.
+3. Move n-1 disks from auxiliary to target using source as a temporary storage.
+
+Translating this to code:
+
+```javascript
+function hanoi(n, source, auxiliary, target, moves) {
+    if (n === 0) {
+        return;
+    }
+    
+    hanoi(n-1, source, target, auxiliary, moves);
+    moves.push([n, source, target]);
+    hanoi(n-1, auxiliary, source, target, moves);
+}
+```
+
+Now, for n=2, source=0, auxiliary=1, target=2:
+
+1. Call hanoi(1, 0, 2, 1, [])
+   - Call hanoi(0, 0, 1, 2, []) (base case, return)
+   - Push [1, 0, 1] to moves: moves = [[1, 0, 1]]
+   - Call hanoi(0, 2, 0, 1, [[1, 0, 1]]) (base case, return)
+2. Push [2, 0, 2] to moves: moves = [[1, 0, 1], [2, 0, 2]]
+3. Call hanoi(1, 1, 0, 2, [[1, 0, 1], [2, 0, 2]])
+   - Call hanoi(0, 1, 2, 0, [[1, 0, 1], [2, 0, 2]]) (base case, return)
+   - Push [1, 1, 2] to moves: moves = [[1, 0, 1], [2, 0, 2], [1, 1, 2]]
+   - Call hanoi(0, 0, 1, 2, [[1, 0, 1], [2, 0, 2], [1, 1, 2]]) (base case, return)
+
+Final moves: [[1, 0, 1], [2, 0, 2], [1, 1, 2]]
+
+Let me double-check this by simulating the moves:
+- Initial state: [[2, 1], [], []]
+- Move disk 1 from peg 0 to peg 1: [[2], [1], []]
+- Move disk 2 from peg 0 to peg 2: [[], [1], [2]]
+- Move disk 1 from peg 1 to peg 2: [[], [], [2, 1]]
+
+This looks correct, but I'm still not sure if my understanding of the function is correct. Let me try a different approach.
+
+Actually, I realize what the confusion was. In the hanoi function, I need to be clear about which peg is which. The confusion arises because the roles of the pegs change in the recursive calls.
+
+Let me rewrite the function to be more explicit:
+
+```javascript
+function hanoi(n, start, end, intermediate, moves) {
+    if (n === 0) {
+        return;
+    }
+    
+    // Move n-1 disks from start to intermediate using end as a temporary storage
+    hanoi(n-1, start, intermediate, end, moves);
+    
+    // Move disk n from start to end
+    moves.push([n, start, end]);
+    
+    // Move n-1 disks from intermediate to end using start as a temporary storage
+    hanoi(n-1, intermediate, end, start, moves);
+}
+```
+
+Now, for n=2, start=0, end=2, intermediate=1:
+
+1. Call hanoi(1, 0, 1, 2, [])
+   - Call hanoi(0, 0, 2, 1, []) (base case, return)
+   - Push [1, 0, 2] to moves: moves = [[1, 0, 2]]
+   - Call hanoi(0, 2, 1, 0, [[1, 0, 2]]) (base case, return)
+2. Push [2, 0, 1] to moves: moves = [[1, 0, 2], [2, 0, 1]]
+3. Call hanoi(1, 1, 2, 0, [[1, 0, 2], [2, 0, 1]])
+   - Call hanoi(0, 1, 0, 2, [[1, 0, 2], [2, 0, 1]]) (base case, return)
+   - Push [1, 1, 0] to moves: moves = [[1, 0, 2], [2, 0, 1], [1, 1, 0]]
+   - Call hanoi(0, 0, 2, 1, [[1, 0, 2], [2, 0, 1], [1, 1, 0]]) (base case, return)
+
+Final moves: [[1, 0, 2], [2, 0, 1], [1, 2, 0]]
+
+Wait, I think I'm still getting confused with the recursive calls. Let me go back to basics.
+
+The Tower of Hanoi algorithm is:
+
+To move n disks from source to target, using auxiliary as a temporary storage:
+1. Move n-1 disks from source to auxiliary using target as a temporary storage.
+2. Move disk n from source to target.
+3. Move n-1 disks from auxiliary to target using source as a temporary storage.
+
+Translating this to code:
+
+```javascript
+function hanoi(n, source, auxiliary, target, moves) {
+    if (n === 1) {
+        moves.push([n, source, target]);
+        return;
+    }
+    
+    hanoi(n-1, source, target, auxiliary, moves);
+    moves.push([n, source, target]);
+    hanoi(n-1, auxiliary, source, target, moves);
+}
+```
+
+Actually, I realize I was making a mistake. Let's trace through the recursion tree for n=2, source=0, auxiliary=1, target=2:
+
+Call hanoi(2, 0, 1, 2, [])
+  - n=2, so not the base case
+  - Call hanoi(1, 0, 2, 1, [])
+    - n=1, so it's the base case
+    - Push [1, 0, 1] to moves: moves = [[1, 0, 1]]
+  - Push [2, 0, 2] to moves: moves = [[1, 0, 1], [2, 0, 2]]
+  - Call hanoi(1, 1, 0, 2, [[1, 0, 1], [2, 0, 2]])
+    - n=1, so it's the base case
+    - Push [1, 1, 2] to moves: moves = [[1, 0, 1], [2, 0, 2], [1, 1, 2]]
+
+Final moves: [[1, 0, 1], [2, 0, 2], [1, 1, 2]]
+
+Let me verify this by tracing through the actual steps:
+- Initial state: [[2, 1], [], []]
+- Move disk 1 from peg 0 to peg 1: [[2], [1], []]
+- Move disk 2 from peg 0 to peg 2: [[], [1], [2]]
+- Move disk 1 from peg 1 to peg 2: [[], [], [2, 1]]
+
+This matches the expected result.
+
+But there's still an issue: I'm mixing up the roles of the auxiliary and target pegs in the recursive calls. The correct recursive formulation of the Tower of Hanoi should be:
+
+To move n disks from source to target, using auxiliary as a temporary storage:
+1. Move n-1 disks from source to auxiliary using target as a temporary storage.
+2. Move disk n from source to target.
+3. Move n-1 disks from auxiliary to target using source as a temporary storage.
+
+I think my formula above is already on the right track; I just need to fix the arguments in the recursive calls. Let me rewrite it:
+
+```javascript
+function hanoi(n, source, auxiliary, target, moves) {
+    if (n === 1) {
+        moves.push([n, source, target]);
+        return;
+    }
+    
+    hanoi(n-1, source, target, auxiliary, moves);
+    moves.push([n, source, target]);
+    hanoi(n-1, auxiliary, source, target, moves);
+}
+```
+
+Wait, this doesn't look right. Let me think about it more carefully.
+
+When I move n-1 disks from source to auxiliary, the temporary storage is the target peg. So that should be:
+
+```
+hanoi(n-1, source, auxiliary, target, moves);
+```
+
+But the parameters are (n, source, auxiliary, target, moves), where source is the source peg, auxiliary is the auxiliary peg, and target is the target peg. So to move n-1 disks from source to auxiliary, I need to swap the roles of auxiliary and target:
+
+```
+hanoi(n-1, source, target, auxiliary, moves);
+```
+
+Similarly, to move n-1 disks from auxiliary to target, the temporary storage is the source peg:
+
+```
+hanoi(n-1, auxiliary, source, target, moves);
+```
+
+Let me try again with these recursive calls:
+
+```javascript
+function hanoi(n, source, auxiliary, target, moves) {
+    if (n === 0) {
+        return;
+    }
+    
+    hanoi(n-1, source, target, auxiliary, moves);
+    moves.push([n, source, target]);
+    hanoi(n-1, auxiliary, source, target, moves);
+}
+```
+
+Now, for n=2, source=0, auxiliary=1, target=2:
+
+Call hanoi(2, 0, 1, 2, [])
+  - n=2, so not the base case
+  - Call hanoi(1, 0, 2, 1, [])
+    - n=1, so not the base case (because I changed the base case to n=0)
+    - Call hanoi(0, 0, 1, 2, []) (base case, return)
+    - Push [1, 0, 2] to moves: moves = [[1, 0, 2]]
+    - Call hanoi(0, 2, 0, 1, [[1, 0, 2]]) (base case, return)
+  - Push [2, 0, 2] to moves: moves = [[1, 0, 2], [2, 0, 2]]
+  - Call hanoi(1, 1, 0, 2, [[1, 0, 2], [2, 0, 2]])
+    - n=1, so not the base case
+    - Call hanoi(0, 1, 2, 0, [[1, 0, 2], [2, 0, 2]]) (base case, return)
+    - Push [1, 1, 2] to moves: moves = [[1, 0, 2], [2, 0, 2], [1, 1, 2]]
+    - Call hanoi(0, 0, 1, 2, [[1, 0, 2], [2, 0, 2], [1, 1, 2]]) (base case, return)
+
+Final moves: [[1, 0, 2], [2, 0, 2], [1, 1, 2]]
+
+Let me verify this by simulating the moves:
+- Initial state: [[2, 1], [], []]
+- Move disk 1 from peg 0 to peg 2: [[2], [], [1]]
+- Move disk 2 from peg 0 to peg 2: [[], [], [2, 1]]
+
+Wait, this doesn't match the expected result for n=2. Let me re-think the algorithm.
+
+I think the issue might be with the target and auxiliary in the recursive calls. Let me try again:
+
+To move n disks from source to target, using auxiliary as a temporary storage:
+1. Move n-1 disks from source to auxiliary using target as a temporary storage.
+2. Move disk n from source to target.
+3. Move n-1 disks from auxiliary to target using source as a temporary storage.
+
+Translating this to code:
+
+```javascript
+function hanoi(n, source, auxiliary, target, moves) {
+    if (n === 1) {
+        moves.push([1, source, target]);
+        return;
+    }
+    
+    hanoi(n-1, source, target, auxiliary, moves);
+    moves.push([n, source, target]);
+    hanoi(n-1, auxiliary, source, target, moves);
+}
+```
+
+Now, for n=2, source=0, auxiliary=1, target=2:
+
+Call hanoi(2, 0, 1, 2, [])
+  - n=2, so not the base case
+  - Call hanoi(1, 0, 2, 1, [])
+    - n=1, so it's the base case
+    - Push [1, 0, 1] to moves: moves = [[1, 0, 1]]
+  - Push [2, 0, 2] to moves: moves = [[1, 0, 1], [2, 0, 2]]
+  - Call hanoi(1, 1, 0, 2, [[1, 0, 1], [2, 0, 2]])
+    - n=1, so it's the base case
+    - Push [1, 1, 2] to moves: moves = [[1, 0, 1], [2, 0, 2], [1, 1, 2]]
+
+Final moves: [[1, 0, 1], [2, 0, 2], [1, 1, 2]]
+
+Let me verify this by simulating the moves:
+- Initial state: [[2, 1], [], []]
+- Move disk 1 from peg 0 to peg 1: [[2], [1], []]
+- Move disk 2 from peg 0 to peg 2: [[], [1], [2]]
+- Move disk 1 from peg 1 to peg 2: [[], [], [2, 1]]
+
+This looks correct!
+
+I keep making mistakes in my traces, so let's try a simpler and clearer approach. I'll reimplement the algorithm step by step, and then trace through for a small example:
+
+```javascript
+function hanoi(n, source, auxiliary, target, moves) {
+    if (n === 1) {
+        moves.push([1, source, target]);
+        return;
+    }
+    
+    // Move n-1 disks from source to auxiliary
+    hanoi(n-1, source, target, auxiliary, moves);
+    
+    // Move the nth disk from source to target
+    moves.push([n, source, target]);
+    
+    // Move n-1 disks from auxiliary to target
+    hanoi(n-1, auxiliary, source, target, moves);
+}
+```
+
+Let's trace this through for n=3, source=0, auxiliary=1, target=2:
+
+Call hanoi(3, 0, 1, 2, [])
+  - n=3, so not the base case
+  - Call hanoi(2, 0, 2, 1, [])
+    - n=2, so not the base case
+    - Call hanoi(1, 0, 1, 2, [])
+      - n=1, so it's the base case
+      - Push [1, 0, 2] to moves: moves = [[1, 0, 2]]
+    - Push [2, 0, 1] to moves: moves = [[1, 0, 2], [2, 0, 1]]
+    - Call hanoi(1, 2, 0, 1, [[1, 0, 2], [2, 0, 1]])
+      - n=1, so it's the base case
+      - Push [1, 2, 1] to moves: moves = [[1, 0, 2], [2, 0, 1], [1, 2, 1]]
+  - Push [3, 0, 2] to moves: moves = [[1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2]]
+  - Call hanoi(2, 1, 0, 2, [[1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2]])
+    - n=2, so not the base case
+    - Call hanoi(1, 1, 2, 0, [[1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2]])
+      - n=1, so it's the base case
+      - Push [1, 1, 0] to moves: moves = [[1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0]]
+    - Push [2, 1, 2] to moves: moves = [[1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2]]
+    - Call hanoi(1, 0, 1, 2, [[1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2]])
+      - n=1, so it's the base case
+      - Push [1, 0, 2] to moves: moves = [[1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2]]
+
+Final moves: [[1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2]]
+
+Now, let's verify this by simulating the moves:
+- Initial state: [[3, 2, 1], [], []]
+- Move disk 1 from peg 0 to peg 2: [[3, 2], [], [1]]
+- Move disk 2 from peg 0 to peg 1: [[3], [2], [1]]
+- Move disk 1 from peg 2 to peg 1: [[3], [2, 1], []]
+- Move disk 3 from peg 0 to peg 2: [[], [2, 1], [3]]
+- Move disk 1 from peg 1 to peg 0: [[1], [2], [3]]
+- Move disk 2 from peg 1 to peg 2: [[1], [], [3, 2]]
+- Move disk 1 from peg 0 to peg 2: [[], [], [3, 2, 1]]
+
+This matches the example given in the problem statement, so I think I finally have the correct implementation!
+
+Now, for n=12, the total number of moves will be 2^12 - 1 = 4095. Let me implement the function and compute the full list:
+
+```javascript
+function hanoi(n, source, auxiliary, target, moves) {
+    if (n === 1) {
+        moves.push([1, source, target]);
+        return;
+    }
+    
+    hanoi(n-1, source, target, auxiliary, moves);
+    moves.push([n, source, target]);
+    hanoi(n-1, auxiliary, source, target, moves);
+}
+
+let moves = [];
+hanoi(12, 0, 1, 2, moves);
+```
+
+Instead of computing the full list by hand, let me generate the list programmatically:
+
+```javascript
+function hanoi(n, source, auxiliary, target, moves) {
+    if (n === 1) {
+        moves.push([1, source, target]);
+        return;
+    }
+    
+    hanoi(n-1, source, target, auxiliary, moves);
+    moves.push([n, source, target]);
+    hanoi(n-1, auxiliary, source, target, moves);
+}
+
+function getHanoiMoves(n, source, auxiliary, target) {
+    let moves = [];
+    hanoi(n, source, auxiliary, target, moves);
+    return moves;
+}
+
+let moves = getHanoiMoves(12, 0, 1, 2);
+```
+
+Ah wait, I see another issue. In the Tower of Hanoi algorithm, the recursive base case is when n=1, not n=0. But I sometimes write n=0 as the base case. Let me fix that:
+
+```javascript
+function hanoi(n, source, auxiliary, target, moves) {
+    if (n === 1) {
+        moves.push([1, source, target]);
+        return;
+    }
+    
+    hanoi(n-1, source, target, auxiliary, moves);
+    moves.push([n, source, target]);
+    hanoi(n-1, auxiliary, source, target, moves);
+}
+
+function getHanoiMoves(n, source, auxiliary, target) {
+    let moves = [];
+    hanoi(n, source, auxiliary, target, moves);
+    return moves;
+}
+
+let moves = getHanoiMoves(12, 0, 1, 2);
+```
+
+Hold on, I just realized that there's another issue. In the recursive calls, I'm switching the roles of the pegs, but I need to be consistent. Let me re-trace the algorithm:
+
+To move n disks from source to target, using auxiliary as a temporary storage:
+1. Move n-1 disks from source to auxiliary using target as a temporary storage.
+2. Move disk n from source to target.
+3. Move n-1 disks from auxiliary to target using source as a temporary storage.
+
+In step 1, I'm moving n-1 disks from source to auxiliary, so source remains the source, auxiliary becomes the target, and target becomes the auxiliary:
+```
+hanoi(n-1, source, auxiliary, target, moves);
+```
+
+But this doesn't match the parameter signature (n, source, auxiliary, target, moves). Let me be explicit about the roles:
+
+```javascript
+function hanoi(n, from, to, via, moves) {
+    if (n === 1) {
+        moves.push([1, from, to]);
+        return;
+    }
+    
+    hanoi(n-1, from, via, to, moves);
+    moves.push([n, from, to]);
+    hanoi(n-1, via, to, from, moves);
+}
+
+function getHanoiMoves(n, source, auxiliary, target) {
+    let moves = [];
+    hanoi(n, source, auxiliary, target, moves);
+    return moves;
+}
+
+let moves = getHanoiMoves(12, 0, 1, 2);
+```
+
+I think there's still an error. Let me try again, from first principles:
+
+To move n disks from source to target, using auxiliary as a temporary storage:
+1. Move n-1 disks from source to auxiliary using target as a temporary storage.
+2. Move disk n from source to target.
+3. Move n-1 disks from auxiliary to target using source as a temporary storage.
+
+Translating this to code:
+
+```javascript
+function hanoi(n, source, auxiliary, target, moves) {
+    if (n === 1) {
+        moves.push([1, source, target]);
+        return;
+    }
+    
+    // Move n-1 disks from source to auxiliary
+    hanoi(n-1, source, target, auxiliary, moves);
+    
+    // Move the nth disk from source to target
+    moves.push([n, source, target]);
+    
+    // Move n-1 disks from auxiliary to target
+    hanoi(n-1, auxiliary, source, target, moves);
+}
+```
+
+But now I have a different argument order. Let me be clearer:
+
+```javascript
+function hanoi(n, from, aux, to, moves) {
+    if (n === 1) {
+        moves.push([1, from, to]);
+        return;
+    }
+    
+    // Move n-1 disks from 'from' to 'aux'
+    hanoi(n-1, from, to, aux, moves);
+    
+    // Move the nth disk from 'from' to 'to'
+    moves.push([n, from, to]);
+    
+    // Move n-1 disks from 'aux' to 'to'
+    hanoi(n-1, aux, from, to, moves);
+}
+```
+
+I think the confusion arose because I was swapping the roles of the pegs in the recursive calls, but I wasn't clear about which peg was which. Let's trace this through step by step for n=3, from=0, aux=1, to=2:
+
+Call hanoi(3, 0, 1, 2, [])
+  - n=3, so not the base case
+  - Call hanoi(2, 0, 2, 1, [])
+    - n=2, so not the base case
+    - Call hanoi(1, 0, 1, 2, [])
+      - n=1, so it's the base case
+      - Push [1, 0, 2] to moves: moves = [[1, 0, 2]]
+    - Push [2, 0, 1] to moves: moves = [[1, 0, 2], [2, 0, 1]]
+    - Call hanoi(1, 2, 0, 1, [[1, 0, 2], [2, 0, 1]])
+      - n=1, so it's the base case
+      - Push [1, 2, 1] to moves: moves = [[1, 0, 2], [2, 0, 1], [1, 2, 1]]
+  - Push [3, 0, 2] to moves: moves = [[1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2]]
+  - Call hanoi(2, 1, 0, 2, [[1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2]])
+    - n=2, so not the base case
+    - Call hanoi(1, 1, 2, 0, [[1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2]])
+      - n=1, so it's the base case
+      - Push [1, 1, 0] to moves: moves = [[1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0]]
+    - Push [2, 1, 2] to moves: moves = [[1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2]]
+    - Call hanoi(1, 0, 1, 2, [[1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2]])
+      - n=1, so it's the base case
+      - Push [1, 0, 2] to moves: moves = [[1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2]]
+
+Final moves: [[1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2]]
+
+Let me verify this by simulating the moves:
+- Initial state: [[3, 2, 1], [], []]
+- Move disk 1 from peg 0 to peg 2: [[3, 2], [], [1]]
+- Move disk 2 from peg 0 to peg 1: [[3], [2], [1]]
+- Move disk 1 from peg 2 to peg 1: [[3], [2, 1], []]
+- Move disk 3 from peg 0 to peg 2: [[], [2, 1], [3]]
+- Move disk 1 from peg 1 to peg 0: [[1], [2], [3]]
+- Move disk 2 from peg 1 to peg 2: [[1], [], [3, 2]]
+- Move disk 1 from peg 0 to peg 2: [[], [], [3, 2, 1]]
+
+This matches the example given in the problem statement, so I think I have the correct implementation now.
+
+Now, for n=12, the total number of moves will be 2^12 - 1 = 4095. Let me generate the full list:
+
+```javascript
+function hanoi(n, from, aux, to, moves) {
+    if (n === 1) {
+        moves.push([1, from, to]);
+        return;
+    }
+    
+    hanoi(n-1, from, to, aux, moves);
+    moves.push([n, from, to]);
+    hanoi(n-1, aux, from, to, moves);
+}
+
+function getHanoiMoves(n, source, auxiliary, target) {
+    let moves = [];
+    hanoi(n, source, auxiliary, target, moves);
+    return moves;
+}
+
+let moves = getHanoiMoves(12, 0, 1, 2);
+```
+
+I'm not going to compute this by hand, because it would be a lot of moves. But I'm going to list the moves using the correct formula. First, let me fix one last issue in my implementation:
+
+In the Tower of Hanoi, the disks are numbered from 1 (smallest) to n (largest). When a move is specified as [disk_id, from_peg, to_peg], the disk_id refers to the size of the disk being moved, not just the number 1 as I've been pushing in the base case.
+
+Let me fix this:
+
+```javascript
+function hanoi(n, from, aux, to, moves) {
+    if (n === 1) {
+        moves.push([n, from, to]);
+        return;
+    }
+    
+    hanoi(n-1, from, to, aux, moves);
+    moves.push([n, from, to]);
+    hanoi(n-1, aux, from, to, moves);
+}
+
+function getHanoiMoves(n, source, auxiliary, target) {
+    let moves = [];
+    hanoi(n, source, auxiliary, target, moves);
+    return moves;
+}
+
+let moves = getHanoiMoves(12, 0, 1, 2);
+```
+
+This should now produce the correct list of moves for n=12.
+
+Since there are 4095 moves, I won't list them all, but I will show the structure of the solution:
+
+For n=1, the moves are: [[1, 0, 2]]
+For n=2, the moves are: [[1, 0, 1], [2, 0, 2], [1, 1, 2]]
+For n=3, the moves are: [[1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2]]
+
+And so on.
+
+Now, for n=12, let me generate the full list of moves:
+
+Alright, I'm going to implement the hanoi function for n=12, from=0, aux=1, to=2 and compute the list of moves:
+
+```
+function hanoi(n, from, aux, to, moves) {
+    if (n === 1) {
+        moves.push([n, from, to]);
+        return;
+    }
+    
+    hanoi(n-1, from, to, aux, moves);
+    moves.push([n, from, to]);
+    hanoi(n-1, aux, from, to, moves);
+}
+
+function getHanoiMoves(n, from, aux, to) {
+    let moves = [];
+    hanoi(n, from, aux, to, moves);
+    return moves;
+}
+
+let moves = getHanoiMoves(12, 0, 1, 2);
+```
+
+Here is the complete list of moves for n=12:
+
+```
+moves=[[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[5,0,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[4,1,2],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[6,0,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[5,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[7,0,2],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[6,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[4,1,2],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[5,0,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[8,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[6,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[4,1,2],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[5,0,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[7,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[5,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[9,0,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[4,1,2],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[5,0,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[7,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[5,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[8,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[4,1,2],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[5,0,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[7,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[5,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[10,0,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[5,0,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[7,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[5,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[8,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[4,1,2],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[5,0,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[7,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[5,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[9,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[5,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[7,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[5,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[8,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[4,1,2],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[5,0,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[7,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[5,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[11,0,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[4,1,2],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[5,0,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[7,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[5,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[8,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[4,1,2],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[5,0,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[7,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[5,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[9,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[5,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[7,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[5,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[8,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[4,1,2],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[5,0,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[7,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[5,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[10,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[5,0,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[7,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[5,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[8,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[4,1,2],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[5,0,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[7,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[5,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[9,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[5,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[7,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[5,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[8,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[4,1,2],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[5,0,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[7,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[5,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[12,0,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[4,1,2],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[5,0,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[7,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[5,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[8,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[4,1,2],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[5,0,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[7,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[5,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[9,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[5,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[7,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[5,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[8,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[4,1,2],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[5,0,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[7,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[5,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[10,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[5,0,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[7,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[5,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[8,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[4,1,2],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[5,0,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[7,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[5,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[9,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[5,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[7,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[5,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[8,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[4,1,2],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[5,0,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[7,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[5,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[11,2,0],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[5,0,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[7,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[5,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[8,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[4,1,2],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[5,0,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[7,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[5,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[9,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[5,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[7,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[5,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[8,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[4,1,2],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[5,0,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[7,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[5,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[10,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[5,0,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[7,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[5,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[8,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[4,1,2],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[5,0,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[7,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[5,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[9,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[5,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[7,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[5,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[8,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[4,1,2],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[5,0,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[7,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[5,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0]]
+```
+
+So the answer is:
+
+```
+moves=[[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[5,0,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[4,1,2],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[6,0,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[5,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[7,0,2],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[6,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[4,1,2],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[5,0,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[8,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[6,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[4,1,2],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[5,0,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[7,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[5,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[9,0,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[4,1,2],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[5,0,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[7,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[5,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[8,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[4,1,2],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[5,0,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[7,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[5,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[10,0,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[5,0,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[7,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[5,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[8,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[4,1,2],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[5,0,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[7,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[5,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[9,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[5,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[7,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[5,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[8,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[4,1,2],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[5,0,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[7,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[5,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[11,0,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[4,1,2],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[5,0,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[7,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[5,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[8,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[4,1,2],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[5,0,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[7,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[5,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[9,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[5,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[7,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[5,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[8,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[4,1,2],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[5,0,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[7,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[5,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[10,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[5,0,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[7,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[5,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[8,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[4,1,2],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[5,0,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[7,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[5,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[9,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[5,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[7,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[5,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[8,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[4,1,2],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[5,0,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[7,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[5,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[11,2,0],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[5,0,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[7,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[5,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[8,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[4,1,2],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[5,0,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[7,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[5,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[9,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[5,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[7,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[5,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[8,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[4,1,2],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[5,0,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[7,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[5,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[10,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[5,0,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[7,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[5,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[8,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[4,1,2],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[5,0,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[7,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[5,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[9,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[5,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[7,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[5,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[8,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[4,1,2],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[5,0,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[7,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[5,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[12,0,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[4,1,2],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[5,0,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[7,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[5,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[8,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[4,1,2],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[5,0,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[7,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[5,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[9,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[5,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[7,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[5,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[8,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[4,1,2],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[5,0,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[7,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[5,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[10,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[5,0,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[7,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[5,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[8,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[4,1,2],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[5,0,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[7,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[5,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[9,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[5,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[7,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[5,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[8,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[4,1,2],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[5,0,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[7,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[5,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[11,2,0],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[5,0,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[7,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[5,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[8,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[4,1,2],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[5,0,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[7,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,1,2],[2,1,0],[1,2,0],[5,2,1],[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2],[4,2,0],[1,2,1],[2,2,0],[1,1,0],[3,2,1],[1,0,2],[2,0,1],[1,2,1],[6,0,1],[1,1,0],[2,1,2],[1,0,2],[3,1,0],[1,2,1],[2,2,0],[1,1,0],[4,1,2],[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1],[5,1,0],[1,1,2],[2,1,0],[1,2,0],[3,1,2],[1,0,1],[2,0,2],[1,1,2],[4,0,1],[1,2,0],[2,2,1],[1,0,1],[3,2,0],[1,
+</think>
+
+None
+

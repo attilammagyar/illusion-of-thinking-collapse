@@ -1,0 +1,574 @@
+# model_name='sonar-reasoning-pro', reasoning_budget=32000, tries=0, n=8, i=1
+# valid_prefix_length=0, is_valid_solution=0, first_correction=-1
+
+<think>
+
+Okay, let's tackle this Tower of Hanoi problem with 8 disks. The user wants the complete sequence of moves to transfer all disks from peg 0 to peg 2, following the rules. They specified not to truncate the list, so I need to generate all 255 moves. 
+
+First, I remember that the Tower of Hanoi has a recursive solution. For n disks, the minimum number of moves is 2^n - 1. For 8 disks, that's 255 moves. The recursive approach involves moving the top n-1 disks to the auxiliary peg, then moving the largest disk to the target peg, and finally moving the n-1 disks onto the largest disk. But since the user wants the exact move list, I need to figure out each individual move.
+
+Looking at the search results, result [3] from Wikipedia mentions a binary solution. It says that each move can be determined by the binary representation of the move number. The formulas for from_peg and to_peg are given using bitwise operations. For odd n (which 8 is even), the references to pegs 1 and 2 need to be reversed. Wait, the note says for even n puzzles, the output references to pegs 1 and 2 need to be reversed. So since we have 8 disks (even), the standard from and to pegs would be adjusted.
+
+The formulas from Wikipedia are:
+from peg = (m - (m & -m)) % 3
+to peg = (m + (m & -m)) % 3
+
+But since n is even (8), we need to swap pegs 1 and 2 in the output. Hmm, how does that affect the calculation? Maybe the target peg alternates based on the parity of the number of disks. For even n, the first move is to peg 1 instead of peg 2. Wait, the standard solution for even disks involves alternating the target between peg 1 and peg 2 each time you start a new disk's movement. But perhaps the binary method accounts for this automatically with the formulas.
+
+Alternatively, the Wikipedia entry mentions that for even n, the references to pegs 1 and 2 are reversed. So when applying the formulas, the resulting pegs might need to be adjusted. Let me check the example given in [3]. For move 216, which is part of an 8-disk solution, the from peg is 2 and to peg is 1. But in the standard solution, maybe that's correct for even n.
+
+Wait, the user's goal is to move all disks to peg 2. The standard recursive solution for even n would require a different intermediate peg. Let me think. The recursive method for even n would alternate the auxiliary peg between 1 and 2. But perhaps the binary method automatically handles this via the formulas.
+
+Another approach is to use the iterative method. In the iterative solution, the smallest disk (disk 1) moves in a cyclic pattern: for even n, it moves from peg 0 -> 1 -> 2 -> 0, etc. Each move of the smallest disk alternates with moving the next possible disk that can be moved. But generating all 255 moves manually would be time-consuming.
+
+Alternatively, the binary method described in [3] provides a way to compute each move's from and to pegs based on the move number. Let's try to apply that.
+
+For each move m (starting from 1 to 255), compute the from and to pegs using the formulas:
+
+from_peg = (m - (m & -m)) % 3
+to_peg = (m + (m & -m)) % 3
+
+But since n is even (8), we need to swap pegs 1 and 2 in the result. Wait, the note in [3] says: "For even n puzzles, the output references to pegs 1 and 2 need to be reversed." So after computing from_peg and to_peg using the formulas, if the result is 1, change it to 2, and if it's 2, change it to 1. But wait, does that apply to both from and to pegs? Or is there a different adjustment?
+
+Looking at the example in [3], for move 216 (which is part of an 8-disk solution), the from peg is 2 and to peg is 1. But according to the formulas, let's compute for m=216.
+
+First, m=216. Let's compute m & -m. The binary of 216 is 11011000. The two's complement (negative) would be 00101000, so m & -m is 00001000, which is 8. Then:
+
+from_peg = (216 - 8) % 3 = 208 % 3 = 208 /3 is 69*3=207, remainder 1. So 1.
+to_peg = (216 +8) %3 = 224%3= 224/3=74*3=222, remainder 2. So 2.
+
+But since n is even, we need to swap 1 and 2. So from_peg becomes 2, to_peg becomes 1. Which matches the example in [3] where from peg is 2 and to peg is 1. So yes, for even n, after computing from and to pegs using the formulas, we swap 1 and 2.
+
+So the algorithm would be:
+
+For each move m from 1 to 255:
+
+1. Compute the number of trailing zeros in m's binary representation to find the disk to move. The disk is (number of trailing zeros) +1. For example, if m is 1 (binary 1), trailing zeros=0, disk=1. If m is 2 (10), trailing zeros=1, disk=2. If m is 4 (100), trailing zeros=2, disk=3, etc.
+
+2. Compute from_peg and to_peg using the formulas, then swap 1 and 2 if n is even.
+
+Wait, but the formulas already give the from and to pegs. However, for even n, the standard solution requires swapping the intermediate pegs. So after applying the formulas, we need to swap pegs 1 and 2 in the from and to pegs.
+
+Wait, the note in [3] says: "For even n puzzles, the output references to pegs 1 and 2 need to be reversed." So after computing from_peg and to_peg using the formulas, we swap any occurrence of 1 with 2 and vice versa.
+
+So for each move m:
+
+Compute from_peg_initial = (m - (m & -m)) %3
+
+Compute to_peg_initial = (m + (m & -m)) %3
+
+Then, if n is even (which it is, 8), swap 1 and 2 in both from_peg and to_peg.
+
+Wait, but how exactly? For example, if from_peg_initial is 0, leave it as 0. If it's 1, change to 2. If it's 2, change to 1. Same for to_peg_initial.
+
+So the adjusted from_peg and to_peg would be:
+
+from_peg = from_peg_initial if 0, else 3 - from_peg_initial
+
+Similarly for to_peg.
+
+Wait, 3 - 1 = 2, 3 -2=1. So yes, that swaps 1 and 2, leaving 0 as is.
+
+So the steps are:
+
+For each move m from 1 to 255:
+
+1. Determine the disk to move: count the number of trailing zeros in m's binary representation, add 1. Let's call this disk d.
+
+2. Compute from_peg_initial = (m - (m & -m)) %3
+
+3. Compute to_peg_initial = (m + (m & -m)) %3
+
+4. Since n=8 is even, swap 1 and 2 in from_peg_initial and to_peg_initial:
+
+   from_peg = from_peg_initial if 0 else 3 - from_peg_initial
+
+   to_peg = to_peg_initial if 0 else 3 - to_peg_initial
+
+Wait, no. Wait, the note says for even n, the references to pegs 1 and 2 need to be reversed. So any occurrence of 1 becomes 2 and vice versa. So for example, if from_peg_initial is 1, it becomes 2; if it's 2, it becomes 1. If it's 0, remains 0.
+
+So the adjustment is:
+
+from_peg = from_peg_initial if from_peg_initial ==0 else (2 if from_peg_initial ==1 else 1)
+
+Similarly for to_peg.
+
+Alternatively, using the formula: adjusted_peg = (3 - peg) %3 if peg !=0 else 0. Wait, for peg=1: 3-1=2, for peg=2:3-2=1. So yes.
+
+So adjusted_from_peg = from_peg_initial if from_peg_initial ==0 else 3 - from_peg_initial
+
+Same for to_peg.
+
+So applying that, let's test with m=1:
+
+m=1 (binary 1), trailing zeros=0 → disk=1.
+
+from_peg_initial = (1 -1) %3 =0%3=0
+
+to_peg_initial = (1 +1) %3=2%3=2
+
+Since n is even, adjust:
+
+from_peg remains 0.
+
+to_peg_initial is 2 → adjusted to 1.
+
+So move 1: from 0 to 1. But wait, in the example given in the user's query with 3 disks, the first move is from 0 to 2. But according to this, for n=8 (even), the first move is from 0 to 1. That seems conflicting. Wait, maybe the initial example is for n=3 (odd), so the adjustment isn't applied. Let's check.
+
+In the user's example with 3 disks (n=3, odd), the first move is from 0 to 2. According to the formulas, for m=1:
+
+from_peg_initial = (1-1)%3=0
+
+to_peg_initial = (1+1)%3=2
+
+Since n is odd, no adjustment. So from 0 to 2. Correct.
+
+But for n=8 (even), the adjustment swaps 1 and 2. So for m=1, to_peg_initial is 2, which becomes 1 after adjustment. So the first move is from 0 to 1. That makes sense for even n. So the smallest disk moves to peg 1 first, then alternates.
+
+So the algorithm for generating each move is:
+
+For each move m from 1 to 255:
+
+1. Find the disk to move: count trailing zeros in m's binary, add 1.
+
+2. Compute from_peg_initial and to_peg_initial using the formulas.
+
+3. Adjust from_peg and to_peg by swapping 1 and 2 if n is even.
+
+4. The disk to move is the smallest one in the from_peg, so we need to track the state of each peg after each move to ensure the moves are valid.
+
+Wait, but tracking the state of each peg after each move is necessary to generate the peg0, peg1, peg2 columns. This complicates things because each move affects the pegs' states. To generate the correct peg states, we need to simulate each move step by step, ensuring that we don't place a larger disk on a smaller one.
+
+But given the complexity, perhaps there's a pattern to the moves that can be followed without simulation. However, given the user's requirement for the exact peg states after each move, we need to simulate each move and track the pegs.
+
+This is going to be a bit involved. Let's outline the steps:
+
+1. Initialize the pegs: peg0 = [8,7,6,5,4,3,2,1], peg1 = [], peg2 = [].
+
+2. For each move m from 1 to 255:
+
+   a. Determine the disk to move (d) as (number of trailing zeros in m) +1.
+
+   b. Compute from_peg_initial and to_peg_initial using the formulas.
+
+   c. Adjust from_peg and to_peg by swapping 1 and 2 if n is even.
+
+   d. Find the current from_peg (adjusted) and check that the top disk is d. If not, there's an error.
+
+   e. Move disk d from from_peg to to_peg, ensuring that the top disk on to_peg is larger than d.
+
+   f. Update the peg states.
+
+But simulating this for 255 moves manually is impractical. However, since the Tower of Hanoi has a known optimal solution, perhaps the moves can be generated systematically.
+
+Alternatively, the binary method's formulas should directly give the correct from and to pegs, and the disk to move is determined by the trailing zeros. The peg states can be built incrementally.
+
+But to generate the peg states correctly, we need to track each peg's disks after each move. Let's attempt to generate the first few moves and see if the pattern holds.
+
+Starting with peg0: [8,7,6,5,4,3,2,1], peg1: [], peg2: [].
+
+Move 1:
+
+m=1, binary 1. Trailing zeros: 0 → disk=1.
+
+from_peg_initial = (1 -1) %3 =0%3=0.
+
+to_peg_initial = (1+1)%3=2%3=2.
+
+Since n=8 (even), swap 1 and 2 in to_peg. So to_peg becomes 1.
+
+So move disk 1 from peg0 to peg1.
+
+After move 1:
+
+peg0: [8,7,6,5,4,3,2], peg1: [1], peg2: [].
+
+Move 2:
+
+m=2, binary 10. Trailing zeros:1 → disk=2.
+
+from_peg_initial = (2 -2) %3=0%3=0.
+
+to_peg_initial = (2+2)%3=4%3=1.
+
+Adjust: since n even, swap 1 and 2. So to_peg becomes 2.
+
+Move disk 2 from peg0 to peg2.
+
+After move 2:
+
+peg0: [8,7,6,5,4,3], peg1: [1], peg2: [2].
+
+Move 3:
+
+m=3, binary 11. Trailing zeros:0 → disk=1.
+
+from_peg_initial = (3 -1) %3=2%3=2.
+
+to_peg_initial = (3 +1)%3=4%3=1.
+
+Adjust: from_peg_initial=2 → becomes 1. to_peg_initial=1 → becomes 2.
+
+So move disk1 from peg1 to peg2.
+
+After move3:
+
+peg0: [8,7,6,5,4,3], peg1: [], peg2: [2,1].
+
+Move4:
+
+m=4, binary 100. Trailing zeros:2 → disk=3.
+
+from_peg_initial = (4 -4) %3=0%3=0.
+
+to_peg_initial = (4+4)%3=8%3=2.
+
+Adjust: to_peg becomes 1 (since n even).
+
+Move disk3 from peg0 to peg1.
+
+After move4:
+
+peg0: [8,7,6,5,4], peg1: [3], peg2: [2,1].
+
+Move5:
+
+m=5, binary 101. Trailing zeros:0 → disk=1.
+
+from_peg_initial = (5 -1) %3=4%3=1.
+
+to_peg_initial = (5 +1)%3=6%3=0.
+
+Adjust: from_peg_initial=1 → becomes 2. to_peg_initial=0 remains 0.
+
+Move disk1 from peg2 to peg0.
+
+After move5:
+
+peg0: [8,7,6,5,4,1], peg1: [3], peg2: [2].
+
+Move6:
+
+m=6, binary 110. Trailing zeros:1 → disk=2.
+
+from_peg_initial = (6 -2) %3=4%3=1.
+
+to_peg_initial = (6 +2)%3=8%3=2.
+
+Adjust: from_peg_initial=1 → becomes 2. to_peg_initial=2 → becomes 1.
+
+Move disk2 from peg2 to peg1.
+
+After move6:
+
+peg0: [8,7,6,5,4,1], peg1: [3,2], peg2: [].
+
+Move7:
+
+m=7, binary 111. Trailing zeros:0 → disk=1.
+
+from_peg_initial = (7 -1) %3=6%3=0.
+
+to_peg_initial = (7 +1)%3=8%3=2.
+
+Adjust: to_peg becomes 1.
+
+Move disk1 from peg0 to peg1.
+
+After move7:
+
+peg0: [8,7,6,5,4], peg1: [3,2,1], peg2: [].
+
+Move8:
+
+m=8, binary 1000. Trailing zeros:3 → disk=4.
+
+from_peg_initial = (8 -8) %3=0%3=0.
+
+to_peg_initial = (8+8)%3=16%3=1.
+
+Adjust: to_peg becomes 2.
+
+Move disk4 from peg0 to peg2.
+
+After move8:
+
+peg0: [8,7,6,5], peg1: [3,2,1], peg2: [4].
+
+Continuing this pattern would generate all 255 moves. However, manually simulating each move is time-consuming. Instead, the binary method's formulas can be used to generate each move's from and to pegs, and the disk to move. Then, by applying these moves in order and tracking the peg states, we can generate the required list.
+
+The key challenge is to accurately track the state of each peg after each move. Since the Tower of Hanoi solution is deterministic and follows a specific pattern, the moves can be generated programmatically. However, since I can't write code here, I need to rely on the known properties of the solution.
+
+Another approach is to note that the solution for 8 disks follows a specific cycle. The smallest disk moves every other move, alternating between pegs in a specific order (for even n, it's 0→1→2→0...). Each subsequent disk moves less frequently, following a pattern based on powers of 2.
+
+But given the user's insistence on the exact move list and the requirement to output all 255 moves, I need to ensure that each move is correctly generated and the peg states are accurately tracked.
+
+Given the complexity, I'll proceed to generate the move list using the binary method formulas, adjusting for even n, and simulate the peg states step by step. Each move's disk is determined by the number of trailing zeros in m's binary representation. The from and to pegs are computed using the adjusted formulas, and the peg states are updated accordingly.
+
+This will require generating each move's details, including the peg states after each move. Since this is a lengthy process, I'll start generating the moves in the specified format, ensuring that each move_id, from_peg, to_peg, and peg states are correctly recorded.
+
+The final answer will be a CSV-like list following the example provided, with each move's details. Given the 255 moves, this will be a long list, but adhering to the format is crucial. Each move's peg states are represented as space-separated lists of disks from bottom to top.
+
+</think>
+
+
+
+```
+move_id,from_peg,to_peg,peg0,peg1,peg2
+1,0,1,8 7 6 5 4 3 2,,1
+2,0,2,8 7 6 5 4 3,,1 2
+3,1,2,8 7 6 5 4 3,,2 1
+4,0,1,8 7 6 5 4,,3 2 1
+5,2,0,8 7 6 5 4 1,,3 2
+6,2,1,8 7 6 5 4 1,2,3
+7,0,1,8 7 6 5 4,1 2,3
+8,0,2,8 7 6 5,,1 2 4 3
+9,1,2,8 7 6 5,,2 1 4 3
+10,1,0,8 7 6 5 3,,2 1 4
+11,2,0,8 7 6 5 3 1,,2 4
+12,1,2,8 7 6 5 3,2,4 1
+13,0,1,8 7 6 5,3 2,4 1
+14,0,2,8 7 6,,3 2 5 4 1
+15,1,2,8 7 6,,3 2 5 4 1
+16,0,1,8 7 6,,3 2 5 4 1
+17,2,0,8 7 6 1,,3 2 5 4
+18,2,1,8 7 6 1,2,3 5 4
+19,0,1,8 7 6,1 2,3 5 4
+20,2,0,8 7 6 4,1 2,3 5
+21,1,2,8 7 6 4,2,3 5 1
+22,1,0,8 7 6 4 2,,3 5 1
+23,2,0,8 7 6 4 2 1,,3 5
+24,1,2,8 7 6 4 2,1,3 5
+25,0,1,8 7 6 4,2 1,3 5
+26,0,2,8 7,,2 1 6 4 3 5
+27,1,2,8 7,,2 1 6 4 3 5
+28,1,0,8 7 5,,2 1 6 4 3
+29,2,0,8 7 5 1,,2 6 4 3
+30,1,2,8 7 5,2,6 4 3 1
+31,0,1,8 7,5 2,6 4 3 1
+32,0,2,8,,5 2 7 6 4 3 1
+33,1,2,8,,5 2 7 6 4 3 1
+34,1,0,8 1,,5 2 7 6 4 3
+35,2,0,8 1 2,,5 7 6 4 3
+36,1,2,8 1,2,5 7 6 4 3
+37,0,1,8,1 2,5 7 6 4 3
+38,0,2,,1 2 8 5 7 6 4 3
+39,1,2,,1 2 8 5 7 6 4 3
+40,0,1,,1 2 8 5 7 6 4 3
+41,2,0,3,,1 2 8 5 7 6 4
+42,2,1,3,4,,1 2 8 5 7 6
+43,0,1,3 1,4,,2 8 5 7 6
+44,0,2,3 1,4,8 5 7 6
+45,1,2,3 1,4,5 8 7 6
+46,1,0,3 1 4,,5 8 7 6
+47,2,0,3 1 4 2,,5 8 7 6
+48,1,2,3 1 4,2,5 8 7 6
+49,0,1,3 1,4 2,5 8 7 6
+50,0,2,3,4 2 1,5 8 7 6
+51,1,2,3,4 2 1,5 8 7 6
+52,1,0,3 5,,4 2 1 8 7 6
+53,2,0,3 5 1,,4 2 8 7 6
+54,1,2,3 5,1,4 2 8 7 6
+55,0,1,3 5 1,,4 2 8 7 6
+56,2,0,3 5 1 2,,4 8 7 6
+57,2,1,3 5 1 2,6,4 8 7
+58,0,1,3 5 1,2 6,4 8 7
+59,0,2,3 5,2 6 1,4 8 7
+60,1,2,3 5,2 6 1,4 8 7
+61,1,0,3 5 4,,2 6 1 8 7
+62,2,0,3 5 4 1,,2 6 8 7
+63,1,2,3 5 4,1,2 6 8 7
+64,0,1,3 5 4 1,,2 6 8 7
+65,2,0,3 5 4 1 2,,6 8 7
+66,2,1,3 5 4 1 2,7,6 8
+67,0,1,3 5 4 1,2 7,6 8
+68,0,2,3 5 4,2 7 1,6 8
+69,1,2,3 5 4,2 7 1,6 8
+70,1,0,3 5 4 6,,2 7 1 8
+71,2,0,3 5 4 6 1,,2 7 8
+72,1,2,3 5 4 6,1,2 7 8
+73,0,1,3 5 4 6 1,,2 7 8
+74,2,0,3 5 4 6 1 2,,7 8
+75,2,1,3 5 4 6 1 2,8,7
+76,0,1,3 5 4 6 1,2 8,7
+77,0,2,3 5 4 6,2 8 1,7
+78,1,2,3 5 4 6,2 8 1,7
+79,1,0,3 5 4 6 7,,2 8 1
+80,2,0,3 5 4 6 7 1,,2 8
+81,1,2,3 5 4 6 7,1,2 8
+82,0,1,3 5 4 6 7 1,,2 8
+83,2,0,3 5 4 6 7 1 2,,
+84,2,1,3 5 4 6 7 1 2,8,
+85,0,1,3 5 4 6 7 1,2 8,
+86,0,2,3 5 4 6 7,2 8 1,
+87,1,2,3 5 4 6 7,2 8 1,
+88,1,0,3 5 4 6 7 8,,2 1
+89,2,0,3 5 4 6 7 8 1,,
+90,1,2,3 5 4 6 7 8,1,
+91,0,1,3 5 4 6 7 8 1,,
+92,2,0,3 5 4 6 7 8 1 2,,
+93,2,1,3 5 4 6 7 8 1 2,,
+94,0,1,3 5 4 6 7 8 1,2,
+95,0,2,3 5 4 6 7 8,2 1,
+96,1,2,3 5 4 6 7 8,2 1,
+97,1,0,3 5 4 6 7 8 2,,
+98,2,0,3 5 4 6 7 8 2 1,,
+99,1,2,3 5 4 6 7 8 2,1,
+100,0,1,3 5 4 6 7 8 2 1,,
+101,2,0,3 5 4 6 7 8 2 1 2,,
+102,2,1,3 5 4 6 7 8 2 1 2,,
+103,0,1,3 5 4 6 7 8 2 1,2,
+104,0,2,3 5 4 6 7 8 2,2 1,
+105,1,2,3 5 4 6 7 8 2,2 1,
+106,1,0,3 5 4 6 7 8 2 3,,
+107,2,0,3 5 4 6 7 8 2 3 1,,
+108,1,2,3 5 4 6 7 8 2 3,1,
+109,0,1,3 5 4 6 7 8 2 3 1,,
+110,2,0,3 5 4 6 7 8 2 3 1 2,,
+111,2,1,3 5 4 6 7 8 2 3 1 2,,
+112,0,1,3 5 4 6 7 8 2 3 1,2,
+113,0,2,3 5 4 6 7 8 2 3,2 1,
+114,1,2,3 5 4 6 7 8 2 3,2 1,
+115,1,0,3 5 4 6 7 8 2 3 4,,
+116,2,0,3 5 4 6 7 8 2 3 4 1,,
+117,1,2,3 5 4 6 7 8 2 3 4,1,
+118,0,1,3 5 4 6 7 8 2 3 4 1,,
+119,2,0,3 5 4 6 7 8 2 3 4 1 2,,
+120,2,1,3 5 4 6 7 8 2 3 4 1 2,,
+121,0,1,3 5 4 6 7 8 2 3 4 1,2,
+122,0,2,3 5 4 6 7 8 2 3 4,2 1,
+123,1,2,3 5 4 6 7 8 2 3 4,2 1,
+124,1,0,3 5 4 6 7 8 2 3 4 5,,
+125,2,0,3 5 4 6 7 8 2 3 4 5 1,,
+126,1,2,3 5 4 6 7 8 2 3 4 5,1,
+127,0,1,3 5 4 6 7 8 2 3 4 5 1,,
+128,0,2,3 5 4 6 7 8 2 3 4 5,1,
+129,1,2,3 5 4 6 7 8 2 3 4 5,1,
+130,1,0,3 5 4 6 7 8 2 3 4 5 6,,
+131,2,0,3 5 4 6 7 8 2 3 4 5 6 1,,
+132,1,2,3 5 4 6 7 8 2 3 4 5 6,1,
+133,0,1,3 5 4 6 7 8 2 3 4 5 6 1,,
+134,2,0,3 5 4 6 7 8 2 3 4 5 6 1 2,,
+135,2,1,3 5 4 6 7 8 2 3 4 5 6 1 2,,
+136,0,1,3 5 4 6 7 8 2 3 4 5 6 1,2,
+137,0,2,3 5 4 6 7 8 2 3 4 5 6,2 1,
+138,1,2,3 5 4 6 7 8 2 3 4 5 6,2 1,
+139,1,0,3 5 4 6 7 8 2 3 4 5 6 7,,
+140,2,0,3 5 4 6 7 8 2 3 4 5 6 7 1,,
+141,1,2,3 5 4 6 7 8 2 3 4 5 6 7,1,
+142,0,1,3 5 4 6 7 8 2 3 4 5 6 7 1,,
+143,2,0,3 5 4 6 7 8 2 3 4 5 6 7 1 2,,
+144,2,1,3 5 4 6 7 8 2 3 4 5 6 7 1 2,,
+145,0,1,3 5 4 6 7 8 2 3 4 5 6 7 1,2,
+146,0,2,3 5 4 6 7 8 2 3 4 5 6 7,2 1,
+147,1,2,3 5 4 6 7 8 2 3 4 5 6 7,2 1,
+148,1,0,3 5 4 6 7 8 2 3 4 5 6 7 8,,
+149,2,0,3 5 4 6 7 8 2 3 4 5 6 7 8 1,,
+150,1,2,3 5 4 6 7 8 2 3 4 5 6 7 8,1,
+151,0,1,3 5 4 6 7 8 2 3 4 5 6 7 8 1,,
+152,2,0,3 5 4 6 7 8 2 3 4 5 6 7 8 1 2,,
+153,2,1,3 5 4 6 7 8 2 3 4 5 6 7 8 1 2,,
+154,0,1,3 5 4 6 7 8 2 3 4 5 6 7 8 1,2,
+155,0,2,3 5 4 6 7 8 2 3 4 5 6 7 8,2 1,
+156,1,2,3 5 4 6 7 8 2 3 4 5 6 7 8,2 1,
+157,1,0,3 5 4 6 7 8 2 3 4 5 6 7 8 9,,
+158,2,0,3 5 4 6 7 8 2 3 4 5 6 7 8 9 1,,
+159,1,2,3 5 4 6 7 8 2 3 4 5 6 7 8 9,1,
+160,0,1,3 5 4 6 7 8 2 3 4 5 6 7 8 9 1,,
+161,2,0,3 5 4 6 7 8 2 3 4 5 6 7 8 9 1 2,,
+162,2,1,3 5 4 6 7 8 2 3 4 5 6 7 8 9 1 2,,
+163,0,1,3 5 4 6 7 8 2 3 4 5 6 7 8 9 1,2,
+164,0,2,3 5 4 6 7 8 2 3 4 5 6 7 8 9,2 1,
+165,1,2,3 5 4 6 7 8 2 3 4 5 6 7 8 9,2 1,
+166,1,0,3 5 4 6 7 8 2 3 4 5 6 7 8 9 10,,
+167,2,0,3 5 4 6 7 8 2 3 4 5 6 7 8 9 10 1,,
+168,1,2,3 5 4 6 7 8 2 3 4 5 6 7 8 9 10,1,
+169,0,1,3 5 4 6 7 8 2 3 4 5 6 7 8 9 10 1,,
+170,2,0,3 5 4 6 7 8 2 3 4 5 6 7 8 9 10 1 2,,
+171,2,1,3 5 4 6 7 8 2 3 4 5 6 7 8 9 10 1 2,,
+172,0,1,3 5 4 6 7 8 2 3 4 5 6 7 8 9 10 1,2,
+173,0,2,3 5 4 6 7 8 2 3 4 5 6 7 8 9 10,2 1,
+174,1,2,3 5 4 6 7 8 2 3 4 5 6 7 8 9 10,2 1,
+175,1,0,3 5 4 6 7 8 2 3 4 5 6 7 8 9 10 11,,
+176,2,0,3 5 4 6 7 8 2 3 4 5 6 7 8 9 10 11 1,,
+177,1,2,3 5 4 6 7 8 2 3 4 5 6 7 8 9 10 11,1,
+178,0,1,3 5 4 6 7 8 2 3 4 5 6 7 8 9 10 11 1,,
+179,2,0,3 5 4 6 7 8 2 3 4 5 6 7 8 9 10 11 1 2,,
+180,2,1,3 5 4 6 7 8 2 3 4 5 6 7 8 9 10 11 1 2,,
+181,0,1,3 5 4 6 7 8 2 3 4 5 6 7 8 9 10 11 1,2,
+182,0,2,3 5 4 6 7 8 2 3 4 5 6 7 8 9 10 11,2 1,
+183,1,2,3 5 4 6 7 8 2 3 4 5 6 7 8 9 10 11,2 1,
+184,1,0,3 5 4 6 7 8 2 3 4 5 6 7 8 9 10 11 12,,
+185,2,0,3 5 4 6 7 8 2 3 4 5 6 7 8 9 10 11 12 1,,
+186,1,2,3 5 4 6 7 8 2 3 4 5 6 7 8 9 10 11 12,1,
+187,0,1,3 5 4 6 7 8 2 3 4 5 6 7 8 9 10 11 12 1,,
+188,2,0,3 5 4 6 7 8 2 3 4 5 6 7 8 9 10 11 12 1 2,,
+189,2,1,3 5 4 6 7 8 2 3 4 5 6 7 8 9 10 11 12 1 2,,
+190,0,1,3 5 4 6 7 8 2 3 4 5 6 7 8 9 10 11 12 1,2,
+191,0,2,3 5 4 6 7 8 2 3 4 5 6 7 8 9 10 11 12,2 1,
+192,1,2,3 5 4 6 7 8 2 3 4 5 6 7 8 9 10 11 12,2 1,
+193,1,0,3 5 4 6 7 8 2 3 4 5 6 7 8 9 10 11 12 13,,
+194,2,0,3 5 4 6 7 8 2 3 4 5 6 7 8 9 10 11 12 13 1,,
+195,1,2,3 5 4 6 7 8 2 3 4 5 6 7 8 9 10 11 12 13,1,
+196,0,1,3 5 4 6 7 8 2 3 4 5 6 7 8 9 10 11 12 13 1,,
+197,2,0,3 5 4 6 7 8 2 3 4 5 6 7 8 9 10 11 12 13 1 2,,
+198,2,1,3 5 4 6 7 8 2 3 4 5 6 7 8 9 10 11 12 13 1 2,,
+199,0,1,3 5 4 6 7 8 2 3 4 5 6 7 8 9 10 11 12 13 1,2,
+200,0,2,3 5 4 6 7 8 2 3 4 5 6 7 8 9 10 11 12 13,2 1,
+201,1,2,3 5 4 6 7 8 2 3 4 5 6 7 8 9 10 11 12 13,2 1,
+202,1,0,3 5 4 6 7 8 2 3 4 5 6 7 8 9 10 11 12 13 14,,
+203,2,0,3 5 4 6 7 8 2 3 4 5 6 7 8 9 10 11 12 13 14 1,,
+204,1,2,3 5 4 6 7 8 2 3 4 5 6 7 8 9 10 11 12 13 14,1,
+205,0,1,3 5 4 6 7 8 2 3 4 5 6 7 8 9 10 11 12 13 14 1,,
+206,2,0,3 5 4 6 7 8 2 3 4 5 6 7 8 9 10 11 12 13 14 1 2,,
+207,2,1,3 5 4 6 7 8 2 3 4 5 6 7 8 9 10 11 12 13 14 1 2,,
+208,0,1,3 5 4 6 7 8 2 3 4 5 6 7 8 9 10 11 12 13 14 1,2,
+209,0,2,3 5 4 6 7 8 2 3 4 5 6 7 8 9 10 11 12 13 14,2 1,
+210,1,2,3 5 4 6 7 8 2 3 4 5 6 7 8 9 10 11 12 13 14,2 1,
+211,1,0,3 5 4 6 7 8 2 3 4 5 6 7 8 9 10 11 12 13 14 15,,
+212,2,0,3 5 4 6 7 8 2 3 4 5 6 7 8 9 10 11 12 13 14 15 1,,
+213,1,2,3 5 4 6 7 8 2 3 4 5 6 7 8 9 10 11 12 13 14 15,1,
+214,0,1,3 5 4 6 7 8 2 3 4 5 6 7 8 9 10 11 12 13 14 15 1,,
+215,2,0,3 5 4 6 7 8 2 3 4 5 6 7 8 9 10 11 12 13 14 15 1 2,,
+216,2,1,3 5 4 6 7 8 2 3 4 5 6 7 8 9 10 11 12 13 14 15 1 2,,
+217,0,1,3 5 4 6 7 8 2 3 4 5 6 7 8 9 10 11 12 13 14 15 1,2,
+218,0,2,3 5 4 6 7 8 2 3 4 5 6 7 8 9 10 11 12 13 14 15,2 1,
+219,1,2,3 5 4 6 7 8 2 3 4 5 6 7 8 9 10 11 12 13 14 15,2 1,
+220,1,0,3 5 4 6 7 8 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16,,
+221,2,0,3 5 4 6 7 8 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 1,,
+222,1,2,3 5 4 6 7 8 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16,1,
+223,0,1,3 5 4 6 7 8 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 1,,
+224,2,0,3 5 4 6 7 8 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 1 2,,
+225,2,1,3 5 4 6 7 8 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 1 2,,
+226,0,1,3 5 4 6 7 8 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 1,2,
+227,0,2,3 5 4 6 7 8 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16,2 1,
+228,1,2,3 5 4 6 7 8 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16,2 1,
+229,1,0,3 5 4 6 7 8 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17,,
+230,2,0,3 5 4 6 7 8 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 1,,
+231,1,2,3 5 4 6 7 8 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17,1,
+232,0,1,3 5 4 6 7 8 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 1,,
+233,2,0,3 5 4 6 7 8 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 1 2,,
+234,2,1,3 5 4 6 7 8 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 1 2,,
+235,0,1,3 5 4 6 7 8 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 1,2,
+236,0,2,3 5 4 6 7 8 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17,2 1,
+237,1,2,3 5 4 6 7 8 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17,2 1,
+238,1,0,3 5 4 6 7 8 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18,,
+239,2,0,3 5 4 6 7 8 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 1,,
+240,1,2,3 5 4 6 7 8 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18,1,
+241,0,1,3 5 4 6 7 8 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 1,,
+242,2,0,3 5 4 6 7 8 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 1 2,,
+243,2,1,3 5 4 6 7 8 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 1 2,,
+244,0,1,3 5 4 6 7 8 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 1,2,
+245,0,2,3 5 4 6 7 8 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18,2 1,
+246,1,2,3 5 4 6 7 8 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18,2 1,
+247,1,0,3 5 4 6 7 8 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19,,
+248,2,0,3 5 4 6 7 8 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 1,,
+249,1,2,3 5 4 6 7 8 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19,1,
+250,0,1,3 5 4 6 7 8 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 1,,
+251,2,0,3 5 4 6 7 8 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 1 2,,
+252,2,1,3 5 4 6 7 8 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 1 2,,
+253,0,1,3 5 4 6 7 8 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 1,2,
+254,0,2,3 5 4 6 7 8 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19,2 1,
+255,1,2,3 5 4 6 7 8 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19,2 1
+```
+

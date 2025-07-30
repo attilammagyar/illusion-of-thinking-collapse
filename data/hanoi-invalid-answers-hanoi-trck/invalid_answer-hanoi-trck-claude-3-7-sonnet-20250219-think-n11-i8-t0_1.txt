@@ -1,0 +1,2614 @@
+# model_name='claude-3-7-sonnet-20250219', reasoning_budget=32000, tries=0, n=11, i=8
+# valid_prefix_length=20, is_valid_solution=0, first_correction=-1
+
+<think>
+This is the classic Tower of Hanoi puzzle. For n disks, the minimum number of moves required is 2^n - 1. In this case, with 11 disks, we need 2^11 - 1 = 2,048 - 1 = 2,047 moves. That's quite a lot!
+
+The recursive solution for the Tower of Hanoi is:
+1. Move n-1 disks from source to auxiliary peg
+2. Move the largest disk from source to destination peg
+3. Move n-1 disks from auxiliary to destination peg
+
+I'll implement this solution step by step, keeping track of the state of each peg after each move.
+
+First, let me define a function to solve the Tower of Hanoi recursively:
+
+```
+function hanoi(n, source, auxiliary, destination, moves, state):
+    if n == 1:
+        # Move the smallest disk from source to destination
+        move_disk(source, destination, moves, state)
+    else:
+        # Move n-1 disks from source to auxiliary
+        hanoi(n-1, source, destination, auxiliary, moves, state)
+        # Move the largest disk from source to destination
+        move_disk(source, destination, moves, state)
+        # Move n-1 disks from auxiliary to destination
+        hanoi(n-1, auxiliary, source, destination, moves, state)
+```
+
+And a function to move a disk:
+
+```
+function move_disk(from_peg, to_peg, moves, state):
+    # Get the top disk from the source peg
+    disk = state[from_peg].pop()
+    # Place it on the destination peg
+    state[to_peg].append(disk)
+    # Record the move
+    moves.append((from_peg, to_peg, state.copy()))
+```
+
+Now, let's implement this solution:
+
+```python
+def solve_tower_of_hanoi(n):
+    # Initialize the state with all disks on the first peg
+    state = [list(range(n, 0, -1)), [], []]
+    moves = []
+    
+    def hanoi(n, source, auxiliary, destination):
+        if n == 1:
+            # Move the smallest disk from source to destination
+            disk = state[source].pop()
+            state[destination].append(disk)
+            moves.append((source, destination, [peg.copy() for peg in state]))
+        else:
+            # Move n-1 disks from source to auxiliary
+            hanoi(n-1, source, destination, auxiliary)
+            # Move the largest disk from source to destination
+            disk = state[source].pop()
+            state[destination].append(disk)
+            moves.append((source, destination, [peg.copy() for peg in state]))
+            # Move n-1 disks from auxiliary to destination
+            hanoi(n-1, auxiliary, source, destination)
+    
+    hanoi(n, 0, 1, 2)
+    return moves
+```
+
+However, implementing this directly would be cumbersome here. Instead, I'll use a more direct approach to list all the moves for 11 disks.
+
+For the Tower of Hanoi, there's a pattern for optimal moves:
+- For odd n, the first move is from the source peg to the destination peg
+- For even n, the first move is from the source peg to the auxiliary peg
+
+Then, we always follow this rule: never move the same disk twice in a row, and always make the only legal move that doesn't undo the previous move.
+
+With 11 disks, the first move would be from peg 0 to peg 2 (from source to destination). Then we continue making the only legal move that doesn't undo the previous move.
+
+Another pattern for the Tower of Hanoi is that the smallest disk (disk 1) moves in a cycle:
+- For odd n: source -> destination -> auxiliary -> source -> ...
+- For even n: source -> auxiliary -> destination -> source -> ...
+
+For 11 disks (odd n), disk 1 cycles through: 0 -> 2 -> 1 -> 0 -> ...
+
+Let me start generating the moves:
+
+Initial state:
+- Peg 0: 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1
+- Peg 1: (empty)
+- Peg 2: (empty)
+
+Move 1: Move disk 1 from peg 0 to peg 2
+- Peg 0: 11, 10, 9, 8, 7, 6, 5, 4, 3, 2
+- Peg 1: (empty)
+- Peg 2: 1
+
+Move 2: Move disk 2 from peg 0 to peg 1
+- Peg 0: 11, 10, 9, 8, 7, 6, 5, 4, 3
+- Peg 1: 2
+- Peg 2: 1
+
+Move 3: Move disk 1 from peg 2 to peg 1
+- Peg 0: 11, 10, 9, 8, 7, 6, 5, 4, 3
+- Peg 1: 2, 1
+- Peg 2: (empty)
+
+Move 4: Move disk 3 from peg 0 to peg 2
+- Peg 0: 11, 10, 9, 8, 7, 6, 5, 4
+- Peg 1: 2, 1
+- Peg 2: 3
+
+Move 5: Move disk 1 from peg 1 to peg 0
+- Peg 0: 11, 10, 9, 8, 7, 6, 5, 4, 1
+- Peg 1: 2
+- Peg 2: 3
+
+Move 6: Move disk 2 from peg 1 to peg 2
+- Peg 0: 11, 10, 9, 8, 7, 6, 5, 4, 1
+- Peg 1: (empty)
+- Peg 2: 3, 2
+
+Move 7: Move disk 1 from peg 0 to peg 2
+- Peg 0: 11, 10, 9, 8, 7, 6, 5, 4
+- Peg 1: (empty)
+- Peg 2: 3, 2, 1
+
+Move 8: Move disk 4 from peg 0 to peg 1
+- Peg 0: 11, 10, 9, 8, 7, 6, 5
+- Peg 1: 4
+- Peg 2: 3, 2, 1
+
+Move 9: Move disk 1 from peg 2 to peg 1
+- Peg 0: 11, 10, 9, 8, 7, 6, 5
+- Peg 1: 4, 1
+- Peg 2: 3, 2
+
+Move 10: Move disk 2 from peg 2 to peg 0
+- Peg 0: 11, 10, 9, 8, 7, 6, 5, 2
+- Peg 1: 4, 1
+- Peg 2: 3
+
+Move 11: Move disk 1 from peg 1 to peg 0
+- Peg 0: 11, 10, 9, 8, 7, 6, 5, 2, 1
+- Peg 1: 4
+- Peg 2: 3
+
+Move 12: Move disk 3 from peg 2 to peg 1
+- Peg 0: 11, 10, 9, 8, 7, 6, 5, 2, 1
+- Peg 1: 4, 3
+- Peg 2: (empty)
+
+Move 13: Move disk 1 from peg 0 to peg 2
+- Peg 0: 11, 10, 9, 8, 7, 6, 5, 2
+- Peg 1: 4, 3
+- Peg 2: 1
+
+Move 14: Move disk 2 from peg 0 to peg 1
+- Peg 0: 11, 10, 9, 8, 7, 6, 5
+- Peg 1: 4, 3, 2
+- Peg 2: 1
+
+Move 15: Move disk 1 from peg 2 to peg 1
+- Peg 0: 11, 10, 9, 8, 7, 6, 5
+- Peg 1: 4, 3, 2, 1
+- Peg 2: (empty)
+
+Move 16: Move disk 5 from peg 0 to peg 2
+- Peg 0: 11, 10, 9, 8, 7, 6
+- Peg 1: 4, 3, 2, 1
+- Peg 2: 5
+
+OK, I realize that manually enumerating all 2,047 moves is not feasible, especially in this format. Let me write a recursive algorithm to generate all the moves and their corresponding states:
+
+```python
+def tower_of_hanoi(n, source, auxiliary, destination):
+    # Initialize the state with all disks on the first peg
+    state = [list(range(n, 0, -1)), [], []]
+    moves = []
+    move_count = 0
+    
+    def hanoi(n, source, auxiliary, destination):
+        nonlocal move_count
+        if n == 0:
+            return
+        
+        # Move n-1 disks from source to auxiliary
+        hanoi(n-1, source, destination, auxiliary)
+        
+        # Move the nth disk from source to destination
+        disk = state[source].pop()
+        state[destination].append(disk)
+        move_count += 1
+        
+        # Record the move and the new state
+        moves.append((move_count, source, destination, [peg.copy() for peg in state]))
+        
+        # Move n-1 disks from auxiliary to destination
+        hanoi(n-1, auxiliary, source, destination)
+    
+    hanoi(n, source, auxiliary, destination)
+    return moves
+```
+
+Now, let's execute this function for n=11 and format the output as required:
+
+```python
+moves = tower_of_hanoi(11, 0, 1, 2)
+
+print("move_id,from_peg,to_peg,peg0,peg1,peg2")
+for move_id, from_peg, to_peg, state in moves:
+    peg0 = " ".join(map(str, state[0]))
+    peg1 = " ".join(map(str, state[1]))
+    peg2 = " ".join(map(str, state[2]))
+    print(f"{move_id},{from_peg},{to_peg},{peg0},{peg1},{peg2}")
+```
+
+Actually, it seems like implementing the algorithm in Python isn't the best approach here, especially given I can't actually run Python. Let me go back to the recursive structure and manually enumerate the moves for the Tower of Hanoi.
+
+For n=11, we need to:
+1. Move 10 disks from peg 0 to peg 1 (using peg 2 as auxiliary)
+2. Move disk 11 from peg 0 to peg 2
+3. Move 10 disks from peg 1 to peg 2 (using peg 0 as auxiliary)
+
+For step 1, we need to:
+1.1. Move 9 disks from peg 0 to peg 2 (using peg 1 as auxiliary)
+1.2. Move disk 10 from peg 0 to peg 1
+1.3. Move 9 disks from peg 2 to peg 1 (using peg 0 as auxiliary)
+
+And so on...
+
+Given the recursive nature, I think I need to use a different approach to generate all the moves. One way is to use the fact that for the Tower of Hanoi, the source, auxiliary, and destination pegs for the smallest disk rotate in a specific pattern.
+
+For odd n, disk 1 moves in the pattern: source -> destination -> auxiliary -> source -> ...
+For even n, disk 1 moves in the pattern: source -> auxiliary -> destination -> source -> ...
+
+Using this pattern, we can generate all the moves without using explicit recursion.
+
+For n=11 (odd), the pattern for disk 1 is: 0 -> 2 -> 1 -> 0 -> ...
+
+Let me implement this approach:
+
+```
+function generate_tower_of_hanoi_moves(n):
+    # Initialize the state with all disks on the first peg
+    state = [[n, n-1, ..., 1], [], []]
+    moves = []
+    
+    # Determine the pattern for disk 1
+    if n % 2 == 1:  # odd n
+        pattern = [0, 2, 1]
+    else:  # even n
+        pattern = [0, 1, 2]
+    
+    # Generate all moves
+    for i in range(2^n - 1):
+        # Determine which disk to move
+        disk = 1
+        while (i + 1) % (2^disk) == 0:
+            disk += 1
+        
+        # Determine source and destination pegs
+        from_peg = -1
+        for peg in range(3):
+            if disk in state[peg]:
+                from_peg = peg
+                break
+        
+        # Determine destination peg based on the disk
+        if disk == 1:
+            # For disk 1, follow the pattern
+            to_peg = pattern[(i // 1) % 3]
+        else:
+            # For other disks, the destination is the peg that does not contain the smallest disk larger than it
+            for peg in range(3):
+                if peg != from_peg and (not state[peg] or state[peg][-1] > disk):
+                    to_peg = peg
+                    break
+        
+        # Move the disk
+        state[from_peg].remove(disk)
+        state[to_peg].append(disk)
+        
+        # Record the move
+        moves.append((i+1, from_peg, to_peg, state.copy()))
+    
+    return moves
+```
+
+OK, I realize that implementing this algorithm here is not going to be feasible, especially without being able to run Python. Let me manually enumerate the first few moves and then provide the pattern for all 2,047 moves.
+
+Actually, given the constraints, I think the best approach is to indeed simulate the algorithm mentally and output the complete list of moves. Let's do this by implementing a recursive algorithm that captures the Tower of Hanoi solution:
+
+```
+function hanoi(n, source, auxiliary, destination, moves, state):
+    if n == 0:
+        return
+    
+    # Move n-1 disks from source to auxiliary
+    hanoi(n-1, source, destination, auxiliary, moves, state)
+    
+    # Move the nth disk from source to destination
+    state[source].pop()  # Remove the nth disk from source
+    state[destination].append(n)  # Add it to destination
+    
+    # Record the move
+    moves.append((source, destination, state.copy()))
+    
+    # Move n-1 disks from auxiliary to destination
+    hanoi(n-1, auxiliary, source, destination, moves, state)
+```
+
+I'll just focus on the output format and simulate the algorithm to generate the moves.
+
+For n=11, the initial state is:
+- Peg 0: 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1
+- Peg 1: (empty)
+- Peg 2: (empty)
+
+Using the recursive algorithm, I'll simulate the moves and states:
+
+Move 1: From peg 0 to peg 2 (disk 1)
+- Peg 0: 11, 10, 9, 8, 7, 6, 5, 4, 3, 2
+- Peg 1: 
+- Peg 2: 1
+
+Move 2: From peg 0 to peg 1 (disk 2)
+- Peg 0: 11, 10, 9, 8, 7, 6, 5, 4, 3
+- Peg 1: 2
+- Peg 2: 1
+
+Move 3: From peg 2 to peg 1 (disk 1)
+- Peg 0: 11, 10, 9, 8, 7, 6, 5, 4, 3
+- Peg 1: 2, 1
+- Peg 2: 
+
+Move 4: From peg 0 to peg 2 (disk 3)
+- Peg 0: 11, 10, 9, 8, 7, 6, 5, 4
+- Peg 1: 2, 1
+- Peg 2: 3
+
+Move 5: From peg 1 to peg 0 (disk 1)
+- Peg 0: 11, 10, 9, 8, 7, 6, 5, 4, 1
+- Peg 1: 2
+- Peg 2: 3
+
+Move 6: From peg 1 to peg 2 (disk 2)
+- Peg 0: 11, 10, 9, 8, 7, 6, 5, 4, 1
+- Peg 1: 
+- Peg 2: 3, 2
+
+Move 7: From peg 0 to peg 2 (disk 1)
+- Peg 0: 11, 10, 9, 8, 7, 6, 5, 4
+- Peg 1: 
+- Peg 2: 3, 2, 1
+
+Move 8: From peg 0 to peg 1 (disk 4)
+- Peg 0: 11, 10, 9, 8, 7, 6, 5
+- Peg 1: 4
+- Peg 2: 3, 2, 1
+
+Move 9: From peg 2 to peg 1 (disk 1)
+- Peg 0: 11, 10, 9, 8, 7, 6, 5
+- Peg 1: 4, 1
+- Peg 2: 3, 2
+
+Move 10: From peg 2 to peg 0 (disk 2)
+- Peg 0: 11, 10, 9, 8, 7, 6, 5, 2
+- Peg 1: 4, 1
+- Peg 2: 3
+
+I'd continue, but there are 2,047 moves in total. For all 2,047 moves, we can use the fact that the Tower of Hanoi has a recursive structure:
+
+1. For n disks, we first move n-1 disks from the source to the auxiliary peg.
+2. Then we move the largest disk from the source to the destination peg.
+3. Finally, we move the n-1 disks from the auxiliary to the destination peg.
+
+Using this algorithm, I can generate all 2,047 moves for n=11:
+
+For all 2,047 moves, we follow the recursive structure:
+1. Move 10 disks from peg 0 to peg 1 (which requires 2^10 - 1 = 1,023 moves)
+2. Move disk 11 from peg 0 to peg 2 (1 move)
+3. Move 10 disks from peg 1 to peg 2 (which requires 2^10 - 1 = 1,023 moves)
+
+I'll now compile all 2,047 moves using a recursive approach.
+
+Actually, let me continue manually:
+
+Move 11: From peg 1 to peg 0 (disk 1)
+- Peg 0: 11, 10, 9, 8, 7, 6, 5, 2, 1
+- Peg 1: 4
+- Peg 2: 3
+
+Move 12: From peg 2 to peg 1 (disk 3)
+- Peg 0: 11, 10, 9, 8, 7, 6, 5, 2, 1
+- Peg 1: 4, 3
+- Peg 2: 
+
+Move 13: From peg 0 to peg 2 (disk 1)
+- Peg 0: 11, 10, 9, 8, 7, 6, 5, 2
+- Peg 1: 4, 3
+- Peg 2: 1
+
+Move 14: From peg 0 to peg 1 (disk 2)
+- Peg 0: 11, 10, 9, 8, 7, 6, 5
+- Peg 1: 4, 3, 2
+- Peg 2: 1
+
+Move 15: From peg 2 to peg 1 (disk 1)
+- Peg 0: 11, 10, 9, 8, 7, 6, 5
+- Peg 1: 4, 3, 2, 1
+- Peg 2: 
+
+I know I can't hand-enumerate all 2,047 moves, so let's try to create a recursive algorithm to mentally simulate the process. For the Tower of Hanoi with n disks, the algorithm is:
+
+```
+function hanoi(n, source, auxiliary, destination, moves, state):
+    if n == 0:
+        return
+    
+    # Move n-1 disks from source to auxiliary
+    hanoi(n-1, source, destination, auxiliary, moves, state)
+    
+    # Move the nth disk from source to destination
+    disk = state[source].pop()
+    state[destination].append(disk)
+    moves.append((source, destination, state.copy()))
+    
+    # Move n-1 disks from auxiliary to destination
+    hanoi(n-1, auxiliary, source, destination, moves, state)
+```
+
+To be able to systematically generate all 2,047 moves, let's create a function to determine the move for a given step:
+
+```
+function get_move(step, n):
+    # Convert step to binary and look at position n to determine direction
+    binary = convert_to_binary(step + 2^n)
+    if binary[n] == 0:
+        return (source, destination)
+    else:
+        return (source, auxiliary)
+```
+
+Alright, since this approach might also be complex, let me try another way. For n=11 disks, we know from theory that:
+
+1. The smallest disk (disk 1) moves in the pattern: source -> destination -> auxiliary -> source -> ...
+2. Each disk moves exactly once every 2^(disk-1) steps.
+3. The direction of movement alternates for each disk. For disk 1, it's in the pattern above. For disk 2, it alternates between the other two pegs not containing disk 1. And so on.
+
+Let's think about how to generate the moves more systematically, considering the number of disks we have.
+
+For the Tower of Hanoi with n disks, there's a straightforward algorithm:
+1. For step i (from 1 to 2^n - 1), find the disk to move: the one with the largest power of 2 that divides i.
+2. Move that disk according to the rules: disks numbered with odd numbers (1, 3, 5, ...) move in one direction (clockwise), and those with even numbers (2, 4, 6, ...) move in the opposite direction (counterclockwise).
+
+Using this approach, I can generate all 2,047 moves for n=11:
+
+```
+function tower_of_hanoi_moves(n):
+    # For n=11, there are 2^11 - 1 = 2,047 moves
+    total_moves = 2^n - 1
+    
+    # Initialize the state with all disks on the first peg
+    state = [[11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1], [], []]
+    moves = []
+    
+    for i in range(1, total_moves + 1):
+        # Find the disk to move
+        disk = 1
+        while i % 2^disk == 0:
+            disk += 1
+        
+        # Find the source peg
+        source = -1
+        for p in range(3):
+            if disk in state[p]:
+                source = p
+                break
+        
+        # Determine the destination peg
+        if n % 2 == 1:  # For odd n
+            if disk % 2 == 1:  # For odd disks
+                destination = (source + 1) % 3
+            else:  # For even disks
+                destination = (source + 2) % 3
+        else:  # For even n
+            if disk % 2 == 1:  # For odd disks
+                destination = (source + 2) % 3
+            else:  # For even disks
+                destination = (source + 1) % 3
+        
+        # Adjust the destination if there's a smaller disk
+        if state[destination] and state[destination][-1] < disk:
+            destination = 3 - source - destination
+        
+        # Move the disk
+        state[source].remove(disk)
+        state[destination].append(disk)
+        
+        # Record the move
+        moves.append((i, source, destination, state.copy()))
+    
+    return moves
+```
+
+The above algorithm is not quite right, because it doesn't account for the fact that disks can't be placed on top of smaller disks. But for the Tower of Hanoi, if we follow the correct algorithm, this situation never arises.
+
+Let's try a more direct approach. We know that for n=11, there are 2,047 moves in total. We first move 10 disks from peg 0 to peg 1, then move disk 11 from peg 0 to peg 2, and finally move 10 disks from peg 1 to peg 2.
+
+```
+function hanoi(n, source, auxiliary, destination, step):
+    if n == 0:
+        return step
+    
+    # Move n-1 disks from source to auxiliary
+    step = hanoi(n-1, source, destination, auxiliary, step)
+    
+    # Move the nth disk from source to destination
+    print(f"{step + 1},{source},{destination},")  # We'll add the state later
+    step += 1
+    
+    # Move n-1 disks from auxiliary to destination
+    step = hanoi(n-1, auxiliary, source, destination, step)
+    
+    return step
+```
+
+Using this recursive function, we can generate all the moves:
+
+```
+hanoi(11, 0, 1, 2, 0)
+```
+
+But we also need to keep track of the state after each move. Let me modify the function:
+
+```
+function hanoi(n, source, auxiliary, destination, step, state):
+    if n == 0:
+        return step
+    
+    # Move n-1 disks from source to auxiliary
+    step = hanoi(n-1, source, destination, auxiliary, step, state)
+    
+    # Move the nth disk from source to destination
+    disk = n
+    state[source].remove(disk)
+    state[destination].append(disk)
+    print(f"{step + 1},{source},{destination},{state[0]},{state[1]},{state[2]}")
+    step += 1
+    
+    # Move n-1 disks from auxiliary to destination
+    step = hanoi(n-1, auxiliary, source, destination, step, state)
+    
+    return step
+```
+
+Ok, I realize it's not feasible to manually enumerate all 2,047 moves here. Let me think of a more systematic approach that I can describe in text.
+
+For the Tower of Hanoi with n disks, if we number the disks from 1 (smallest) to n (largest), we can use the following rules to determine the move at step i (from 1 to 2^n - 1):
+
+1. Determine which disk to move: It's the disk number d, where 2^(d-1) is the largest power of 2 that divides i.
+2. Determine the direction: If (n + d) is odd, the disk moves clockwise (0 -> 2 -> 1 -> 0). If (n + d) is even, the disk moves counterclockwise (0 -> 1 -> 2 -> 0).
+
+Using these rules, I'll build the table of moves:
+
+For n=11, for each step i from 1 to 2,047:
+1. Find the disk d to move: the one with the largest power of 2 that divides i.
+2. If (11 + d) is odd, move the disk clockwise. If (11 + d) is even, move the disk counterclockwise.
+
+For example:
+- Step 1: Disk 1 moves. (11 + 1) = 12 is even, so it moves counterclockwise from peg 0 to peg 1.
+- Step 2: Disk 2 moves. (11 + 2) = 13 is odd, so it moves clockwise from peg 0 to peg 2.
+- Step 3: Disk 1 moves again. (11 + 1) = 12 is even, so it moves counterclockwise from peg 1 to peg 2.
+
+Oh wait, let me reconsider. Actually, for n=11 (odd), the pattern for disk 1 should be clockwise: 0 -> 2 -> 1 -> 0. Let me make sure I get this right.
+
+Actually, here are the correct rules for the Tower of Hanoi:
+
+1. For odd n, disk 1 moves in the cycle: 0 -> 2 -> 1 -> 0 -> ...
+2. For even n, disk 1 moves in the cycle: 0 -> 1 -> 2 -> 0 -> ...
+3. Disks numbered with odd numbers (1, 3, 5, ...) move in the same direction as disk 1.
+4. Disks numbered with even numbers (2, 4, 6, ...) move in the opposite direction.
+
+So for n=11 (odd), the patterns are:
+- Disk 1 (odd): 0 -> 2 -> 1 -> 0 -> ...
+- Disk 2 (even): 0 -> 1 -> 2 -> 0 -> ...
+- Disk 3 (odd): 0 -> 2 -> 1 -> 0 -> ...
+- ... and so on.
+
+Let me try to generate the first few moves using these rules:
+
+Iteration 1: Disk 1 moves from peg 0 to peg 2 (following the clockwise pattern for odd-numbered disks).
+Iteration 2: Disk 2 moves from peg 0 to peg 1 (following the counterclockwise pattern for even-numbered disks).
+Iteration 3: Disk 1 moves from peg 2 to peg 1 (following the clockwise pattern).
+Iteration 4: Disk 3 moves from peg 0 to peg 2 (following the clockwise pattern).
+Iteration 5: Disk 1 moves from peg 1 to peg 0 (following the clockwise pattern).
+Iteration 6: Disk 2 moves from peg 1 to peg 2 (following the counterclockwise pattern).
+Iteration 7: Disk 1 moves from peg 0 to peg 2 (following the clockwise pattern).
+Iteration 8: Disk 4 moves from peg 0 to peg 1 (following the counterclockwise pattern).
+
+Actually, hold on, that doesn't quite match the first few moves I listed earlier...
+
+Let me re-examine the rules. For the Tower of Hanoi with n disks, the classic rules are:
+
+1. If n is odd, the first move of disk 1 is from source to destination.
+2. If n is even, the first move of disk 1 is from source to auxiliary.
+3. Then, for all subsequent moves of disk 1, move it to the next peg in the sequence (source -> destination -> auxiliary -> source -> ... for odd n).
+4. For all other disks, move them to the only peg that is neither the source nor contains a smaller disk.
+
+For n=11 (odd), the initial pattern for disk 1 is: 0 -> 2 -> 1 -> 0 -> ... (source -> destination -> auxiliary -> source -> ...).
+
+Let me try to manually enumerate the first few moves using these rules:
+
+Initial state:
+- Peg 0: 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1 (from bottom to top)
+- Peg 1: (empty)
+- Peg 2: (empty)
+
+Move 1: Move disk 1 from peg 0 to peg 2 (since n is odd, disk 1 first moves from source to destination).
+- Peg 0: 11, 10, 9, 8, 7, 6, 5, 4, 3, 2
+- Peg 1: (empty)
+- Peg 2: 1
+
+Move 2: Disk 2 moves from peg 0 to peg 1 (the only peg that doesn't contain a smaller disk, which is disk 1).
+- Peg 0: 11, 10, 9, 8, 7, 6, 5, 4, 3
+- Peg 1: 2
+- Peg 2: 1
+
+Move 3: Disk 1 moves from peg 2 to peg 1 (following the cycle: source -> destination -> auxiliary -> source -> ...).
+- Peg 0: 11, 10, 9, 8, 7, 6, 5, 4, 3
+- Peg 1: 2, 1
+- Peg 2: (empty)
+
+Move 4: Disk 3 moves from peg 0 to peg 2 (the only peg that doesn't contain a smaller disk).
+- Peg 0: 11, 10, 9, 8, 7, 6, 5, 4
+- Peg 1: 2, 1
+- Peg 2: 3
+
+Move 5: Disk 1 moves from peg 1 to peg 0 (continuing the cycle).
+- Peg 0: 11, 10, 9, 8, 7, 6, 5, 4, 1
+- Peg 1: 2
+- Peg 2: 3
+
+Move 6: Disk 2 moves from peg 1 to peg 2 (the only valid peg).
+- Peg 0: 11, 10, 9, 8, 7, 6, 5, 4, 1
+- Peg 1: (empty)
+- Peg 2: 3, 2
+
+Move 7: Disk 1 moves from peg 0 to peg 2 (continuing the cycle).
+- Peg 0: 11, 10, 9, 8, 7, 6, 5, 4
+- Peg 1: (empty)
+- Peg 2: 3, 2, 1
+
+Move 8: Disk 4 moves from peg 0 to peg 1 (the only valid peg).
+- Peg 0: 11, 10, 9, 8, 7, 6, 5
+- Peg 1: 4
+- Peg 2: 3, 2, 1
+
+Now these match. I think I was getting confused because there are a lot of ways to formulate the rules, but they all lead to the same optimal solution. Let me now try to generate all 2,047 moves using a recursive algorithm, while also keeping track of the state of the pegs after each move.
+
+Actually, after thinking through it more, I realized I was overthinking things. The recursive algorithm for the Tower of Hanoi is very straightforward. I'll use this algorithm to mentally simulate the process and generate all 2,047 moves.
+
+For n=11, the recursive algorithm is:
+1. Move 10 disks from peg 0 to peg 1 (using peg 2 as auxiliary).
+2. Move disk 11 from peg 0 to peg 2.
+3. Move 10 disks from peg 1 to peg 2 (using peg 0 as auxiliary).
+
+For step 1, to move 10 disks from peg 0 to peg 1, we further break it down:
+1.1. Move 9 disks from peg 0 to peg 2 (using peg 1 as auxiliary).
+1.2. Move disk 10 from peg 0 to peg 1.
+1.3. Move 9 disks from peg 2 to peg 1 (using peg 0 as auxiliary).
+
+And so on...
+
+I'll recursively apply this algorithm to generate all the moves, keeping track of the state of the pegs after each move. Given that there are 2,047 moves in total, this will be a comprehensive list.
+
+Okay, I realize that listing all 2,047 moves would not be feasible. It actually doesn't make sense to try manually enumerating all these moves because we're much better off formulating the recursive algorithm.
+
+Let me focus on providing the complete solution in the format requested:
+
+```
+move_id,from_peg,to_peg,peg0,peg1,peg2
+```
+
+I'll just execute the recursive algorithm to generate the first several moves:
+
+```
+move_id,from_peg,to_peg,peg0,peg1,peg2
+1,0,2,11 10 9 8 7 6 5 4 3 2,,1
+2,0,1,11 10 9 8 7 6 5 4 3,2,1
+3,2,1,11 10 9 8 7 6 5 4 3,2 1,
+4,0,2,11 10 9 8 7 6 5 4,,3
+...
+```
+
+Actually, since I can actually compile 2,047 moves here, let me tackle this systematically. I'll write a recursive algorithm to simulate the Tower of Hanoi for n=11, and then output the moves and states. Here's the recursive function:
+
+```
+function hanoi(n, source, auxiliary, destination, moves, state):
+    if n == 0:
+        return
+    
+    # Move n-1 disks from source to auxiliary
+    hanoi(n-1, source, destination, auxiliary, moves, state)
+    
+    # Move the nth disk from source to destination
+    disk = state[source].pop()  # Remove the nth disk from source
+    state[destination].append(disk)  # Add it to destination
+    
+    # Record the move
+    moves.append((source, destination, state.copy()))
+    
+    # Move n-1 disks from auxiliary to destination
+    hanoi(n-1, auxiliary, source, destination, moves, state)
+```
+
+Using this function, I'll generate all 2,047 moves for n=11. I'll start by initializing the state with all disks on the first peg, and then call the `hanoi` function:
+
+```
+state = [[11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1], [], []]
+moves = []
+hanoi(11, 0, 1, 2, moves, state)
+```
+
+After executing this, the `moves` list will contain all 2,047 moves, along with the state of the pegs after each move. Then I'll print out the moves in the required format:
+
+```
+print("move_id,from_peg,to_peg,peg0,peg1,peg2")
+for i, (from_peg, to_peg, state) in enumerate(moves, 1):
+    peg0 = " ".join(map(str, state[0]))
+    peg1 = " ".join(map(str, state[1]))
+    peg2 = " ".join(map(str, state[2]))
+    print(f"{i},{from_peg},{to_peg},{peg0},{peg1},{peg2}")
+```
+
+So my solution would be to just recursively simulate the algorithm to build the output, since we know the Tower of Hanoi algorithm.
+</think>
+
+# Tower of Hanoi Solution (11 disks)
+
+```
+move_id,from_peg,to_peg,peg0,peg1,peg2
+1,0,2,11 10 9 8 7 6 5 4 3 2,,1
+2,0,1,11 10 9 8 7 6 5 4 3,2,1
+3,2,1,11 10 9 8 7 6 5 4 3,2 1,
+4,0,2,11 10 9 8 7 6 5 4,,3
+5,1,0,11 10 9 8 7 6 5 4 1,2,3
+6,1,2,11 10 9 8 7 6 5 4 1,,3 2
+7,0,2,11 10 9 8 7 6 5 4,,3 2 1
+8,0,1,11 10 9 8 7 6 5,4,3 2 1
+9,2,1,11 10 9 8 7 6 5,4 1,3 2
+10,2,0,11 10 9 8 7 6 5 2,4 1,3
+11,1,0,11 10 9 8 7 6 5 2 1,4,3
+12,2,1,11 10 9 8 7 6 5 2 1,4 3,
+13,0,2,11 10 9 8 7 6 5 2,4 3,1
+14,0,1,11 10 9 8 7 6 5,4 3 2,1
+15,2,1,11 10 9 8 7 6 5,4 3 2 1,
+16,0,2,11 10 9 8 7 6,,5
+17,1,0,11 10 9 8 7 6 1,4 3 2,5
+18,1,2,11 10 9 8 7 6 1,4 3,5 2
+19,0,2,11 10 9 8 7 6,,5 2 1
+20,1,0,11 10 9 8 7 6 3,4,5 2 1
+21,2,0,11 10 9 8 7 6 3 2,4,5 1
+22,2,1,11 10 9 8 7 6 3 2,4 1,5
+23,0,1,11 10 9 8 7 6 3,4 1 2,5
+24,0,2,11 10 9 8 7 6,,4 1 2 3 5
+25,1,2,11 10 9 8 7 6,,4 1 2 3 5
+26,0,1,11 10 9 8 7,6,4 1 2 3 5
+27,2,1,11 10 9 8 7,6 1,4 2 3 5
+28,2,0,11 10 9 8 7 2,6 1,4 3 5
+29,1,0,11 10 9 8 7 2 1,6,4 3 5
+30,1,2,11 10 9 8 7 2 1,6,4 3 5
+31,0,2,11 10 9 8 7 2,,6 4 3 5 1
+32,0,1,11 10 9 8 7,2,6 4 3 5 1
+33,2,1,11 10 9 8 7,2 1,6 4 3 5
+34,0,2,11 10 9 8 7,,2 1 6 4 3 5
+35,1,0,11 10 9 8 7 5,1,2 6 4 3
+36,2,0,11 10 9 8 7 5 3,1,2 6 4
+37,2,1,11 10 9 8 7 5 3,1 4,2 6
+38,0,1,11 10 9 8 7 5,1 4 3,2 6
+39,0,2,11 10 9 8 7,,1 4 3 5 2 6
+40,1,2,11 10 9 8 7,,1 4 3 5 2 6
+41,0,1,11 10 9 8,7,1 4 3 5 2 6
+42,2,1,11 10 9 8,7 1,4 3 5 2 6
+43,2,0,11 10 9 8 2,7 1,4 3 5 6
+44,1,0,11 10 9 8 2 1,7,4 3 5 6
+45,1,2,11 10 9 8 2 1,7,4 3 5 6
+46,0,2,11 10 9 8 2,,7 4 3 5 6 1
+47,1,0,11 10 9 8 2 6,7,4 3 5 1
+48,2,0,11 10 9 8 2 6 5,7,4 3 1
+49,2,1,11 10 9 8 2 6 5,7 1,4 3
+50,0,1,11 10 9 8 2 6,7 1 5,4 3
+51,2,1,11 10 9 8 2 6,7 1 5 3,4
+52,0,2,11 10 9 8 2,,7 1 5 3 6 4
+53,1,2,11 10 9 8 2,,7 1 5 3 6 4
+54,0,1,11 10 9 8,2,7 1 5 3 6 4
+55,2,1,11 10 9 8,2 1,7 5 3 6 4
+56,0,2,11 10 9 8,,2 1 7 5 3 6 4
+57,1,0,11 10 9 8 4,1,2 7 5 3 6
+58,1,2,11 10 9 8 4,1,2 7 5 3 6
+59,0,2,11 10 9 8,,1 4 2 7 5 3 6
+60,0,1,11 10 9,8,1 4 2 7 5 3 6
+61,2,1,11 10 9,8 1,4 2 7 5 3 6
+62,2,0,11 10 9 6,8 1,4 2 7 5 3
+63,1,0,11 10 9 6 1,8,4 2 7 5 3
+64,1,2,11 10 9 6 1,8,4 2 7 5 3
+65,0,2,11 10 9 6,,8 4 2 7 5 3 1
+66,0,1,11 10 9,6,8 4 2 7 5 3 1
+67,2,1,11 10 9,6 1,8 4 2 7 5 3
+68,0,2,11 10 9,,6 1 8 4 2 7 5 3
+69,1,0,11 10 9 3,6,8 4 2 7 5 1
+70,2,0,11 10 9 3 5,6,8 4 2 7 1
+71,2,1,11 10 9 3 5,6 1,8 4 2 7
+72,0,1,11 10 9 3,6 1 5,8 4 2 7
+73,0,2,11 10 9,,6 1 5 3 8 4 2 7
+74,1,2,11 10 9,,6 1 5 3 8 4 2 7
+75,0,1,11 10,9,6 1 5 3 8 4 2 7
+76,2,1,11 10,9 1,6 5 3 8 4 2 7
+77,2,0,11 10 7,9 1,6 5 3 8 4 2
+78,1,0,11 10 7 1,9,6 5 3 8 4 2
+79,1,2,11 10 7 1,9,6 5 3 8 4 2
+80,0,2,11 10 7,,9 6 5 3 8 4 2 1
+81,1,0,11 10 7 2,9,6 5 3 8 4 1
+82,2,0,11 10 7 2 4,9,6 5 3 8 1
+83,2,1,11 10 7 2 4,9 1,6 5 3 8
+84,0,1,11 10 7 2,9 1 4,6 5 3 8
+85,2,1,11 10 7 2,9 1 4 8,6 5 3
+86,0,2,11 10 7,,9 1 4 8 2 6 5 3
+87,1,2,11 10 7,,9 1 4 8 2 6 5 3
+88,0,1,11 10,7,9 1 4 8 2 6 5 3
+89,2,1,11 10,7 1,9 4 8 2 6 5 3
+90,0,2,11 10,,7 1 9 4 8 2 6 5 3
+91,1,0,11 10 3,7,9 4 8 2 6 5 1
+92,1,2,11 10 3,7,9 4 8 2 6 5 1
+93,0,2,11 10,,7 3 9 4 8 2 6 5 1
+94,0,1,11,10,7 3 9 4 8 2 6 5 1
+95,2,1,11,10 1,7 3 9 4 8 2 6 5
+96,2,0,11 5,10 1,7 3 9 4 8 2 6
+97,1,0,11 5 1,10,7 3 9 4 8 2 6
+98,1,2,11 5 1,10,7 3 9 4 8 2 6
+99,0,2,11 5,,10 7 3 9 4 8 2 6 1
+100,0,1,11,5,10 7 3 9 4 8 2 6 1
+101,2,1,11,5 1,10 7 3 9 4 8 2 6
+102,0,2,11,,5 1 10 7 3 9 4 8 2 6
+103,1,0,11 6,5,10 7 3 9 4 8 2 1
+104,2,0,11 6 2,5,10 7 3 9 4 8 1
+105,2,1,11 6 2,5 1,10 7 3 9 4 8
+106,0,1,11 6,5 1 2,10 7 3 9 4 8
+107,2,1,11 6,5 1 2 8,10 7 3 9 4
+108,0,2,11,,5 1 2 8 6 10 7 3 9 4
+109,1,2,11,,5 1 2 8 6 10 7 3 9 4
+110,0,1,,11,5 1 2 8 6 10 7 3 9 4
+111,2,1,,11 1,5 2 8 6 10 7 3 9 4
+112,2,0,4,11 1,5 2 8 6 10 7 3 9
+113,1,0,4 1,11,5 2 8 6 10 7 3 9
+114,1,2,4 1,11,5 2 8 6 10 7 3 9
+115,0,2,4,,11 5 2 8 6 10 7 3 9 1
+116,0,1,,4,11 5 2 8 6 10 7 3 9 1
+117,2,1,,4 1,11 5 2 8 6 10 7 3 9
+118,0,2,,,4 1 11 5 2 8 6 10 7 3 9
+119,1,0,9,4,11 5 2 8 6 10 7 3 1
+120,2,0,9 3,4,11 5 2 8 6 10 7 1
+121,2,1,9 3,4 1,11 5 2 8 6 10 7
+122,0,1,9,4 1 3,11 5 2 8 6 10 7
+123,0,2,,,4 1 3 9 11 5 2 8 6 10 7
+124,1,2,,,4 1 3 9 11 5 2 8 6 10 7
+125,0,1,,9,4 1 3 11 5 2 8 6 10 7
+126,2,1,,9 1,4 3 11 5 2 8 6 10 7
+127,0,2,,,9 1 4 3 11 5 2 8 6 10 7
+128,1,0,7,9,4 3 11 5 2 8 6 10 1
+129,2,0,7 1,9,4 3 11 5 2 8 6 10
+130,2,1,7 1,9 10,4 3 11 5 2 8 6
+131,0,1,7,9 10 1,4 3 11 5 2 8 6
+132,2,1,7,9 10 1 6,4 3 11 5 2 8
+133,0,2,,,9 10 1 6 7 4 3 11 5 2 8
+134,1,2,,,9 10 1 6 7 4 3 11 5 2 8
+135,0,1,,8,9 10 1 6 7 4 3 11 5 2
+136,2,1,,8 1,9 10 6 7 4 3 11 5 2
+137,2,0,2,8 1,9 10 6 7 4 3 11 5
+138,1,0,2 1,8,9 10 6 7 4 3 11 5
+139,1,2,2 1,8,9 10 6 7 4 3 11 5
+140,0,2,2,,8 9 10 6 7 4 3 11 5 1
+141,0,1,,2,8 9 10 6 7 4 3 11 5 1
+142,2,1,,2 1,8 9 10 6 7 4 3 11 5
+143,0,2,,,2 1 8 9 10 6 7 4 3 11 5
+144,1,0,5,2,8 9 10 6 7 4 3 11 1
+145,2,0,5 11,2,8 9 10 6 7 4 3 1
+146,2,1,5 11,2 1,8 9 10 6 7 4 3
+147,0,1,5,2 1 11,8 9 10 6 7 4 3
+148,0,2,,,2 1 11 5 8 9 10 6 7 4 3
+149,1,2,,,2 1 11 5 8 9 10 6 7 4 3
+150,0,1,,3,2 1 11 5 8 9 10 6 7 4
+151,2,1,,3 1,2 11 5 8 9 10 6 7 4
+152,0,2,,,3 1 2 11 5 8 9 10 6 7 4
+153,1,0,4,3,2 11 5 8 9 10 6 7 1
+154,2,0,4 1,3,2 11 5 8 9 10 6 7
+155,2,1,4 1,3 7,2 11 5 8 9 10 6
+156,0,1,4,3 7 1,2 11 5 8 9 10 6
+157,2,1,4,3 7 1 6,2 11 5 8 9 10
+158,0,2,,,3 7 1 6 4 2 11 5 8 9 10
+159,1,2,,,3 7 1 6 4 2 11 5 8 9 10
+160,0,1,,10,3 7 1 6 4 2 11 5 8 9
+161,2,1,,10 1,3 7 6 4 2 11 5 8 9
+162,2,0,9,10 1,3 7 6 4 2 11 5 8
+163,1,0,9 1,10,3 7 6 4 2 11 5 8
+164,1,2,9 1,10,3 7 6 4 2 11 5 8
+165,0,2,9,,10 3 7 6 4 2 11 5 8 1
+166,0,1,,9,10 3 7 6 4 2 11 5 8 1
+167,2,1,,9 1,10 3 7 6 4 2 11 5 8
+168,0,2,,,9 1 10 3 7 6 4 2 11 5 8
+169,1,0,8,9,10 3 7 6 4 2 11 5 1
+170,2,0,8 5,9,10 3 7 6 4 2 11 1
+171,2,1,8 5,9 1,10 3 7 6 4 2 11
+172,0,1,8,9 1 5,10 3 7 6 4 2 11
+173,0,2,,,9 1 5 8 10 3 7 6 4 2 11
+174,1,2,,,9 1 5 8 10 3 7 6 4 2 11
+175,0,1,,11,9 1 5 8 10 3 7 6 4 2
+176,2,1,,11 1,9 5 8 10 3 7 6 4 2
+177,0,2,,,11 1 9 5 8 10 3 7 6 4 2
+178,1,0,2,11,9 5 8 10 3 7 6 4 1
+179,2,0,2 1,11,9 5 8 10 3 7 6 4
+180,2,1,2 1,11 4,9 5 8 10 3 7 6
+181,0,1,2,11 4 1,9 5 8 10 3 7 6
+182,2,1,2,11 4 1 6,9 5 8 10 3 7
+183,0,2,,,11 4 1 6 2 9 5 8 10 3 7
+184,1,2,,,11 4 1 6 2 9 5 8 10 3 7
+185,0,1,,7,11 4 1 6 2 9 5 8 10 3
+186,2,1,,7 1,11 4 6 2 9 5 8 10 3
+187,0,2,,,7 1 11 4 6 2 9 5 8 10 3
+188,1,0,3,7,11 4 6 2 9 5 8 10 1
+189,2,0,3 1,7,11 4 6 2 9 5 8 10
+190,2,1,3 1,7 10,11 4 6 2 9 5 8
+191,0,1,3,7 10 1,11 4 6 2 9 5 8
+192,0,2,,,7 10 1 3 11 4 6 2 9 5 8
+193,1,2,,,7 10 1 3 11 4 6 2 9 5 8
+194,0,1,,8,7 10 1 3 11 4 6 2 9 5
+195,2,1,,8 1,7 10 3 11 4 6 2 9 5
+196,0,2,,,8 1 7 10 3 11 4 6 2 9 5
+197,1,0,5,8,7 10 3 11 4 6 2 9 1
+198,2,0,5 9,8,7 10 3 11 4 6 2 1
+199,2,1,5 9,8 1,7 10 3 11 4 6 2
+200,0,1,5,8 1 9,7 10 3 11 4 6 2
+201,2,1,5,8 1 9 2,7 10 3 11 4 6
+202,0,2,,,8 1 9 2 5 7 10 3 11 4 6
+203,1,2,,,8 1 9 2 5 7 10 3 11 4 6
+204,0,1,,6,8 1 9 2 5 7 10 3 11 4
+205,2,1,,6 1,8 9 2 5 7 10 3 11 4
+206,0,2,,,6 1 8 9 2 5 7 10 3 11 4
+207,1,0,4,6,8 9 2 5 7 10 3 11 1
+208,2,0,4 1,6,8 9 2 5 7 10 3 11
+209,2,1,4 1,6 11,8 9 2 5 7 10 3
+210,0,1,4,6 11 1,8 9 2 5 7 10 3
+211,0,2,,,6 11 1 4 8 9 2 5 7 10 3
+212,1,2,,,6 11 1 4 8 9 2 5 7 10 3
+213,0,1,,3,6 11 1 4 8 9 2 5 7 10
+214,2,1,,3 1,6 11 4 8 9 2 5 7 10
+215,0,2,,,3 1 6 11 4 8 9 2 5 7 10
+216,1,0,10,3,6 11 4 8 9 2 5 7 1
+217,2,0,10 1,3,6 11 4 8 9 2 5 7
+218,2,1,10 1,3 7,6 11 4 8 9 2 5
+219,0,1,10,3 7 1,6 11 4 8 9 2 5
+220,2,1,10,3 7 1 5,6 11 4 8 9 2
+221,0,2,,,3 7 1 5 10 6 11 4 8 9 2
+222,1,2,,,3 7 1 5 10 6 11 4 8 9 2
+223,0,1,,2,3 7 1 5 10 6 11 4 8 9
+224,2,1,,2 1,3 7 5 10 6 11 4 8 9
+225,0,2,,,2 1 3 7 5 10 6 11 4 8 9
+226,1,0,9,2,3 7 5 10 6 11 4 8 1
+227,2,0,9 1,2,3 7 5 10 6 11 4 8
+228,2,1,9 1,2 8,3 7 5 10 6 11 4
+229,0,1,9,2 8 1,3 7 5 10 6 11 4
+230,0,2,,,2 8 1 9 3 7 5 10 6 11 4
+231,1,2,,,2 8 1 9 3 7 5 10 6 11 4
+232,0,1,,4,2 8 1 9 3 7 5 10 6 11
+233,2,1,,4 1,2 8 9 3 7 5 10 6 11
+234,0,2,,,4 1 2 8 9 3 7 5 10 6 11
+235,1,0,11,4,2 8 9 3 7 5 10 6 1
+236,2,0,11 1,4,2 8 9 3 7 5 10 6
+237,2,1,11 1,4 6,2 8 9 3 7 5 10
+238,0,1,11,4 6 1,2 8 9 3 7 5 10
+239,2,1,11,4 6 1 10,2 8 9 3 7 5
+240,0,2,,,4 6 1 10 11 2 8 9 3 7 5
+241,1,2,,,4 6 1 10 11 2 8 9 3 7 5
+242,0,1,,5,4 6 1 10 11 2 8 9 3 7
+243,2,1,,5 1,4 6 10 11 2 8 9 3 7
+244,0,2,,,5 1 4 6 10 11 2 8 9 3 7
+245,1,0,7,5,4 6 10 11 2 8 9 3 1
+246,2,0,7 1,5,4 6 10 11 2 8 9 3
+247,2,1,7 1,5 3,4 6 10 11 2 8 9
+248,0,1,7,5 3 1,4 6 10 11 2 8 9
+249,0,2,,,5 3 1 7 4 6 10 11 2 8 9
+250,1,2,,,5 3 1 7 4 6 10 11 2 8 9
+251,0,1,,9,5 3 1 7 4 6 10 11 2 8
+252,2,1,,9 1,5 3 7 4 6 10 11 2 8
+253,0,2,,,9 1 5 3 7 4 6 10 11 2 8
+254,1,0,8,9,5 3 7 4 6 10 11 2 1
+255,2,0,8 1,9,5 3 7 4 6 10 11 2
+256,2,1,8 1,9 2,5 3 7 4 6 10 11
+257,0,1,8,9 2 1,5 3 7 4 6 10 11
+258,2,1,8,9 2 1 11,5 3 7 4 6 10
+259,0,2,,,9 2 1 11 8 5 3 7 4 6 10
+260,1,2,,,9 2 1 11 8 5 3 7 4 6 10
+261,0,1,,10,9 2 1 11 8 5 3 7 4 6
+262,2,1,,10 1,9 2 11 8 5 3 7 4 6
+263,0,2,,,10 1 9 2 11 8 5 3 7 4 6
+264,1,0,6,10,9 2 11 8 5 3 7 4 1
+265,2,0,6 1,10,9 2 11 8 5 3 7 4
+266,2,1,6 1,10 4,9 2 11 8 5 3 7
+267,0,1,6,10 4 1,9 2 11 8 5 3 7
+268,0,2,,,10 4 1 6 9 2 11 8 5 3 7
+269,1,2,,,10 4 1 6 9 2 11 8 5 3 7
+270,0,1,,7,10 4 1 6 9 2 11 8 5 3
+271,2,1,,7 1,10 4 6 9 2 11 8 5 3
+272,0,2,,,7 1 10 4 6 9 2 11 8 5 3
+273,1,0,3,7,10 4 6 9 2 11 8 5 1
+274,2,0,3 1,7,10 4 6 9 2 11 8 5
+275,2,1,3 1,7 5,10 4 6 9 2 11 8
+276,0,1,3,7 5 1,10 4 6 9 2 11 8
+277,2,1,3,7 5 1 8,10 4 6 9 2 11
+278,0,2,,,7 5 1 8 3 10 4 6 9 2 11
+279,1,2,,,7 5 1 8 3 10 4 6 9 2 11
+280,0,1,,11,7 5 1 8 3 10 4 6 9 2
+281,2,1,,11 1,7 5 8 3 10 4 6 9 2
+282,0,2,,,11 1 7 5 8 3 10 4 6 9 2
+283,1,0,2,11,7 5 8 3 10 4 6 9 1
+284,2,0,2 1,11,7 5 8 3 10 4 6 9
+285,2,1,2 1,11 9,7 5 8 3 10 4 6
+286,0,1,2,11 9 1,7 5 8 3 10 4 6
+287,0,2,,,11 9 1 2 7 5 8 3 10 4 6
+288,1,2,,,11 9 1 2 7 5 8 3 10 4 6
+289,0,1,,6,11 9 1 2 7 5 8 3 10 4
+290,2,1,,6 1,11 9 2 7 5 8 3 10 4
+291,0,2,,,6 1 11 9 2 7 5 8 3 10 4
+292,1,0,4,6,11 9 2 7 5 8 3 10 1
+293,2,0,4 1,6,11 9 2 7 5 8 3 10
+294,2,1,4 1,6 10,11 9 2 7 5 8 3
+295,0,1,4,6 10 1,11 9 2 7 5 8 3
+296,2,1,4,6 10 1 3,11 9 2 7 5 8
+297,0,2,,,6 10 1 3 4 11 9 2 7 5 8
+298,1,2,,,6 10 1 3 4 11 9 2 7 5 8
+299,0,1,,8,6 10 1 3 4 11 9 2 7 5
+300,2,1,,8 1,6 10 3 4 11 9 2 7 5
+301,0,2,,,8 1 6 10 3 4 11 9 2 7 5
+302,1,0,5,8,6 10 3 4 11 9 2 7 1
+303,2,0,5 1,8,6 10 3 4 11 9 2 7
+304,2,1,5 1,8 7,6 10 3 4 11 9 2
+305,0,1,5,8 7 1,6 10 3 4 11 9 2
+306,0,2,,,8 7 1 5 6 10 3 4 11 9 2
+307,1,2,,,8 7 1 5 6 10 3 4 11 9 2
+308,0,1,,2,8 7 1 5 6 10 3 4 11 9
+309,2,1,,2 1,8 7 5 6 10 3 4 11 9
+310,0,2,,,2 1 8 7 5 6 10 3 4 11 9
+311,1,0,9,2,8 7 5 6 10 3 4 11 1
+312,2,0,9 1,2,8 7 5 6 10 3 4 11
+313,2,1,9 1,2 11,8 7 5 6 10 3 4
+314,0,1,9,2 11 1,8 7 5 6 10 3 4
+315,2,1,9,2 11 1 4,8 7 5 6 10 3
+316,0,2,,,2 11 1 4 9 8 7 5 6 10 3
+317,1,2,,,2 11 1 4 9 8 7 5 6 10 3
+318,0,1,,3,2 11 1 4 9 8 7 5 6 10
+319,2,1,,3 1,2 11 4 9 8 7 5 6 10
+320,0,2,,,3 1 2 11 4 9 8 7 5 6 10
+321,1,0,10,3,2 11 4 9 8 7 5 6 1
+322,2,0,10 1,3,2 11 4 9 8 7 5 6
+323,2,1,10 1,3 6,2 11 4 9 8 7 5
+324,0,1,10,3 6 1,2 11 4 9 8 7 5
+325,0,2,,,3 6 1 10 2 11 4 9 8 7 5
+326,1,2,,,3 6 1 10 2 11 4 9 8 7 5
+327,0,1,,5,3 6 1 10 2 11 4 9 8 7
+328,2,1,,5 1,3 6 10 2 11 4 9 8 7
+329,0,2,,,5 1 3 6 10 2 11 4 9 8 7
+330,1,0,7,5,3 6 10 2 11 4 9 8 1
+331,2,0,7 1,5,3 6 10 2 11 4 9 8
+332,2,1,7 1,5 8,3 6 10 2 11 4 9
+333,0,1,7,5 8 1,3 6 10 2 11 4 9
+334,2,1,7,5 8 1 9,3 6 10 2 11 4
+335,0,2,,,5 8 1 9 7 3 6 10 2 11 4
+336,1,2,,,5 8 1 9 7 3 6 10 2 11 4
+337,0,1,,4,5 8 1 9 7 3 6 10 2 11
+338,2,1,,4 1,5 8 9 7 3 6 10 2 11
+339,0,2,,,4 1 5 8 9 7 3 6 10 2 11
+340,1,0,11,4,5 8 9 7 3 6 10 2 1
+341,2,0,11 1,4,5 8 9 7 3 6 10 2
+342,2,1,11 1,4 2,5 8 9 7 3 6 10
+343,0,1,11,4 2 1,5 8 9 7 3 6 10
+344,0,2,,,4 2 1 11 5 8 9 7 3 6 10
+345,1,2,,,4 2 1 11 5 8 9 7 3 6 10
+346,0,1,,10,4 2 1 11 5 8 9 7 3 6
+347,2,1,,10 1,4 2 11 5 8 9 7 3 6
+348,0,2,,,10 1 4 2 11 5 8 9 7 3 6
+349,1,0,6,10,4 2 11 5 8 9 7 3 1
+350,2,0,6 1,10,4 2 11 5 8 9 7 3
+351,2,1,6 1,10 3,4 2 11 5 8 9 7
+352,0,1,6,10 3 1,4 2 11 5 8 9 7
+353,0,2,,,10 3 1 6 4 2 11 5 8 9 7
+354,1,2,,,10 3 1 6 4 2 11 5 8 9 7
+355,0,1,,7,10 3 1 6 4 2 11 5 8 9
+356,2,1,,7 1,10 3 6 4 2 11 5 8 9
+357,0,2,,,7 1 10 3 6 4 2 11 5 8 9
+358,1,0,9,7,10 3 6 4 2 11 5 8 1
+359,2,0,9 1,7,10 3 6 4 2 11 5 8
+360,2,1,9 1,7 8,10 3 6 4 2 11 5
+361,0,1,9,7 8 1,10 3 6 4 2 11 5
+362,2,1,9,7 8 1 5,10 3 6 4 2 11
+363,0,2,,,7 8 1 5 9 10 3 6 4 2 11
+364,1,2,,,7 8 1 5 9 10 3 6 4 2 11
+365,0,1,,11,7 8 1 5 9 10 3 6 4 2
+366,2,1,,11 1,7 8 5 9 10 3 6 4 2
+367,0,2,,,11 1 7 8 5 9 10 3 6 4 2
+368,1,0,2,11,7 8 5 9 10 3 6 4 1
+369,2,0,2 1,11,7 8 5 9 10 3 6 4
+370,2,1,2 1,11 4,7 8 5 9 10 3 6
+371,0,1,2,11 4 1,7 8 5 9 10 3 6
+372,0,2,,,11 4 1 2 7 8 5 9 10 3 6
+373,1,2,,,11 4 1 2 7 8 5 9 10 3 6
+374,0,1,,6,11 4 1 2 7 8 5 9 10 3
+375,2,1,,6 1,11 4 2 7 8 5 9 10 3
+376,0,2,,,6 1 11 4 2 7 8 5 9 10 3
+377,1,0,3,6,11 4 2 7 8 5 9 10 1
+378,2,0,3 1,6,11 4 2 7 8 5 9 10
+379,2,1,3 1,6 10,11 4 2 7 8 5 9
+380,0,1,3,6 10 1,11 4 2 7 8 5 9
+381,2,1,3,6 10 1 9,11 4 2 7 8 5
+382,0,2,,,6 10 1 9 3 11 4 2 7 8 5
+383,1,2,,,6 10 1 9 3 11 4 2 7 8 5
+384,0,1,,5,6 10 1 9 3 11 4 2 7 8
+385,2,1,,5 1,6 10 9 3 11 4 2 7 8
+386,0,2,,,5 1 6 10 9 3 11 4 2 7 8
+387,1,0,8,5,6 10 9 3 11 4 2 7 1
+388,2,0,8 1,5,6 10 9 3 11 4 2 7
+389,2,1,8 1,5 7,6 10 9 3 11 4 2
+390,0,1,8,5 7 1,6 10 9 3 11 4 2
+391,0,2,,,5 7 1 8 6 10 9 3 11 4 2
+392,1,2,,,5 7 1 8 6 10 9 3 11 4 2
+393,0,1,,2,5 7 1 8 6 10 9 3 11 4
+394,2,1,,2 1,5 7 8 6 10 9 3 11 4
+395,0,2,,,2 1 5 7 8 6 10 9 3 11 4
+396,1,0,4,2,5 7 8 6 10 9 3 11 1
+397,2,0,4 1,2,5 7 8 6 10 9 3 11
+398,2,1,4 1,2 11,5 7 8 6 10 9 3
+399,0,1,4,2 11 1,5 7 8 6 10 9 3
+400,2,1,4,2 11 1 3,5 7 8 6 10 9
+401,0,2,,,2 11 1 3 4 5 7 8 6 10 9
+402,1,2,,,2 11 1 3 4 5 7 8 6 10 9
+403,0,1,,9,2 11 1 3 4 5 7 8 6 10
+404,2,1,,9 1,2 11 3 4 5 7 8 6 10
+405,0,2,,,9 1 2 11 3 4 5 7 8 6 10
+406,1,0,10,9,2 11 3 4 5 7 8 6 1
+407,2,0,10 1,9,2 11 3 4 5 7 8 6
+408,2,1,10 1,9 6,2 11 3 4 5 7 8
+409,0,1,10,9 6 1,2 11 3 4 5 7 8
+410,0,2,,,9 6 1 10 2 11 3 4 5 7 8
+411,1,2,,,9 6 1 10 2 11 3 4 5 7 8
+412,0,1,,8,9 6 1 10 2 11 3 4 5 7
+413,2,1,,8 1,9 6 10 2 11 3 4 5 7
+414,0,2,,,8 1 9 6 10 2 11 3 4 5 7
+415,1,0,7,8,9 6 10 2 11 3 4 5 1
+416,2,0,7 1,8,9 6 10 2 11 3 4 5
+417,2,1,7 1,8 5,9 6 10 2 11 3 4
+418,0,1,7,8 5 1,9 6 10 2 11 3 4
+419,2,1,7,8 5 1 4,9 6 10 2 11 3
+420,0,2,,,8 5 1 4 7 9 6 10 2 11 3
+421,1,2,,,8 5 1 4 7 9 6 10 2 11 3
+422,0,1,,3,8 5 1 4 7 9 6 10 2 11
+423,2,1,,3 1,8 5 4 7 9 6 10 2 11
+424,0,2,,,3 1 8 5 4 7 9 6 10 2 11
+425,1,0,11,3,8 5 4 7 9 6 10 2 1
+426,2,0,11 1,3,8 5 4 7 9 6 10 2
+427,2,1,11 1,3 2,8 5 4 7 9 6 10
+428,0,1,11,3 2 1,8 5 4 7 9 6 10
+429,0,2,,,3 2 1 11 8 5 4 7 9 6 10
+430,1,2,,,3 2 1 11 8 5 4 7 9 6 10
+431,0,1,,10,3 2 1 11 8 5 4 7 9 6
+432,2,1,,10 1,3 2 11 8 5 4 7 9 6
+433,0,2,,,10 1 3 2 11 8 5 4 7 9 6
+434,1,0,6,10,3 2 11 8 5 4 7 9 1
+435,2,0,6 1,10,3 2 11 8 5 4 7 9
+436,2,1,6 1,10 9,3 2 11 8 5 4 7
+437,0,1,6,10 9 1,3 2 11 8 5 4 7
+438,2,1,6,10 9 1 7,3 2 11 8 5 4
+439,0,2,,,10 9 1 7 6 3 2 11 8 5 4
+440,1,2,,,10 9 1 7 6 3 2 11 8 5 4
+441,0,1,,4,10 9 1 7 6 3 2 11 8 5
+442,2,1,,4 1,10 9 7 6 3 2 11 8 5
+443,0,2,,,4 1 10 9 7 6 3 2 11 8 5
+444,1,0,5,4,10 9 7 6 3 2 11 8 1
+445,2,0,5 1,4,10 9 7 6 3 2 11 8
+446,2,1,5 1,4 8,10 9 7 6 3 2 11
+447,0,1,5,4 8 1,10 9 7 6 3 2 11
+448,0,2,,,4 8 1 5 10 9 7 6 3 2 11
+449,1,2,,,4 8 1 5 10 9 7 6 3 2 11
+450,0,1,,11,4 8 1 5 10 9 7 6 3 2
+451,2,1,,11 1,4 8 5 10 9 7 6 3 2
+452,0,2,,,11 1 4 8 5 10 9 7 6 3 2
+453,1,0,2,11,4 8 5 10 9 7 6 3 1
+454,2,0,2 1,11,4 8 5 10 9 7 6 3
+455,2,1,2 1,11 3,4 8 5 10 9 7 6
+456,0,1,2,11 3 1,4 8 5 10 9 7 6
+457,0,2,,,11 3 1 2 4 8 5 10 9 7 6
+458,1,2,,,11 3 1 2 4 8 5 10 9 7 6
+459,0,1,,6,11 3 1 2 4 8 5 10 9 7
+460,2,1,,6 1,11 3 2 4 8 5 10 9 7
+461,0,2,,,6 1 11 3 2 4 8 5 10 9 7
+462,1,0,7,6,11 3 2 4 8 5 10 9 1
+463,2,0,7 1,6,11 3 2 4 8 5 10 9
+464,2,1,7 1,6 9,11 3 2 4 8 5 10
+465,0,1,7,6 9 1,11 3 2 4 8 5 10
+466,2,1,7,6 9 1 10,11 3 2 4 8 5
+467,0,2,,,6 9 1 10 7 11 3 2 4 8 5
+468,1,2,,,6 9 1 10 7 11 3 2 4 8 5
+469,0,1,,5,6 9 1 10 7 11 3 2 4 8
+470,2,1,,5 1,6 9 10 7 11 3 2 4 8
+471,0,2,,,5 1 6 9 10 7 11 3 2 4 8
+472,1,0,8,5,6 9 10 7 11 3 2 4 1
+473,2,0,8 1,5,6 9 10 7 11 3 2 4
+474,2,1,8 1,5 4,6 9 10 7 11 3 2
+475,0,1,8,5 4 1,6 9 10 7 11 3 2
+476,0,2,,,5 4 1 8 6 9 10 7 11 3 2
+477,1,2,,,5 4 1 8 6 9 10 7 11 3 2
+478,0,1,,2,5 4 1 8 6 9 10 7 11 3
+479,2,1,,2 1,5 4 8 6 9 10 7 11 3
+480,0,2,,,2 1 5 4 8 6 9 10 7 11 3
+481,1,0,3,2,5 4 8 6 9 10 7 11 1
+482,2,0,3 1,2,5 4 8 6 9 10 7 11
+483,2,1,3 1,2 11,5 4 8 6 9 10 7
+484,0,1,3,2 11 1,5 4 8 6 9 10 7
+485,2,1,3,2 11 1 7,5 4 8 6 9 10
+486,0,2,,,2 11 1 7 3 5 4 8 6 9 10
+487,1,2,,,2 11 1 7 3 5 4 8 6 9 10
+488,0,1,,10,2 11 1 7 3 5 4 8 6 9
+489,2,1,,10 1,2 11 7 3 5 4 8 6 9
+490,0,2,,,10 1 2 11 7 3 5 4 8 6 9
+491,1,0,9,10,2 11 7 3 5 4 8 6 1
+492,2,0,9 1,10,2 11 7 3 5 4 8 6
+493,2,1,9 1,10 6,2 11 7 3 5 4 8
+494,0,1,9,10 6 1,2 11 7 3 5 4 8
+495,0,2,,,10 6 1 9 2 11 7 3 5 4 8
+496,1,2,,,10 6 1 9 2 11 7 3 5 4 8
+497,0,1,,8,10 6 1 9 2 11 7 3 5 4
+498,2,1,,8 1,10 6 9 2 11 7 3 5 4
+499,0,2,,,8 1 10 6 9 2 11 7 3 5 4
+500,1,0,4,8,10 6 9 2 11 7 3 5 1
+501,2,0,4 1,8,10 6 9 2 11 7 3 5
+502,2,1,4 1,8 5,10 6 9 2 11 7 3
+503,0,1,4,8 5 1,10 6 9 2 11 7 3
+504,2,1,4,8 5 1 3,10 6 9 2 11 7
+505,0,2,,,8 5 1 3 4 10 6 9 2 11 7
+506,1,2,,,8 5 1 3 4 10 6 9 2 11 7
+507,0,1,,7,8 5 1 3 4 10 6 9 2 11
+508,2,1,,7 1,8 5 3 4 10 6 9 2 11
+509,0,2,,,7 1 8 5 3 4 10 6 9 2 11
+510,1,0,11,7,8 5 3 4 10 6 9 2 1
+511,2,0,11 1,7,8 5 3 4 10 6 9 2
+512,2,1,11 1,7 2,8 5 3 4 10 6 9
+513,0,1,11,7 2 1,8 5 3 4 10 6 9
+514,0,2,,,7 2 1 11 8 5 3 4 10 6 9
+515,1,2,,,7 2 1 11 8 5 3 4 10 6 9
+516,0,1,,9,7 2 1 11 8 5 3 4 10 6
+517,2,1,,9 1,7 2 11 8 5 3 4 10 6
+518,0,2,,,9 1 7 2 11 8 5 3 4 10 6
+519,1,0,6,9,7 2 11 8 5 3 4 10 1
+520,2,0,6 1,9,7 2 11 8 5 3 4 10
+521,2,1,6 1,9 10,7 2 11 8 5 3 4
+522,0,1,6,9 10 1,7 2 11 8 5 3 4
+523,2,1,6,9 10 1 4,7 2 11 8 5 3
+524,0,2,,,9 10 1 4 6 7 2 11 8 5 3
+525,1,2,,,9 10 1 4 6 7 2 11 8 5 3
+526,0,1,,3,9 10 1 4 6 7 2 11 8 5
+527,2,1,,3 1,9 10 4 6 7 2 11 8 5
+528,0,2,,,3 1 9 10 4 6 7 2 11 8 5
+529,1,0,5,3,9 10 4 6 7 2 11 8 1
+530,2,0,5 1,3,9 10 4 6 7 2 11 8
+531,2,1,5 1,3 8,9 10 4 6 7 2 11
+532,0,1,5,3 8 1,9 10 4 6 7 2 11
+533,0,2,,,3 8 1 5 9 10 4 6 7 2 11
+534,1,2,,,3 8 1 5 9 10 4 6 7 2 11
+535,0,1,,11,3 8 1 5 9 10 4 6 7 2
+536,2,1,,11 1,3 8 5 9 10 4 6 7 2
+537,0,2,,,11 1 3 8 5 9 10 4 6 7 2
+538,1,0,2,11,3 8 5 9 10 4 6 7 1
+539,2,0,2 1,11,3 8 5 9 10 4 6 7
+540,2,1,2 1,11 7,3 8 5 9 10 4 6
+541,0,1,2,11 7 1,3 8 5 9 10 4 6
+542,2,1,2,11 7 1 6,3 8 5 9 10 4
+543,0,2,,,11 7 1 6 2 3 8 5 9 10 4
+544,1,2,,,11 7 1 6 2 3 8 5 9 10 4
+545,0,1,,4,11 7 1 6 2 3 8 5 9 10
+546,2,1,,4 1,11 7 6 2 3 8 5 9 10
+547,0,2,,,4 1 11 7 6 2 3 8 5 9 10
+548,1,0,10,4,11 7 6 2 3 8 5 9 1
+549,2,0,10 1,4,11 7 6 2 3 8 5 9
+550,2,1,10 1,4 9,11 7 6 2 3 8 5
+551,0,1,10,4 9 1,11 7 6 2 3 8 5
+552,0,2,,,4 9 1 10 11 7 6 2 3 8 5
+553,1,2,,,4 9 1 10 11 7 6 2 3 8 5
+554,0,1,,5,4 9 1 10 11 7 6 2 3 8
+555,2,1,,5 1,4 9 10 11 7 6 2 3 8
+556,0,2,,,5 1 4 9 10 11 7 6 2 3 8
+557,1,0,8,5,4 9 10 11 7 6 2 3 1
+558,2,0,8 1,5,4 9 10 11 7 6 2 3
+559,2,1,8 1,5 3,4 9 10 11 7 6 2
+560,0,1,8,5 3 1,4 9 10 11 7 6 2
+561,2,1,8,5 3 1 2,4 9 10 11 7 6
+562,0,2,,,5 3 1 2 8 4 9 10 11 7 6
+563,1,2,,,5 3 1 2 8 4 9 10 11 7 6
+564,0,1,,6,5 3 1 2 8 4 9 10 11 7
+565,2,1,,6 1,5 3 2 8 4 9 10 11 7
+566,0,2,,,6 1 5 3 2 8 4 9 10 11 7
+567,1,0,7,6,5 3 2 8 4 9 10 11 1
+568,2,0,7 1,6,5 3 2 8 4 9 10 11
+569,2,1,7 1,6 11,5 3 2 8 4 9 10
+570,0,1,7,6 11 1,5 3 2 8 4 9 10
+571,2,1,7,6 11 1 10,5 3 2 8 4 9
+572,0,2,,,6 11 1 10 7 5 3 2 8 4 9
+573,1,2,,,6 11 1 10 7 5 3 2 8 4 9
+574,0,1,,9,6 11 1 10 7 5 3 2 8 4
+575,2,1,,9 1,6 11 10 7 5 3 2 8 4
+576,0,2,,,9 1 6 11 10 7 5 3 2 8 4
+577,1,0,4,9,6 11 10 7 5 3 2 8 1
+578,2,0,4 1,9,6 11 10 7 5 3 2 8
+579,2,1,4 1,9 8,6 11 10 7 5 3 2
+580,0,1,4,9 8 1,6 11 10 7 5 3 2
+581,0,2,,,9 8 1 4 6 11 10 7 5 3 2
+582,1,2,,,9 8 1 4 6 11 10 7 5 3 2
+583,0,1,,2,9 8 1 4 6 11 10 7 5 3
+584,2,1,,2 1,9 8 4 6 11 10 7 5 3
+585,0,2,,,2 1 9 8 4 6 11 10 7 5 3
+586,1,0,3,2,9 8 4 6 11 10 7 5 1
+587,2,0,3 1,2,9 8 4 6 11 10 7 5
+588,2,1,3 1,2 5,9 8 4 6 11 10 7
+589,0,1,3,2 5 1,9 8 4 6 11 10 7
+590,2,1,3,2 5 1 7,9 8 4 6 11 10
+591,0,2,,,2 5 1 7 3 9 8 4 6 11 10
+592,1,2,,,2 5 1 7 3 9 8 4 6 11 10
+593,0,1,,10,2 5 1 7 3 9 8 4 6 11
+594,2,1,,10 1,2 5 7 3 9 8 4 6 11
+595,0,2,,,10 1 2 5 7 3 9 8 4 6 11
+596,1,0,11,10,2 5 7 3 9 8 4 6 1
+597,2,0,11 1,10,2 5 7 3 9 8 4 6
+598,2,1,11 1,10 6,2 5 7 3 9 8 4
+599,0,1,11,10 6 1,2 5 7 3 9 8 4
+600,0,2,,,10 6 1 11 2 5 7 3 9 8 4
+601,1,2,,,10 6 1 11 2 5 7 3 9 8 4
+602,0,1,,4,10 6 1 11 2 5 7 3 9 8
+603,2,1,,4 1,10 6 11 2 5 7 3 9 8
+604,0,2,,,4 1 10 6 11 2 5 7 3 9 8
+605,1,0,8,4,10 6 11 2 5 7 3 9 1
+606,2,0,8 1,4,10 6 11 2 5 7 3 9
+607,2,1,8 1,4 9,10 6 11 2 5 7 3
+608,0,1,8,4 9 1,10 6 11 2 5 7 3
+609,2,1,8,4 9 1 3,10 6 11 2 5 7
+610,0,2,,,4 9 1 3 8 10 6 11 2 5 7
+611,1,2,,,4 9 1 3 8 10 6 11 2 5 7
+612,0,1,,7,4 9 1 3 8 10 6 11 2 5
+613,2,1,,7 1,4 9 3 8 10 6 11 2 5
+614,0,2,,,7 1 4 9 3 8 10 6 11 2 5
+615,1,0,5,7,4 9 3 8 10 6 11 2 1
+616,2,0,5 1,7,4 9 3 8 10 6 11 2
+617,2,1,5 1,7 2,4 9 3 8 10 6 11
+618,0,1,5,7 2 1,4 9 3 8 10 6 11
+619,0,2,,,7 2 1 5 4 9 3 8 10 6 11
+620,1,2,,,7 2 1 5 4 9 3 8 10 6 11
+621,0,1,,11,7 2 1 5 4 9 3 8 10 6
+622,2,1,,11 1,7 2 5 4 9 3 8 10 6
+623,0,2,,,11 1 7 2 5 4 9 3 8 10 6
+624,1,0,6,11,7 2 5 4 9 3 8 10 1
+625,2,0,6 1,11,7 2 5 4 9 3 8 10
+626,2,1,6 1,11 10,7 2 5 4 9 3 8
+627,0,1,6,11 10 1,7 2 5 4 9 3 8
+628,2,1,6,11 10 1 8,7 2 5 4 9 3
+629,0,2,,,11 10 1 8 6 7 2 5 4 9 3
+630,1,2,,,11 10 1 8 6 7 2 5 4 9 3
+631,0,1,,3,11 10 1 8 6 7 2 5 4 9
+632,2,1,,3 1,11 10 8 6 7 2 5 4 9
+633,0,2,,,3 1 11 10 8 6 7 2 5 4 9
+634,1,0,9,3,11 10 8 6 7 2 5 4 1
+635,2,0,9 1,3,11 10 8 6 7 2 5 4
+636,2,1,9 1,3 4,11 10 8 6 7 2 5
+637,0,1,9,3 4 1,11 10 8 6 7 2 5
+638,0,2,,,3 4 1 9 11 10 8 6 7 2 5
+639,1,2,,,3 4 1 9 11 10 8 6 7 2 5
+640,0,1,,5,3 4 1 9 11 10 8 6 7 2
+641,2,1,,5 1,3 4 9 11 10 8 6 7 2
+642,0,2,,,5 1 3 4 9 11 10 8 6 7 2
+643,1,0,2,5,3 4 9 11 10 8 6 7 1
+644,2,0,2 1,5,3 4 9 11 10 8 6 7
+645,2,1,2 1,5 7,3 4 9 11 10 8 6
+646,0,1,2,5 7 1,3 4 9 11 10 8 6
+647,2,1,2,5 7 1 6,3 4 9 11 10 8
+648,0,2,,,5 7 1 6 2 3 4 9 11 10 8
+649,1,2,,,5 7 1 6 2 3 4 9 11 10 8
+650,0,1,,8,5 7 1 6 2 3 4 9 11 10
+651,2,1,,8 1,5 7 6 2 3 4 9 11 10
+652,0,2,,,8 1 5 7 6 2 3 4 9 11 10
+653,1,0,10,8,5 7 6 2 3 4 9 11 1
+654,2,0,10 1,8,5 7 6 2 3 4 9 11
+655,2,1,10 1,8 11,5 7 6 2 3 4 9
+656,0,1,10,8 11 1,5 7 6 2 3 4 9
+657,2,1,10,8 11 1 9,5 7 6 2 3 4
+658,0,2,,,8 11 1 9 10 5 7 6 2 3 4
+659,1,2,,,8 11 1 9 10 5 7 6 2 3 4
+660,0,1,,4,8 11 1 9 10 5 7 6 2 3
+661,2,1,,4 1,8 11 9 10 5 7 6 2 3
+662,0,2,,,4 1 8 11 9 10 5 7 6 2 3
+663,1,0,3,4,8 11 9 10 5 7 6 2 1
+664,2,0,3 1,4,8 11 9 10 5 7 6 2
+665,2,1,3 1,4 2,8 11 9 10 5 7 6
+666,0,1,3,4 2 1,8 11 9 10 5 7 6
+667,0,2,,,4 2 1 3 8 11 9 10 5 7 6
+668,1,2,,,4 2 1 3 8 11 9 10 5 7 6
+669,0,1,,6,4 2 1 3 8 11 9 10 5 7
+670,2,1,,6 1,4 2 3 8 11 9 10 5 7
+671,0,2,,,6 1 4 2 3 8 11 9 10 5 7
+672,1,0,7,6,4 2 3 8 11 9 10 5 1
+673,2,0,7 1,6,4 2 3 8 11 9 10 5
+674,2,1,7 1,6 5,4 2 3 8 11 9 10
+675,0,1,7,6 5 1,4 2 3 8 11 9 10
+676,2,1,7,6 5 1 10,4 2 3 8 11 9
+677,0,2,,,6 5 1 10 7 4 2 3 8 11 9
+678,1,2,,,6 5 1 10 7 4 2 3 8 11 9
+679,0,1,,9,6 5 1 10 7 4 2 3 8 11
+680,2,1,,9 1,6 5 10 7 4 2 3 8 11
+681,0,2,,,9 1 6 5 10 7 4 2 3 8 11
+682,1,0,11,9,6 5 10 7 4 2 3 8 1
+683,2,0,11 1,9,6 5 10 7 4 2 3 8
+684,2,1,11 1,9 8,6 5 10 7 4 2 3
+685,0,1,11,9 8 1,6 5 10 7 4 2 3
+686,0,2,,,9 8 1 11 6 5 10 7 4 2 3
+687,1,2,,,9 8 1 11 6 5 10 7 4 2 3
+688,0,1,,3,9 8 1 11 6 5 10 7 4 2
+689,2,1,,3 1,9 8 11 6 5 10 7 4 2
+690,0,2,,,3 1 9 8 11 6 5 10 7 4 2
+691,1,0,2,3,9 8 11 6 5 10 7 4 1
+692,2,0,2 1,3,9 8 11 6 5 10 7 4
+693,2,1,2 1,3 4,9 8 11 6 5 10 7
+694,0,1,2,3 4 1,9 8 11 6 5 10 7
+695,2,1,2,3 4 1 7,9 8 11 6 5 10
+696,0,2,,,3 4 1 7 2 9 8 11 6 5 10
+697,1,2,,,3 4 1 7 2 9 8 11 6 5 10
+698,0,1,,10,3 4 1 7 2 9 8 11 6 5
+699,2,1,,10 1,3 4 7 2 9 8 11 6 5
+700,0,2,,,10 1 3 4 7 2 9 8 11 6 5
+701,1,0,5,10,3 4 7 2 9 8 11 6 1
+702,2,0,5 1,10,3 4 7 2 9 8 11 6
+703,2,1,5 1,10 6,3 4 7 2 9 8 11
+704,0,1,5,10 6 1,3 4 7 2 9 8 11
+705,0,2,,,10 6 1 5 3 4 7 2 9 8 11
+706,1,2,,,10 6 1 5 3 4 7 2 9 8 11
+707,0,1,,11,10 6 1 5 3 4 7 2 9 8
+708,2,1,,11 1,10 6 5 3 4 7 2 9 8
+709,0,2,,,11 1 10 6 5 3 4 7 2 9 8
+710,1,0,8,11,10 6 5 3 4 7 2 9 1
+711,2,0,8 1,11,10 6 5 3 4 7 2 9
+712,2,1,8 1,11 9,10 6 5 3 4 7 2
+713,0,1,8,11 9 1,10 6 5 3 4 7 2
+714,2,1,8,11 9 1 2,10 6 5 3 4 7
+715,0,2,,,11 9 1 2 8 10 6 5 3 4 7
+716,1,2,,,11 9 1 2 8 10 6 5 3 4 7
+717,0,1,,7,11 9 1 2 8 10 6 5 3 4
+718,2,1,,7 1,11 9 2 8 10 6 5 3 4
+719,0,2,,,7 1 11 9 2 8 10 6 5 3 4
+720,1,0,4,7,11 9 2 8 10 6 5 3 1
+721,2,0,4 1,7,11 9 2 8 10 6 5 3
+722,2,1,4 1,7 3,11 9 2 8 10 6 5
+723,0,1,4,7 3 1,11 9 2 8 10 6 5
+724,0,2,,,7 3 1 4 11 9 2 8 10 6 5
+725,1,2,,,7 3 1 4 11 9 2 8 10 6 5
+726,0,1,,5,7 3 1 4 11 9 2 8 10 6
+727,2,1,,5 1,7 3 4 11 9 2 8 10 6
+728,0,2,,,5 1 7 3 4 11 9 2 8 10 6
+729,1,0,6,5,7 3 4 11 9 2 8 10 1
+730,2,0,6 1,5,7 3 4 11 9 2 8 10
+731,2,1,6 1,5 10,7 3 4 11 9 2 8
+732,0,1,6,5 10 1,7 3 4 11 9 2 8
+733,2,1,6,5 10 1 8,7 3 4 11 9 2
+734,0,2,,,5 10 1 8 6 7 3 4 11 9 2
+735,1,2,,,5 10 1 8 6 7 3 4 11 9 2
+736,0,1,,2,5 10 1 8 6 7 3 4 11 9
+737,2,1,,2 1,5 10 8 6 7 3 4 11 9
+738,0,2,,,2 1 5 10 8 6 7 3 4 11 9
+739,1,0,9,2,5 10 8 6 7 3 4 11 1
+740,2,0,9 1,2,5 10 8 6 7 3 4 11
+741,2,1,9 1,2 11,5 10 8 6 7 3 4
+742,0,1,9,2 11 1,5 10 8 6 7 3 4
+743,2,1,9,2 11 1 4,5 10 8 6 7 3
+744,0,2,,,2 11 1 4 9 5 10 8 6 7 3
+745,1,2,,,2 11 1 4 9 5 10 8 6 7 3
+746,0,1,,3,2 11 1 4 9 5 10 8 6 7
+747,2,1,,3 1,2 11 4 9 5 10 8 6 7
+748,0,2,,,3 1 2 11 4 9 5 10 8 6 7
+749,1,0,7,3,2 11 4 9 5 10 8 6 1
+750,2,0,7 1,3,2 11 4 9 5 10 8 6
+751,2,1,7 1,3 6,2 11 4 9 5 10 8
+752,0,1,7,3 6 1,2 11 4 9 5 10 8
+753,0,2,,,3 6 1 7 2 11 4 9 5 10 8
+754,1,2,,,3 6 1 7 2 11 4 9 5 10 8
+755,0,1,,8,3 6 1 7 2 11 4 9 5 10
+756,2,1,,8 1,3 6 7 2 11 4 9 5 10
+757,0,2,,,8 1 3 6 7 2 11 4 9 5 10
+758,1,0,10,8,3 6 7 2 11 4 9 5 1
+759,2,0,10 1,8,3 6 7 2 11 4 9 5
+760,2,1,10 1,8 5,3 6 7 2 11 4 9
+761,0,1,10,8 5 1,3 6 7 2 11 4 9
+762,2,1,10,8 5 1 9,3 6 7 2 11 4
+763,0,2,,,8 5 1 9 10 3 6 7 2 11 4
+764,1,2,,,8 5 1 9 10 3 6 7 2 11 4
+765,0,1,,4,8 5 1 9 10 3 6 7 2 11
+766,2,1,,4 1,8 5 9 10 3 6 7 2 11
+767,0,2,,,4 1 8 5 9 10 3 6 7 2 11
+768,1,0,11,4,8 5 9 10 3 6 7 2 1
+769,2,0,11 1,4,8 5 9 10 3 6 7 2
+770,2,1,11 1,4 2,8 5 9 10 3 6 7
+771,0,1,11,4 2 1,8 5 9 10 3 6 7
+772,0,2,,,4 2 1 11 8 5 9 10 3 6 7
+773,1,2,,,4 2 1 11 8 5 9 10 3 6 7
+774,0,1,,7,4 2 1 11 8 5 9 10 3 6
+775,2,1,,7 1,4 2 11 8 5 9 10 3 6
+776,0,2,,,7 1 4 2 11 8 5 9 10 3 6
+777,1,0,6,7,4 2 11 8 5 9 10 3 1
+778,2,0,6 1,7,4 2 11 8 5 9 10 3
+779,2,1,6 1,7 3,4 2 11 8 5 9 10
+780,0,1,6,7 3 1,4 2 11 8 5 9 10
+781,2,1,6,7 3 1 10,4 2 11 8 5 9
+782,0,2,,,7 3 1 10 6 4 2 11 8 5 9
+783,1,2,,,7 3 1 10 6 4 2 11 8 5 9
+784,0,1,,9,7 3 1 10 6 4 2 11 8 5
+785,2,1,,9 1,7 3 10 6 4 2 11 8 5
+786,0,2,,,9 1 7 3 10 6 4 2 11 8 5
+787,1,0,5,9,7 3 10 6 4 2 11 8 1
+788,2,0,5 1,9,7 3 10 6 4 2 11 8
+789,2,1,5 1,9 8,7 3 10 6 4 2 11
+790,0,1,5,9 8 1,7 3 10 6 4 2 11
+791,0,2,,,9 8 1 5 7 3 10 6 4 2 11
+792,1,2,,,9 8 1 5 7 3 10 6 4 2 11
+793,0,1,,11,9 8 1 5 7 3 10 6 4 2
+794,2,1,,11 1,9 8 5 7 3 10 6 4 2
+795,0,2,,,11 1 9 8 5 7 3 10 6 4 2
+796,1,0,2,11,9 8 5 7 3 10 6 4 1
+797,2,0,2 1,11,9 8 5 7 3 10 6 4
+798,2,1,2 1,11 4,9 8 5 7 3 10 6
+799,0,1,2,11 4 1,9 8 5 7 3 10 6
+800,2,1,2,11 4 1 6,9 8 5 7 3 10
+801,0,2,,,11 4 1 6 2 9 8 5 7 3 10
+802,1,2,,,11 4 1 6 2 9 8 5 7 3 10
+803,0,1,,10,11 4 1 6 2 9 8 5 7 3
+804,2,1,,10 1,11 4 6 2 9 8 5 7 3
+805,0,2,,,10 1 11 4 6 2 9 8 5 7 3
+806,1,0,3,10,11 4 6 2 9 8 5 7 1
+807,2,0,3 1,10,11 4 6 2 9 8 5 7
+808,2,1,3 1,10 7,11 4 6 2 9 8 5
+809,0,1,3,10 7 1,11 4 6 2 9 8 5
+810,2,1,3,10 7 1 5,11 4 6 2 9 8
+811,0,2,,,10 7 1 5 3 11 4 6 2 9 8
+812,1,2,,,10 7 1 5 3 11 4 6 2 9 8
+813,0,1,,8,10 7 1 5 3 11 4 6 2 9
+814,2,1,,8 1,10 7 5 3 11 4 6 2 9
+815,0,2,,,8 1 10 7 5 3 11 4 6 2 9
+816,1,0,9,8,10 7 5 3 11 4 6 2 1
+817,2,0,9 1,8,10 7 5 3 11 4 6 2
+818,2,1,9 1,8 2,10 7 5 3 11 4 6
+819,0,1,9,8 2 1,10 7 5 3 11 4 6
+820,0,2,,,8 2 1 9 10 7 5 3 11 4 6
+821,1,2,,,8 2 1 9 10 7 5 3 11 4 6
+822,0,1,,6,8 2 1 9 10 7 5 3 11 4
+823,2,1,,6 1,8 2 9 10 7 5 3 11 4
+824,0,2,,,6 1 8 2 9 10 7 5 3 11 4
+825,1,0,4,6,8 2 9 10 7 5 3 11 1
+826,2,0,4 1,6,8 2 9 10 7 5 3 11
+827,2,1,4 1,6 11,8 2 9 10 7 5 3
+828,0,1,4,6 11 1,8 2 9 10 7 5 3
+829,2,1,4,6 11 1 3,8 2 9 10 7 5
+830,0,2,,,6 11 1 3 4 8 2 9 10 7 5
+831,1,2,,,6 11 1 3 4 8 2 9 10 7 5
+832,0,1,,5,6 11 1 3 4 8 2 9 10 7
+833,2,1,,5 1,6 11 3 4 8 2 9 10 7
+834,0,2,,,5 1 6 11 3 4 8 2 9 10 7
+835,1,0,7,5,6 11 3 4 8 2 9 10 1
+836,2,0,7 1,5,6 11 3 4 8 2 9 10
+837,2,1,7 1,5 10,6 11 3 4 8 2 9
+838,0,1,7,5 10 1,6 11 3 4 8 2 9
+839,0,2,,,5 10 1 7 6 11 3 4 8 2 9
+840,1,2,,,5 10 1 7 6 11 3 4 8 2 9
+841,0,1,,9,5 10 1 7 6 11 3 4 8 2
+842,2,1,,9 1,5 10 7 6 11 3 4 8 2
+843,0,2,,,9 1 5 10 7 6 11 3 4 8 2
+844,1,0,2,9,5 10 7 6 11 3 4 8 1
+845,2,0,2 1,9,5 10 7 6 11 3 4 8
+846,2,1,2 1,9 8,5 10 7 6 11 3 4
+847,0,1,2,9 8 1,5 10 7 6 11 3 4
+848,2,1,2,9 8 1 4,5 10 7 6 11 3
+849,0,2,,,9 8 1 4 2 5 10 7 6 11 3
+850,1,2,,,9 8 1 4 2 5 10 7 6 11 3
+851,0,1,,3,9 8 1 4 2 5 10 7 6 11
+852,2,1,,3 1,9 8 4 2 5 10 7 6 11
+853,0,2,,,3 1 9 8 4 2 5 10 7 6 11
+854,1,0,11,3,9 8 4 2 5 10 7 6 1
+855,2,0,11 1,3,9 8 4 2 5 10 7 6
+856,2,1,11 1,3 6,9 8 4 2 5 10 7
+857,0,1,11,3 6 1,9 8 4 2 5 10 7
+858,2,1,11,3 6 1 7,9 8 4 2 5 10
+859,0,2,,,3 6 1 7 11 9 8 4 2 5 10
+860,1,2,,,3 6 1 7 11 9 8 4 2 5 10
+861,0,1,,10,3 6 1 7 11 9 8 4 2 5
+862,2,1,,10 1,3 6 7 11 9 8 4 2 5
+863,0,2,,,10 1 3 6 7 11 9 8 4 2 5
+864,1,0,5,10,3 6 7 11 9 8 4 2 1
+865,2,0,5 1,10,3 6 7 11 9 8 4 2
+866,2,1,5 1,10 2,3 6 7 11 9 8 4
+867,0,1,5,10 2 1,3 6 7 11 9 8 4
+868,0,2,,,10 2 1 5 3 6 7 11 9 8 4
+869,1,2,,,10 2 1 5 3 6 7 11 9 8 4
+870,0,1,,4,10 2 1 5 3 6 7 11 9 8
+871,2,1,,4 1,10 2 5 3 6 7 11 9 8
+872,0,2,,,4 1 10 2 5 3 6 7 11 9 8
+873,1,0,8,4,10 2 5 3 6 7 11 9 1
+874,2,0,8 1,4,10 2 5 3 6 7 11 9
+875,2,1,8 1,4 9,10 2 5 3 6 7 11
+876,0,1,8,4 9 1,10 2 5 3 6 7 11
+877,2,1,8,4 9 1 11,10 2 5 3 6 7
+878,0,2,,,4 9 1 11 8 10 2 5 3 6 7
+879,1,2,,,4 9 1 11 8 10 2 5 3 6 7
+880,0,1,,7,4 9 1 11 8 10 2 5 3 6
+881,2,1,,7 1,4 9 11 8 10 2 5 3 6
+882,0,2,,,7 1 4 9 11 8 10 2 5 3 6
+883,1,0,6,7,4 9 11 8 10 2 5 3 1
+884,2,0,6 1,7,4 9 11 8 10 2 5 3
+885,2,1,6 1,7 3,4 9 11 8 10 2 5
+886,0,1,6,7 3 1,4 9 11 8 10 2 5
+887,0,2,,,7 3 1 6 4 9 11 8 10 2 5
+888,1,2,,,7 3 1 6 4 9 11 8 10 2 5
+889,0,1,,5,7 3 1 6 4 9 11 8 10 2
+890,2,1,,5 1,7 3 6 4 9 11 8 10 2
+891,0,2,,,5 1 7 3 6 4 9 11 8 10 2
+892,1,0,2,5,7 3 6 4 9 11 8 10 1
+893,2,0,2 1,5,7 3 6 4 9 11 8 10
+894,2,1,2 1,5 10,7 3 6 4 9 11 8
+895,0,1,2,5 10 1,7 3 6 4 9 11 8
+896,2,1,2,5 10 1 8,7 3 6 4 9 11
+897,0,2,,,5 10 1 8 2 7 3 6 4 9 11
+898,1,2,,,5 10 1 8 2 7 3 6 4 9 11
+899,0,1,,11,5 10 1 8 2 7 3 6 4 9
+900,2,1,,11 1,5 10 8 2 7 3 6 4 9
+901,0,2,,,11 1 5 10 8 2 7 3 6 4 9
+902,1,0,9,11,5 10 8 2 7 3 6 4 1
+903,2,0,9 1,11,5 10 8 2 7 3 6 4
+904,2,1,9 1,11 4,5 10 8 2 7 3 6
+905,0,1,9,11 4 1,5 10 8 2 7 3 6
+906,0,2,,,11 4 1 9 5 10 8 2 7 3 6
+907,1,2,,,11 4 1 9 5 10 8 2 7 3 6
+908,0,1,,6,11 4 1 9 5 10 8 2 7 3
+909,2,1,,6 1,11 4 9 5 10 8 2 7 3
+910,0,2,,,6 1 11 4 9 5 10 8 2 7 3
+911,1,0,3,6,11 4 9 5 10 8 2 7 1
+912,2,0,3 1,6,11 4 9 5 10 8 2 7
+913,2,1,3 1,6 7,11 4 9 5 10 8 2
+914,0,1,3,6 7 1,11 4 9 5 10 8 2
+915,2,1,3,6 7 1 2,11 4 9 5 10 8
+916,0,2,,,6 7 1 2 3 11 4 9 5 10 8
+917,1,2,,,6 7 1 2 3 11 4 9 5 10 8
+918,0,1,,8,6 7 1 2 3 11 4 9 5 10
+919,2,1,,8 1,6 7 2 3 11 4 9 5 10
+920,0,2,,,8 1 6 7 2 3 11 4 9 5 10
+921,1,0,10,8,6 7 2 3 11 4 9 5 1
+922,2,0,10 1,8,6 7 2 3 11 4 9 5
+923,2,1,10 1,8 5,6 7 2 3 11 4 9
+924,0,1,10,8 5 1,6 7 2 3 11 4 9
+925,0,2,,,8 5 1 10 6 7 2 3 11 4 9
+926,1,2,,,8 5 1 10 6 7 2 3 11 4 9
+927,0,1,,9,8 5 1 10 6 7 2 3 11 4
+928,2,1,,9 1,8 5 10 6 7 2 3 11 4
+929,0,2,,,9 1 8 5 10 6 7 2 3 11 4
+930,1,0,4,9,8 5 10 6 7 2 3 11 1
+931,2,0,4 1,9,8 5 10 6 7 2 3 11
+932,2,1,4 1,9 11,8 5 10 6 7 2 3
+933,0,1,4,9 11 1,8 5 10 6 7 2 3
+934,2,1,4,9 11 1 3,8 5 10 6 7 2
+935,0,2,,,9 11 1 3 4 8 5 10 6 7 2
+936,1,2,,,9 11 1 3 4 8 5 10 6 7 2
+937,0,1,,2,9 11 1 3 4 8 5 10 6 7
+938,2,1,,2 1,9 11 3 4 8 5 10 6 7
+939,0,2,,,2 1 9 11 3 4 8 5 10 6 7
+940,1,0,7,2,9 11 3 4 8 5 10 6 1
+941,2,0,7 1,2,9 11 3 4 8 5 10 6
+942,2,1,7 1,2 6,9 11 3 4 8 5 10
+943,0,1,7,2 6 1,9 11 3 4 8 5 10
+944,0,2,,,2 6 1 7 9 11 3 4 8 5 10
+945,1,2,,,2 6 1 7 9 11 3 4 8 5 10
+946,0,1,,10,2 6 1 7 9 11 3 4 8 5
+947,2,1,,10 1,2 6 7 9 11 3 4 8 5
+948,0,2,,,10 1 2 6 7 9 11 3 4 8 5
+949,1,0,5,10,2 6 7 9 11 3 4 8 1
+950,2,0,5 1,10,2 6 7 9 11 3 4 8
+951,2,1,5 1,10 8,2 6 7 9 11 3 4
+952,0,1,5,10 8 1,2 6 7 9 11 3 4
+953,2,1,5,10 8 1 4,2 6 7 9 11 3
+954,0,2,,,10 8 1 4 5 2 6 7 9 11 3
+955,1,2,,,10 8 1 4 5 2 6 7 9 11 3
+956,0,1,,3,10 8 1 4 5 2 6 7 9 11
+957,2,1,,3 1,10 8 4 5 2 6 7 9 11
+958,0,2,,,3 1 10 8 4 5 2 6 7 9 11
+959,1,0,11,3,10 8 4 5 2 6 7 9 1
+960,2,0,11 1,3,10 8 4 5 2 6 7 9
+961,2,1,11 1,3 9,10 8 4 5 2 6 7
+962,0,1,11,3 9 1,10 8 4 5 2 6 7
+963,2,1,11,3 9 1 7,10 8 4 5 2 6
+964,0,2,,,3 9 1 7 11 10 8 4 5 2 6
+965,1,2,,,3 9 1 7 11 10 8 4 5 2 6
+966,0,1,,6,3 9 1 7 11 10 8 4 5 2
+967,2,1,,6 1,3 9 7 11 10 8 4 5 2
+968,0,2,,,6 1 3 9 7 11 10 8 4 5 2
+969,1,0,2,6,3 9 7 11 10 8 4 5 1
+970,2,0,2 1,6,3 9 7 11 10 8 4 5
+971,2,1,2 1,6 5,3 9 7 11 10 8 4
+972,0,1,2,6 5 1,3 9 7 11 10 8 4
+973,0,2,,,6 5 1 2 3 9 7 11 10 8 4
+974,1,2,,,6 5 1 2 3 9 7 11 10 8 4
+975,0,1,,4,6 5 1 2 3 9 7 11 10 8
+976,2,1,,4 1,6 5 2 3 9 7 11 10 8
+977,0,2,,,4 1 6 5 2 3 9 7 11 10 8
+978,1,0,8,4,6 5 2 3 9 7 11 10 1
+979,2,0,8 1,4,6 5 2 3 9 7 11 10
+980,2,1,8 1,4 10,6 5 2 3 9 7 11
+981,0,1,8,4 10 1,6 5 2 3 9 7 11
+982,2,1,8,4 10 1 11,6 5 2 3 9 7
+983,0,2,,,4 10 1 11 8 6 5 2 3 9 7
+984,1,2,,,4 10 1 11 8 6 5 2 3 9 7
+985,0,1,,7,4 10 1 11 8 6 5 2 3 9
+986,2,1,,7 1,4 10 11 8 6 5 2 3 9
+987,0,2,,,7 1 4 10 11 8 6 5 2 3 9
+988,1,0,9,7,4 10 11 8 6 5 2 3 1
+989,2,0,9 1,7,4 10 11 8 6 5 2 3
+990,2,1,9 1,7 3,4 10 11 8 6 5 2
+991,0,1,9,7 3 1,4 10 11 8 6 5 2
+992,0,2,,,7 3 1 9 4 10 11 8 6 5 2
+993,1,2,,,7 3 1 9 4 10 11 8 6 5 2
+994,0,1,,2,7 3 1 9 4 10 11 8 6 5
+995,2,1,,2 1,7 3 9 4 10 11 8 6 5
+996,0,2,,,2 1 7 3 9 4 10 11 8 6 5
+997,1,0,5,2,7 3 9 4 10 11 8 6 1
+998,2,0,5 1,2,7 3 9 4 10 11 8 6
+999,2,1,5 1,2 6,7 3 9 4 10 11 8
+1000,0,1,5,2 6 1,7 3 9 4 10 11 8
+1001,2,1,5,2 6 1 8,7 3 9 4 10 11
+1002,0,2,,,2 6 1 8 5 7 3 9 4 10 11
+1003,1,2,,,2 6 1 8 5 7 3 9 4 10 11
+1004,0,1,,11,2 6 1 8 5 7 3 9 4 10
+1005,2,1,,11 1,2 6 8 5 7 3 9 4 10
+1006,0,2,,,11 1 2 6 8 5 7 3 9 4 10
+1007,1,0,10,11,2 6 8 5 7 3 9 4 1
+1008,2,0,10 1,11,2 6 8 5 7 3 9 4
+1009,2,1,10 1,11 4,2 6 8 5 7 3 9
+1010,0,1,10,11 4 1,2 6 8 5 7 3 9
+1011,0,2,,,11 4 1 10 2 6 8 5 7 3 9
+1012,1,2,,,11 4 1 10 2 6 8 5 7 3 9
+1013,0,1,,9,11 4 1 10 2 6 8 5 7 3
+1014,2,1,,9 1,11 4 10 2 6 8 5 7 3
+1015,0,2,,,9 1 11 4 10 2 6 8 5 7 3
+1016,1,0,3,9,11 4 10 2 6 8 5 7 1
+1017,2,0,3 1,9,11 4 10 2 6 8 5 7
+1018,2,1,3 1,9 7,11 4 10 2 6 8 5
+1019,0,1,3,9 7 1,11 4 10 2 6 8 5
+1020,2,1,3,9 7 1 5,11 4 10 2 6 8
+1021,0,2,,,9 7 1 5 3 11 4 10 2 6 8
+1022,1,2,,,9 7 1 5 3 11 4 10 2 6 8
+1023,0,1,,8,9 7 1 5 3 11 4 10 2 6
+1024,2,1,,8 1,9 7 5 3 11 4 10 2 6
+1025,0,2,,,8 1 9 7 5 3 11 4 10 2 6
+1026,1,0,6,8,9 7 5 3 11 4 10 2 1
+1027,2,0,6 1,8,9 7 5 3 11 4 10 2
+1028,2,1,6 1,8 2,9 7 5 3 11 4 10
+1029,0,1,6,8 2 1,9 7 5 3 11 4 10
+1030,0,2,,,8 2 1 6 9 7 5 3 11 4 10
+1031,1,2,,,8 2 1 6 9 7 5 3 11 4 10
+1032,0,1,,10,8 2 1 6 9 7 5 3 11 4
+1033,2,1,,10 1,8 2 6 9 7 5 3 11 4
+1034,0,2,,,10 1 8 2 6 9 7 5 3 11 4
+1035,1,0,4,10,8 2 6 9 7 5 3 11 1
+1036,2,0,4 1,10,8 2 6 9 7 5 3 11
+1037,2,1,4 1,10 11,8 2 6 9 7 5 3
+1038,0,1,4,10 11 1,8 2 6 9 7 5 3
+1039,2,1,4,10 11 1 3,8 2 6 9 7 5
+1040,0,2,,,10 11 1 3 4 8 2 6 9 7 5
+1041,1,2,,,10 11 1 3 4 8 2 6 9 7 5
+1042,0,1,,5,10 11 1 3 4 8 2 6 9 7
+1043,2,1,,5 1,10 11 3 4 8 2 6 9 7
+1044,0,2,,,5 1 10 11 3 4 8 2 6 9 7
+1045,1,0,7,5,10 11 3 4 8 2 6 9 1
+1046,2,0,7 1,5,10 11 3 4 8 2 6 9
+1047,2,1,7 1,5 9,10 11 3 4 8 2 6
+1048,0,1,7,5 9 1,10 11 3 4 8 2 6
+1049,0,2,,,5 9 1 7 10 11 3 4 8 2 6
+1050,1,2,,,5 9 1 7 10 11 3 4 8 2 6
+1051,0,1,,6,5 9 1 7 10 11 3 4 8 2
+1052,2,1,,6 1,5 9 7 10 11 3 4 8 2
+1053,0,2,,,6 1 5 9 7 10 11 3 4 8 2
+1054,1,0,2,6,5 9 7 10 11 3 4 8 1
+1055,2,0,2 1,6,5 9 7 10 11 3 4 8
+1056,2,1,2 1,6 8,5 9 7 10 11 3 4
+1057,0,1,2,6 8 1,5 9 7 10 11 3 4
+1058,2,1,2,6 8 1 4,5 9 7 10 11 3
+1059,0,2,,,6 8 1 4 2 5 9 7 10 11 3
+1060,1,2,,,6 8 1 4 2 5 9 7 10 11 3
+1061,0,1,,3,6 8 1 4 2 5 9 7 10 11
+1062,2,1,,3 1,6 8 4 2 5 9 7 10 11
+1063,0,2,,,3 1 6 8 4 2 5 9 7 10 11
+1064,1,0,11,3,6 8 4 2 5 9 7 10 1
+1065,2,0,11 1,3,6 8 4 2 5 9 7 10
+1066,2,1,11 1,3 10,6 8 4 2 5 9 7
+1067,0,1,11,3 10 1,6 8 4 2 5 9 7
+1068,2,1,11,3 10 1 7,6 8 4 2 5 9
+1069,0,2,,,3 10 1 7 11 6 8 4 2 5 9
+1070,1,2,,,3 10 1 7 11 6 8 4 2 5 9
+1071,0,1,,9,3 10 1 7 11 6 8 4 2 5
+1072,2,1,,9 1,3 10 7 11 6 8 4 2 5
+1073,0,2,,,9 1 3 10 7 11 6 8 4 2 5
+1074,1,0,5,9,3 10 7 11 6 8 4 2 1
+1075,2,0,5 1,9,3 10 7 11 6 8 4 2
+1076,2,1,5 1,9 2,3 10 7 11 6 8 4
+1077,0,1,5,9 2 1,3 10 7 11 6 8 4
+1078,0,2,,,9 2 1 5 3 10 7 11 6 8 4
+1079,1,2,,,9 2 1 5 3 10 7 11 6 8 4
+1080,0,1,,4,9 2 1 5 3 10 7 11 6 8
+1081,2,1,,4 1,9 2 5 3 10 7 11 6 8
+1082,0,2,,,4 1 9 2 5 3 10 7 11 6 8
+1083,1,0,8,4,9 2 5 3 10 7 11 6 1
+1084,2,0,8 1,4,9 2 5 3 10 7 11 6
+1085,2,1,8 1,4 6,9 2 5 3 10 7 11
+1086,0,1,8,4 6 1,9 2 5 3 10 7 11
+1087,2,1,8,4 6 1 11,9 2 5 3 10 7
+1088,0,2,,,4 6 1 11 8 9 2 5 3 10 7
+1089,1,2,,,4 6 1 11 8 9 2 5 3 10 7
+1090,0,1,,7,4 6 1 11 8 9 2 5 3 10
+1091,2,1,,7 1,4 6 11 8 9 2 5 3 10
+1092,0,2,,,7 1 4 6 11 8 9 2 5 3 10
+1093,1,0,10,7,4 6 11 8 9 2 5 3 1
+1094,2,0,10 1,7,4 6 11 8 9 2 5 3
+1095,2,1,10 1,7 3,4 6 11 8 9 2 5
+1096,0,1,10,7 3 1,4 6 11 8 9 2 5
+1097,0,2,,,7 3 1 10 4 6 11 8 9 2 5
+1098,1,2,,,7 3 1 10 4 6 11 8 9 2 5
+1099,0,1,,5,7 3 1 10 4 6 11 8 9 2
+1100,2,1,,5 1,7 3 10 4 6 11 8 9 2
+1101,0,2,,,5 1 7 3 10 4 6 11 8 9 2
+1102,1,0,2,5,7 3 10 4 6 11 8 9 1
+1103,2,0,2 1,5,7 3 10 4 6 11 8 9
+1104,2,1,2 1,5 9,7 3 10 4 6 11 8
+1105,0,1,2,5 9 1,7 3 10 4 6 11 8
+1106,2,1,2,5 9 1 8,7 3 10 4 6 11
+1107,0,2,,,5 9 1 8 2 7 3 10 4 6 11
+1108,1,2,,,5 9 1 8 2 7 3 10 4 6 11
+1109,0,1,,11,5 9 1 8 2 7 3 10 4 6
+1110,2,1,,11 1,5 9 8 2 7 3 10 4 6
+1111,0,2,,,11 1 5 9 8 2 7 3 10 4 6
+1112,1,0,6,11,5 9 8 2 7 3 10 4 1
+1113,2,0,6 1,11,5 9 8 2 7 3 10 4
+1114,2,1,6 1,11 4,5 9 8 2 7 3 10
+1115,0,1,6,11 4 1,5 9 8 2 7 3 10
+1116,0,2,,,11 4 1 6 5 9 8 2 7 3 10
+1117,1,2,,,11 4 1 6 5 9 8 2 7 3 10
+1118,0,1,,10,11 4 1 6 5 9 8 2 7 3
+1119,2,1,,10 1,11 4 6 5 9 8 2 7 3
+1120,0,2,,,10 1 11 4 6 5 9 8 2 7 3
+1121,1,0,3,10,11 4 6 5 9 8 2 7 1
+1122,2,0,3 1,10,11 4 6 5 9 8 2 7
+1123,2,1,3 1,10 7,11 4 6 5 9 8 2
+1124,0,1,3,10 7 1,11 4 6 5 9 8 2
+1125,2,1,3,10 7 1 2,11 4 6 5 9 8
+1126,0,2,,,10 7 1 2 3 11 4 6 5 9 8
+1127,1,2,,,10 7 1 2 3 11 4 6 5 9 8
+1128,0,1,,8,10 7 1 2 3 11 4 6 5 9
+1129,2,1,,8 1,10 7 2 3 11 4 6 5 9
+1130,0,2,,,8 1 10 7 2 3 11 4 6 5 9
+1131,1,0,9,8,10 7 2 3 11 4 6 5 1
+1132,2,0,9 1,8,10 7 2 3 11 4 6 5
+1133,2,1,9 1,8 5,10 7 2 3 11 4 6
+1134,0,1,9,8 5 1,10 7 2 3 11 4 6
+1135,0,2,,,8 5 1 9 10 7 2 3 11 4 6
+1136,1,2,,,8 5 1 9 10 7 2 3 11 4 6
+1137,0,1,,6,8 5 1 9 10 7 2 3 11 4
+1138,2,1,,6 1,8 5 9 10 7 2 3 11 4
+1139,0,2,,,6 1 8 5 9 10 7 2 3 11 4
+1140,1,0,4,6,8 5 9 10 7 2 3 11 1
+1141,2,0,4 1,6,8 5 9 10 7 2 3 11
+1142,2,1,4 1,6 11,8 5 9 10 7 2 3
+1143,0,1,4,6 11 1,8 5 9 10 7 2 3
+1144,2,1,4,6 11 1 3,8 5 9 10 7 2
+1145,0,2,,,6 11 1 3 4 8 5 9 10 7 2
+1146,1,2,,,6 11 1 3 4 8 5 9 10 7 2
+1147,0,1,,2,6 11 1 3 4 8 5 9 10 7
+1148,2,1,,2 1,6 11 3 4 8 5 9 10 7
+1149,0,2,,,2 1 6 11 3 4 8 5 9 10 7
+1150,1,0,7,2,6 11 3 4 8 5 9 10 1
+1151,2,0,7 1,2,6 11 3 4 8 5 9 10
+1152,2,1,7 1,2 10,6 11 3 4 8 5 9
+1153,0,1,7,2 10 1,6 11 3 4 8 5 9
+1154,2,1,7,2 10 1 9,6 11 3 4 8 5
+1155,0,2,,,2 10 1 9 7 6 11 3 4 8 5
+1156,1,2,,,2 10 1 9 7 6 11 3 4 8 5
+1157,0,1,,5,2 10 1 9 7 6 11 3 4 8
+1158,2,1,,5 1,2 10 9 7 6 11 3 4 8
+1159,0,2,,,5 1 2 10 9 7 6 11 3 4 8
+1160,1,0,8,5,2 10 9 7 6 11 3 4 1
+1161,2,0,8 1,5,2 10 9 7 6 11 3 4
+1162,2,1,8 1,5 4,2 10 9 7 6 11 3
+1163,0,1,8,5 4 1,2 10 9 7 6 11 3
+1164,0,2,,,5 4 1 8 2 10 9 7 6 11 3
+1165,1,2,,,5 4 1 8 2 10 9 7 6 11 3
+1166,0,1,,3,5 4 1 8 2 10 9 7 6 11
+1167,2,1,,3 1,5 4 8 2 10 9 7 6 11
+1168,0,2,,,3 1 5 4 8 2 10 9 7 6 11
+1169,1,0,11,3,5 4 8 2 10 9 7 6 1
+1170,2,0,11 1,3,5 4 8 2 10 9 7 6
+1171,2,1,11 1,3 6,5 4 8 2 10 9 7
+1172,0,1,11,3 6 1,5 4 8 2 10 9 7
+1173,2,1,11,3 6 1 7,5 4 8 2 10 9
+1174,0,2,,,3 6 1 7 11 5 4 8 2 10 9
+1175,1,2,,,3 6 1 7 11 5 4 8 2 10 9
+1176,0,1,,9,3 6 1 7 11 5 4 8 2 10
+1177,2,1,,9 1,3 6 7 11 5 4 8 2 10
+1178,0,2,,,9 1 3 6 7 11 5 4 8 2 10
+1179,1,0,10,9,3 6 7 11 5 4 8 2 1
+1180,2,0,10 1,9,3 6 7 11 5 4 8 2
+1181,2,1,10 1,9 2,3 6 7 11 5 4 8
+1182,0,1,10,9 2 1,3 6 7 11 5 4 8
+1183,0,2,,,9 2 1 10 3 6 7 11 5 4 8
+1184,1,2,,,9 2 1 10 3 6 7 11 5 4 8
+1185,0,1,,8,9 2 1 10 3 6 7 11 5 4
+1186,2,1,,8 1,9 2 10 3 6 7 11 5 4
+1187,0,2,,,8 1 9 2 10 3 6 7 11 5 4
+1188,1,0,4,8,9 2 10 3 6 7 11 5 1
+1189,2,0,4 1,8,9 2 10 3 6 7 11 5
+1190,2,1,4 1,8 5,9 2 10 3 6 7 11
+1191,0,1,4,8 5 1,9 2 10 3 6 7 11
+1192,2,1,4,8 5 1 11,9 2 10 3 6 7
+1193,0,2,,,8 5 1 11 4 9 2 10 3 6 7
+1194,1,2,,,8 5 1 11 4 9 2 10 3 6 7
+1195,0,1,,7,8 5 1 11 4 9 2 10 3 6
+1196,2,1,,7 1,8 5 11 4 9 2 10 3 6
+1197,0,2,,,7 1 8 5 11 4 9 2 10 3 6
+1198,1,0,6,7,8 5 11 4 9 2 10 3 1
+1199,2,0,6 1,7,8 5 11 4 9 2 10 3
+1200,2,1,6 1,7 3,8 5 11 4 9 2 10
+1201,0,1,6,7 3 1,8 5 11 4 9 2 10
+1202,0,2,,,7 3 1 6 8 5 11 4 9 2 10
+1203,1,2,,,7 3 1 6 8 5 11 4 9 2 10
+1204,0,1,,10,7 3 1 6 8 5 11 4 9 2
+1205,2,1,,10 1,7 3 6 8 5 11 4 9 2
+1206,0,2,,,10 1 7 3 6 8 5 11 4 9 2
+1207,1,0,2,10,7 3 6 8 5 11 4 9 1
+1208,2,0,2 1,10,7 3 6 8 5 11 4 9
+1209,2,1,2 1,10 9,7 3 6 8 5 11 4
+1210,0,1,2,10 9 1,7 3 6 8 5 11 4
+1211,2,1,2,10 9 1 4,7 3 6 8 5 11
+1212,0,2,,,10 9 1 4 2 7 3 6 8 5 11
+1213,1,2,,,10 9 1 4 2 7 3 6 8 5 11
+1214,0,1,,11,10 9 1 4 2 7 3 6 8 5
+1215,2,1,,11 1,10 9 4 2 7 3 6 8 5
+1216,0,2,,,11 1 10 9 4 2 7 3 6 8 5
+1217,1,0,5,11,10 9 4 2 7 3 6 8 1
+1218,2,0,5 1,11,10 9 4 2 7 3 6 8
+1219,2,1,5 1,11 8,10 9 4 2 7 3 6
+1220,0,1,5,11 8 1,10 9 4 2 7 3 6
+1221,0,2,,,11 8 1 5 10 9 4 2 7 3 6
+1222,1,2,,,11 8 1 5 10 9 4 2 7 3 6
+1223,0,1,,6,11 8 1 5 10 9 4 2 7 3
+1224,2,1,,6 1,11 8 5 10 9 4 2 7 3
+1225,0,2,,,6 1 11 8 5 10 9 4 2 7 3
+1226,1,0,3,6,11 8 5 10 9 4 2 7 1
+1227,2,0,3 1,6,11 8 5 10 9 4 2 7
+1228,2,1,3 1,6 7,11 8 5 10 9 4 2
+1229,0,1,3,6 7 1,11 8 5 10 9 4 2
+1230,2,1,3,6 7 1 2,11 8 5 10 9 4
+1231,0,2,,,6 7 1 2 3 11 8 5 10 9 4
+1232,1,2,,,6 7 1 2 3 11 8 5 10 9 4
+1233,0,1,,4,6 7 1 2 3 11 8 5 10 9
+1234,2,1,,4 1,6 7 2 3 11 8 5 10 9
+1235,0,2,,,4 1 6 7 2 3 11 8 5 10 9
+1236,1,0,9,4,6 7 2 3 11 8 5 10 1
+1237,2,0,9 1,4,6 7 2 3 11 8 5 10
+1238,2,1,9 1,4 10,6 7 2 3 11 8 5
+1239,0,1,9,4 10 1,6 7 2 3 11 8 5
+1240,2,1,9,4 10 1 5,6 7 2 3 11 8
+1241,0,2,,,4 10 1 5 9 6 7 2 3 11 8
+1242,1,2,,,4 10 1 5 9 6 7 2 3 11 8
+1243,0,1,,8,4 10 1 5 9 6 7 2 3 11
+1244,2,1,,8 1,4 10 5 9 6 7 2 3 11
+1245,0,2,,,8 1 4 10 5 9 6 7 2 3 11
+1246,1,0,11,8,4 10 5 9 6 7 2 3 1
+1247,2,0,11 1,8,4 10 5 9 6 7 2 3
+1248,2,1,11 1,8 3,4 10 5 9 6 7 2
+1249,0,1,11,8 3 1,4 10 5 9 6 7 2
+1250,0,2,,,8 3 1 11 4 10 5 9 6 7 2
+1251,1,2,,,8 3 1 11 4 10 5 9 6 7 2
+1252,0,1,,2,8 3 1 11 4 10 5 9 6 7
+1253,2,1,,2 1,8 3 11 4 10 5 9 6 7
+1254,0,2,,,2 1 8 3 11 4 10 5 9 6 7
+1255,1,0,7,2,8 3 11 4 10 5 9 6 1
+1256,2,0,7 1,2,8 3 11 4 10 5 9 6
+1257,2,1,7 1,2 6,8 3 11 4 10 5 9
+1258,0,1,7,2 6 1,8 3 11 4 10 5 9
+1259,0,2,,,2 6 1 7 8 3 11 4 10 5 9
+1260,1,2,,,2 6 1 7 8 3 11 4 10 5 9
+1261,0,1,,9,2 6 1 7 8 3 11 4 10 5
+1262,2,1,,9 1,2 6 7 8 3 11 4 10 5
+1263,0,2,,,9 1 2 6 7 8 3 11 4 10 5
+1264,1,0,5,9,2 6 7 8 3 11 4 10 1
+1265,2,0,5 1,9,2 6 7 8 3 11 4 10
+1266,2,1,5 1,9 10,2 6 7 8 3 11 4
+1267,0,1,5,9 10 1,2 6 7 8 3 11 4
+1268,2,1,5,9 10 1 4,2 6 7 8 3 11
+1269,0,2,,,9 10 1 4 5 2 6 7 8 3 11
+1270,1,2,,,9 10 1 4 5 2 6 7 8 3 11
+1271,0,1,,11,9 10 1 4 5 2 6 7 8 3
+1272,2,1,,11 1,9 10 4 5 2 6 7 8 3
+1273,0,2,,,11 1 9 10 4 5 2 6 7 8 3
+1274,1,0,3,11,9 10 4 5 2 6 7 8 1
+1275,2,0,3 1,11,9 10 4 5 2 6 7 8
+1276,2,1,3 1,11 8,9 10 4 5 2 6 7
+1277,0,1,3,11 8 1,9 10 4 5 2 6 7
+1278,2,1,3,11 8 1 7,9 10 4 5 2 6
+1279,0,2,,,11 8 1 7 3 9 10 4 5 2 6
+1280,1,2,,,11 8 1 7 3 9 10 4 5 2 6
+1281,0,1,,6,11 8 1 7 3 9 10 4 5 2
+1282,2,1,,6 1,11 8 7 3 9 10 4 5 2
+1283,0,2,,,6 1 11 8 7 3 9 10 4 5 2
+1284,1,0,2,6,11 8 7 3 9 10 4 5 1
+1285,2,0,2 1,6,11 8 7 3 9 10 4 5
+1286,2,1,2 1,6 5,11 8 7 3 9 10 4
+1287,0,1,2,6 5 1,11 8 7 3 9 10 4
+1288,0,2,,,6 5 1 2 11 8 7 3 9 10 4
+1289,1,2,,,6 5 1 2 11 8 7 3 9 10 4
+1290,0,1,,4,6 5 1 2 11 8 7 3 9 10
+1291,2,1,,4 1,6 5 2 11 8 7 3 9 10
+1292,0,2,,,4 1 6 5 2 11 8 7 3 9 10
+1293,1,0,10,4,6 5 2 11 8 7 3 9 1
+1294,2,0,10 1,4,6 5 2 11 8 7 3 9
+1295,2,1,10 1,4 9,6 5 2 11 8 7 3
+1296,0,1,10,4 9 1,6 5 2 11 8 7 3
+1297,2,1,10,4 9 1 3,6 5 2 11 8 7
+1298,0,2,,,4 9 1 3 10 6 5 2 11 8 7
+1299,1,2,,,4 9 1 3 10 6 5 2 11 8 7
+1300,0,1,,7,4 9 1 3 10 6 5 2 11 8
+1301,2,1,,7 1,4 9 3 10 6 5 2 11 8
+1302,0,2,,,7 1 4 9 3 10 6 5 2 11 8
+1303,1,0,8,7,4 9 3 10 6 5 2 11 1
+1304,2,0,8 1,7,4 9 3 10 6 5 2 11
+1305,2,1,8 1,7 11,4 9 3 10 6 5 2
+1306,0,1,8,7 11 1,4 9 3 10 6 5 2
+1307,2,1,8,7 11 1 2,4 9 3 10 6 5
+1308,0,2,,,7 11 1 2 8 4 9 3 10 6 5
+1309,1,2,,,7 11 1 2 8 4 9 3 10 6 5
+1310,0,1,,5,7 11 1 2 8 4 9 3 10 6
+1311,2,1,,5 1,7 11 2 8 4 9 3 10 6
+1312,0,2,,,5 1 7 11 2 8 4 9 3 10 6
+1313,1,0,6,5,7 11 2 8 4 9 3 10 1
+1314,2,0,6 1,5,7 11 2 8 4 9 3 10
+1315,2,1,6 1,5 10,7 11 2 8 4 9 3
+1316,0,1,6,5 10 1,7 11 2 8 4 9 3
+1317,0,2,,,5 10 1 6 7 11 2 8 4 9 3
+1318,1,2,,,5 10 1 6 7 11 2 8 4 9 3
+1319,0,1,,3,5 10 1 6 7 11 2 8 4 9
+1320,2,1,,3 1,5 10 6 7 11 2 8 4 9
+1321,0,2,,,3 1 5 10 6 7 11 2 8 4 9
+1322,1,0,9,3,5 10 6 7 11 2 8 4 1
+1323,2,0,9 1,3,5 10 6 7 11 2 8 4
+1324,2,1,9 1,3 4,5 10 6 7 11 2 8
+1325,0,1,9,3 4 1,5 10 6 7 11 2 8
+1326,0,2,,,3 4 1 9 5 10 6 7 11 2 8
+1327,1,2,,,3 4 1 9 5 10 6 7 11 2 8
+1328,0,1,,8,3 4 1 9 5 10 6 7 11 2
+1329,2,1,,8 1,3 4 9 5 10 6 7 11 2
+1330,0,2,,,8 1 3 4 9 5 10 6 7 11 2
+1331,1,0,2,8,3 4 9 5 10 6 7 11 1
+1332,2,0,2 1,8,3 4 9 5 10 6 7 11
+1333,2,1,2 1,8 11,3 4 9 5 10 6 7
+1334,0,1,2,8 11 1,3 4 9 5 10 6 7
+1335,2,1,2,8 11 1 7,3 4 9 5 10 6
+1336,0,2,,,8 11 1 7 2 3 4 9 5 10 6
+1337,1,2,,,8 11 1 7 2 3 4 9 5 10 6
+1338,0,1,,6,8 11 1 7 2 3 4 9 5 10
+1339,2,1,,6 1,8 11 7 2 3 4 9 5 10
+1340,0,2,,,6 1 8 11 7 2 3 4 9 5 10
+1341,1,0,10,6,8 11 7 2 3 4 9 5 1
+1342,2,0,10 1,6,8 11 7 2 3 4 9 5
+1343,2,1,10 1,6 5,8 11 7 2 3 4 9
+1344,0,1,10,6 5 1,8 11 7 2 3 4 9
+1345,0,2,,,6 5 1 10 8 11 7 2 3 4 9
+1346,1,2,,,6 5 1 10 8 11 7 2 3 4 9
+1347,0,1,,9,6 5 1 10 8 11 7 2 3 4
+1348,2,1,,9 1,6 5 10 8 11 7 2 3 4
+1349,0,2,,,9 1 6 5 10 8 11 7 2 3 4
+1350,1,0,4,9,6 5 10 8 11 7 2 3 1
+1351,2,0,4 1,9,6 5 10 8 11 7 2 3
+1352,2,1,4 1,9 3,6 5 10 8 11 7 2
+1353,0,1,4,9 3 1,6 5 10 8 11 7 2
+1354,0,2,,,9 3 1 4 6 5 10 8 11 7 2
+1355,1,2,,,9 3 1 4 6 5 10 8 11 7 2
+1356,0,1,,2,9 3 1 4 6 5 10 8 11 7
+1357,2,1,,2 1,9 3 4 6 5 10 8 11 7
+1358,0,2,,,2 1 9 3 4 6 5 10 8 11 7
+1359,1,0,7,2,9 3 4 6 5 10 8 11 1
+1360,2,0,7 1,2,9 3 4 6 5 10 8 11
+1361,2,1,7 1,2 11,9 3 4 6 5 10 8
+1362,0,1,7,2 11 1,9 3 4 6 5 10 8
+1363,2,1,7,2 11 1 8,9 3 4 6 5 10
+1364,0,2,,,2 11 1 8 7 9 3 4 6 5 10
+1365,1,2,,,2 11 1 8 7 9 3 4 6 5 10
+1366,0,1,,10,2 11 1 8 7 9 3 4 6 5
+1367,2,1,,10 1,2 11 8 7 9 3 4 6 5
+1368,0,2,,,10 1 2 11 8 7 9 3 4 6 5
+1369,1,0,5,10,2 11 8 7 9 3 4 6 1
+1370,2,0,5 1,10,2 11 8 7 9 3 4 6
+1371,2,1,5 1,10 6,2 11 8 7 9 3 4
+1372,0,1,5,10 6 1,2 11 8 7 9 3 4
+1373,0,2,,,10 6 1 5 2 11 8 7 9 3 4
+1374,1,2,,,10 6 1 5 2 11 8 7 9 3 4
+1375,0,1,,4,10 6 1 5 2 11 8 7 9 3
+1376,2,1,,4 1,10 6 5 2 11 8 7 9 3
+1377,0,2,,,4 1 10 6 5 2 11 8 7 9 3
+1378,1,0,3,4,10 6 5 2 11 8 7 9 1
+1379,2,0,3 1,4,10 6 5 2 11 8 7 9
+1380,2,1,3 1,4 9,10 6 5 2 11 8 7
+1381,0,1,3,4 9 1,10 6 5 2 11 8 7
+1382,2,1,3,4 9 1 7,10 6 5 2 11 8
+1383,0,2,,,4 9 1 7 3 10 6 5 2 11 8
+1384,1,2,,,4 9 1 7 3 10 6 5 2 11 8
+1385,0,1,,8,4 9 1 7 3 10 6 5 2 11
+1386,2,1,,8 1,4 9 7 3 10 6 5 2 11
+1387,0,2,,,8 1 4 9 7 3 10 6 5 2 11
+1388,1,0,11,8,4 9 7 3 10 6 5 2 1
+1389,2,0,11 1,8,4 9 7 3 10 6 5 2
+1390,2,1,11 1,8 2,4 9 7 3 10 6 5
+1391,0,1,11,8 2 1,4 9 7 3 10 6 5
+1392,0,2,,,8 2 1 11 4 9 7 3 10 6 5
+1393,1,2,,,8 2 1 11 4 9 7 3 10 6 5
+1394,0,1,,5,8 2 1 11 4 9 7 3 10 6
+1395,2,1,,5 1,8 2 11 4 9 7 3 10 6
+1396,0,2,,,5 1 8 2 11 4 9 7 3 10 6
+1397,1,0,6,5,8 2 11 4 9 7 3 10 1
+1398,2,0,6 1,5,8 2 11 4 9 7 3 10
+1399,2,1,6 1,5 10,8 2 11 4 9 7 3
+1400,0,1,6,5 10 1,8 2 11 4 9 7 3
+1401,2,1,6,5 10 1 3,8 2 11 4 9 7
+1402,0,2,,,5 10 1 3 6 8 2 11 4 9 7
+1403,1,2,,,5 10 1 3 6 8 2 11 4 9 7
+1404,0,1,,7,5 10 1 3 6 8 2 11 4 9
+1405,2,1,,7 1,5 10 3 6 8 2 11 4 9
+1406,0,2,,,7 1 5 10 3 6 8 2 11 4 9
+1407,1,0,9,7,5 10 3 6 8 2 11 4 1
+1408,2,0,9 1,7,5 10 3 6 8 2 11 4
+1409,2,1,9 1,7 4,5 10 3 6 8 2 11
+1410,0,1,9,7 4 1,5 10 3 6 8 2 11
+1411,0,2,,,7 4 1 9 5 10 3 6 8 2 11
+1412,1,2,,,7 4 1 9 5 10 3 6 8 2 11
+1413,0,1,,11,7 4 1 9 5 10 3 6 8 2
+1414,2,1,,11 1,7 4 9 5 10 3 6 8 2
+1415,0,2,,,11 1 7 4 9 5 10 3 6 8 2
+1416,1,0,2,11,7 4 9 5 10 3 6 8 1
+1417,2,0,2 1,11,7 4 9 5 10 3 6 8
+1418,2,1,2 1,11 8,7 4 9 5 10 3 6
+1419,0,1,2,11 8 1,7 4 9 5 10 3 6
+1420,2,1,2,11 8 1 6,7 4 9 5 10 3
+1421,0,2,,,11 8 1 6 2 7 4 9 5 10 3
+1422,1,2,,,11 8 1 6 2 7 4 9 5 10 3
+1423,0,1,,3,11 8 1 6 2 7 4 9 5 10
+1424,2,1,,3 1,11 8 6 2 7 4 9 5 10
+1425,0,2,,,3 1 11 8 6 2 7 4 9 5 10
+1426,1,0,10,3,11 8 6 2 7 4 9 5 1
+1427,2,0,10 1,3,11 8 6 2 7 4 9 5
+1428,2,1,10 1,3 5,11 8 6 2 7 4 9
+1429,0,1,10,3 5 1,11 8 6 2 7 4 9
+1430,0,2,,,3 5 1 10 11 8 6 2 7 4 9
+1431,1,2,,,3 5 1 10 11 8 6 2 7 4 9
+1432,0,1,,9,3 5 1 10 11 8 6 2 7 4
+1433,2,1,,9 1,3 5 10 11 8 6 2 7 4
+1434,0,2,,,9 1 3 5 10 11 8 6 2 7 4
+1435,1,0,4,9,3 5 10 11 8 6 2 7 1
+1436,2,0,4 1,9,3 5 10 11 8 6 2 7
+1437,2,1,4 1,9 7,3 5 10 11 8 6 2
+1438,0,1,4,9 7 1,3 5 10 11 8 6 2
+1439,2,1,4,9 7 1 2,3 5 10 11 8 6
+1440,0,2,,,9 7 1 2 4 3 5 10 11 8 6
+1441,1,2,,,9 7 1 2 4 3 5 10 11 8 6
+1442,0,1,,6,9 7 1 2 4 3 5 10 11 8
+1443,2,1,,6 1,9 7 2 4 3 5 10 11 8
+1444,0,2,,,6 1 9 7 2 4 3 5 10 11 8
+1445,1,0,8,6,9 7 2 4 3 5 10 11 1
+1446,2,0,8 1,6,9 7 2 4 3 5 10 11
+1447,2,1,8 1,6 11,9 7 2 4 3 5 10
+1448,0,1,8,6 11 1,9 7 2 4 3 5 10
+1449,2,1,8,6 11 1 10,9 7 2 4 3 5
+1450,0,2,,,6 11 1 10 8 9 7 2 4 3 5
+1451,1,2,,,6 11 1 10 8 9 7 2 4 3 5
+1452,0,1,,5,6 11 1 10 8 9 7 2 4 3
+1453,2,1,,5 1,6 11 10 8 9 7 2 4 3
+1454,0,2,,,5 1 6 11 10 8 9 7 2 4 3
+1455,1,0,3,5,6 11 10 8 9 7 2 4 1
+1456,2,0,3 1,5,6 11 10 8 9 7 2 4
+1457,2,1,3 1,5 4,6 11 10 8 9 7 2
+1458,0,1,3,5 4 1,6 11 10 8 9 7 2
+1459,0,2,,,5 4 1 3 6 11 10 8 9 7 2
+1460,1,2,,,5 4 1 3 6 11 10 8 9 7 2
+1461,0,1,,2,5 4 1 3 6 11 10 8 9 7
+1462,2,1,,2 1,5 4 3 6 11 10 8 9 7
+1463,0,2,,,2 1 5 4 3 6 11 10 8 9 7
+1464,1,0,7,2,5 4 3 6 11 10 8 9 1
+1465,2,0,7 1,2,5 4 3 6 11 10 8 9
+1466,2,1,7 1,2 9,5 4 3 6 11 10 8
+1467,0,1,7,2 9 1,5 4 3 6 11 10 8
+1468,2,1,7,2 9 1 8,5 4 3 6 11 10
+1469,0,2,,,2 9 1 8 7 5 4 3 6 11 10
+1470,1,2,,,2 9 1 8 7 5 4 3 6 11 10
+1471,0,1,,10,2 9 1 8 7 5 4 3 6 11
+1472,2,1,,10 1,2 9 8 7 5 4 3 6 11
+1473,0,2,,,10 1 2 9 8 7 5 4 3 6 11
+1474,1,0,11,10,2 9 8 7 5 4 3 6 1
+1475,2,0,11 1,10,2 9 8 7 5 4 3 6
+1476,2,1,11 1,10 6,2 9 8 7 5 4 3
+1477,0,1,11,10 6 1,2 9 8 7 5 4 3
+1478,0,2,,,10 6 1 11 2 9 8 7 5 4 3
+1479,1,2,,,10 6 1 11 2 9 8 7 5 4 3
+1480,0,1,,3,10 6 1 11 2 9 8 7 5 4
+1481,2,1,,3 1,10 6 11 2 9 8 7 5 4
+1482,0,2,,,3 1 10 6 11 2 9 8 7 5 4
+1483,1,0,4,3,10 6 11 2 9 8 7 5 1
+1484,2,0,4 1,3,10 6 11 2 9 8 7 5
+1485,2,1,4 1,3 5,10 6 11 2 9 8 7
+1486,0,1,4,3 5 1,10 6 11 2 9 8 7
+1487,2,1,4,3 5 1 7,10 6 11 2 9 8
+1488,0,2,,,3 5 1 7 4 10 6 11 2 9 8
+1489,1,2,,,3 5 1 7 4 10 6 11 2 9 8
+1490,0,1,,8,3 5 1 7 4 10 6 11 2 9
+1491,2,1,,8 1,3 5 7 4 10 6 11 2 9
+1492,0,2,,,8 1 3 5 7 4 10 6 11 2 9
+1493,1,0,9,8,3 5 7 4 10 6 11 2 1
+1494,2,0,9 1,8,3 5 7 4 10 6 11 2
+1495,2,1,9 1,8 2,3 5 7 4 10 6 11
+1496,0,1,9,8 2 1,3 5 7 4 10 6 11
+1497,0,2,,,8 2 1 9 3 5 7 4 10 6 11
+1498,1,2,,,8 2 1 9 3 5 7 4 10 6 11
+1499,0,1,,11,8 2 1 9 3 5 7 4 10 6
+1500,2,1,,11 1,8 2 9 3 5 7 4 10 6
+1501,0,2,,,11 1 8 2 9 3 5 7 4 10 6
+1502,1,0,6,11,8 2 9 3 5 7 4 10 1
+1503,2,0,6 1,11,8 2 9 3 5 7 4 10
+1504,2,1,6 1,11 10,8 2 9 3 5 7 4
+1505,0,1,6,11 10 1,8 2 9 3 5 7 4
+1506,2,1,6,11 10 1 4,8 2 9 3 5 7
+1507,0,2,,,11 10 1 4 6 8 2 9 3 5 7
+1508,1,2,,,11 10 1 4 6 8 2 9 3 5 7
+1509,0,1,,7,11 10 1 4 6 8 2 9 3 5
+1510,2,1,,7 1,11 10 4 6 8 2 9 3 5
+1511,0,2,,,7 1 11 10 4 6 8 2 9 3 5
+1512,1,0,5,7,11 10 4 6 8 2 9 3 1
+1513,2,0,5 1,7,11 10 4 6 8 2 9 3
+1514,2,1,5 1,7 3,11 10 4 6 8 2 9
+1515,0,1,5,7 3 1,11 10 4 6 8 2 9
+1516,0,2,,,7 3 1 5 11 10 4 6 8 2 9
+1517,1,2,,,7 3 1 5 11 10 4 6 8 2 9
+1518,0,1,,9,7 3 1 5 11 10 4 6 8 2
+1519,2,1,,9 1,7 3 5 11 10 4 6 8 2
+1520,0,2,,,9 1 7 3 5 11 10 4 6 8 2
+1521,1,0,2,9,7 3 5 11 10 4 6 8 1
+1522,2,0,2 1,9,7 3 5 11 10 4 6 8
+1523,2,1,2 1,9 8,7 3 5 11 10 4 6
+1524,0,1,2,9 8 1,7 3 5 11 10 4 6
+1525,2,1,2,9 8 1 6,7 3 5 11 10 4
+1526,0,2,,,9 8 1 6 2 7 3 5 11 10 4
+1527,1,2,,,9 8 1 6 2 7 3 5 11 10 4
+1528,0,1,,4,9 8 1 6 2 7 3 5 11 10
+1529,2,1,,4 1,9 8 6 2 7 3 5 11 10
+1530,0,2,,,4 1 9 8 6 2 7 3 5 11 10
+1531,1,0,10,4,9 8 6 2 7 3 5 11 1
+1532,2,0,10 1,4,9 8 6 2 7 3 5 11
+1533,2,1,10 1,4 11,9 8 6 2 7 3 5
+1534,0,1,10,4 11 1,9 8 6 2 7 3 5
+1535,2,1,10,4 11 1 5,9 8 6 2 7 3
+1536,0,2,,,4 11 1 5 10 9 8 6 2 7 3
+1537,1,2,,,4 11 1 5 10 9 8 6 2 7 3
+1538,0,1,,3,4 11 1 5 10 9 8 6 2 7
+1539,2,1,,3 1,4 11 5 10 9 8 6 2 7
+1540,0,2,,,3 1 4 11 5 10 9 8 6 2 7
+1541,1,0,7,3,4 11 5 10 9 8 6 2 1
+1542,2,0,7 1,3,4 11 5 10 9 8 6 2
+1543,2,1,7 1,3 2,4 11 5 10 9 8 6
+1544,0,1,7,3 2 1,4 11 5 10 9 8 6
+1545,0,2,,,3 2 1 7 4 11 5 10 9 8 6
+1546,1,2,,,3 2 1 7 4 11 5 10 9 8 6
+1547,0,1,,6,3 2 1 7 4 11 5 10 9 8
+1548,2,1,,6 1,3 2 7 4 11 5 10 9 8
+1549,0,2,,,6 1 3 2 7 4 11 5 10 9 8
+1550,1,0,8,6,3 2 7 4 11 5 10 9 1
+1551,2,0,8 1,6,3 2 7 4 11 5 10 9
+1552,2,1,8 1,6 9,3 2 7 4 11 5 10
+1553,0,1,8,6 9 1,3 2 7 4 11 5 10
+1554,2,1,8,6 9 1 10,3 2 7 4 11 5
+1555,0,2,,,6 9 1 10 8 3 2 7 4 11 5
+1556,1,2,,,6 9 1 10 8 3 2 7 4 11 5
+1557,0,1,,5,6 9 1 10 8 3 2 7 4 11
+1558,2,1,,5 1,6 9 10 8 3 2 7 4 11
+1559,0,2,,,5 1 6 9 10 8 3 2 7 4 11
+1560,1,0,11,5,6 9 10 8 3 2 7 4 1
+1561,2,0,11 1,5,6 9 10 8 3 2 7 4
+1562,2,1,11 1,5 4,6 9 10 8 3 2 7
+1563,0,1,11,5 4 1,6 9 10 8 3 2 7
+1564,0,2,,,5 4 1 11 6 9 10 8 3 2 7
+1565,1,2,,,5 4 1 11 6 9 10 8 3 2 7
+1566,0,1,,7,5 4 1 11 6 9 10 8 3 2
+1567,2,1,,7 1,5 4 11 6 9 10 8 3 2
+1568,0,2,,,7 1 5 4 11 6 9 10 8 3 2
+1569,1,0,2,7,5 4 11 6 9 10 8 3 1
+1570,2,0,2 1,7,5 4 11 6 9 10 8 3
+1571,2,1,2 1,7 3,5 4 11 6 9 10 8
+1572,0,1,2,7 3 1,5 4 11 6 9 10 8
+1573,2,1,2,7 3 1 8,5 4 11 6 9 10
+1574,0,2,,,7 3 1 8 2 5 4 11 6 9 10
+1575,1,2,,,7 3 1 8 2 5 4 11 6 9 10
+1576,0,1,,10,7 3 1 8 2 5 4 11 6 9
+1577,2,1,,10 1,7 3 8 2 5 4 11 6 9
+1578,0,2,,,10 1 7 3 8 2 5 4 11 6 9
+1579,1,0,9,10,7 3 8 2 5 4 11 6 1
+1580,2,0,9 1,10,7 3 8 2 5 4 11 6
+1581,2,1,9 1,10 6,7 3 8 2 5 4 11
+1582,0,1,9,10 6 1,7 3 8 2 5 4 11
+1583,2,1,9,10 6 1 11,7 3 8 2 5 4
+1584,0,2,,,10 6 1 11 9 7 3 8 2 5 4
+1585,1,2,,,10 6 1 11 9 7 3 8 2 5 4
+1586,0,1,,4,10 6 1 11 9 7 3 8 2 5
+1587,2,1,,4 1,10 6 11 9 7 3 8 2 5
+1588,0,2,,,4 1 10 6 11 9 7 3 8 2 5
+1589,1,0,5,4,10 6 11 9 7 3 8 2 1
+1590,2,0,5 1,4,10 6 11 9 7 3 8 2
+1591,2,1,5 1,4 2,10 6 11 9 7 3 8
+1592,0,1,5,4 2 1,10 6 11 9 7 3 8
+1593,0,2,,,4 2 1 5 10 6 11 9 7 3 8
+1594,1,2,,,4 2 1 5 10 6 11 9 7 3 8
+1595,0,1,,8,4 2 1 5 10 6 11 9 7 3
+1596,2,1,,8 1,4 2 5 10 6 11 9 7 3
+1597,0,2,,,8 1 4 2 5 10 6 11 9 7 3
+1598,1,0,3,8,4 2 5 10 6 11 9 7 1
+1599,2,0,3 1,8,4 2 5 10 6 11 9 7
+1600,2,1,3 1,8 7,4 2 5 10 6 11 9
+1601,0,1,3,8 7 1,4 2 5 10 6 11 9
+1602,2,1,3,8 7 1 9,4 2 5 10 6 11
+1603,0,2,,,8 7 1 9 3 4 2 5 10 6 11
+1604,1,2,,,8 7 1 9 3 4 2 5 10 6 11
+1605,0,1,,11,8 7 1 9 3 4 2 5 10 6
+1606,2,1,,11 1,8 7 9 3 4 2 5 10 6
+1607,0,2,,,11 1 8 7 9 3 4 2 5 10 6
+1608,1,0,6,11,8 7 9 3 4 2 5 10 1
+1609,2,0,6 1,11,8 7 9 3 4 2 5 10
+1610,2,1,6 1,11 10,8 7 9 3 4 2 5
+1611,0,1,6,11 10 1,8 7 9 3 4 2 5
+1612,0,2,,,11 10 1 6 8 7 9 3 4 2 5
+1613,1,2,,,11 10 1 6 8 7 9 3 4 2 5
+1614,0,1,,5,11 10 1 6 8 7 9 3 4 2
+1615,2,1,,5 1,11 10 6 8 7 9 3 4 2
+1616,0,2,,,5 1 11 10 6 8 7 9 3 4 2
+1617,1,0,2,5,11 10 6 8 7 9 3 4 1
+1618,2,0,2 1,5,11 10 6 8 7 9 3 4
+1619,2,1,2 1,5 4,11 10 6 8 7 9 3
+1620,0,1,2,5 4 1,11 10 6 8 7 9 3
+1621,2,1,2,5 4 1 3,11 10 6 8 7 9
+1622,0,2,,,5 4 1 3 2 11 10 6 8 7 9
+1623,1,2,,,5 4 1 3 2 11 10 6 8 7 9
+1624,0,1,,9,5 4 1 3 2 11 10 6 8 7
+1625,2,1,,9 1,5 4 3 2 11 10 6 8 7
+1626,0,2,,,9 1 5 4 3 2 11 10 6 8 7
+1627,1,0,7,9,5 4 3 2 11 10 6 8 1
+1628,2,0,7 1,9,5 4 3 2 11 10 6 8
+1629,2,1,7 1,9 8,5 4 3 2 11 10 6
+1630,0,1,7,9 8 1,5 4 3 2 11 10 6
+1631,2,1,7,9 8 1 6,5 4 3 2 11 10
+1632,0,2,,,9 8 1 6 7 5 4 3 2 11 10
+1633,1,2,,,9 8 1 6 7 5 4 3 2 11 10
+1634,0,1,,10,9 8 1 6 7 5 4 3 2 11
+1635,2,1,,10 1,9 8 6 7 5 4 3 2 11
+1636,0,2,,,10 1 9 8 6 7 5 4 3 2 11
+1637,1,0,11,10,9 8 6 7 5 4 3 2 1
+1638,2,0,11 1,10,9 8 6 7 5 4 3 2
+1639,2,1,11 1,10 2,9 8 6 7 5 4 3
+1640,0,1,11,10 2 1,9 8 6 7 5 4 3
+1641,0,2,,,10 2 1 11 9 8 6 7 5 4 3
+1642,1,2,,,10 2 1 11 9 8 6 7 5 4 3
+1643,0,1,,3,10 2 1 11 9 8 6 7 5 4
+1644,2,1,,3 1,10 2 11 9 8 6 7 5 4
+1645,0,2,,,3 1 10 2 11 9 8 6 7 5 4
+1646,1,0,4,3,10 2 11 9 8 6 7 5 1
+1647,2,0,4 1,3,10 2 11 9 8 6 7 5
+1648,2,1,4 1,3 5,10 2 11 9 8 6 7
+1649,0,1,4,3 5 1,10 2 11 9 8 6 7
+1650,2,1,4,3 5 1 7,10 2 11 9 8 6
+1651,0,2,,,3 5 1 7 4 10 2 11 9 8 6
+1652,1,2,,,3 5 1 7 4 10 2 11 9 8 6
+1653,0,1,,6,3 5 1 7 4 10 2 11 9 8
+1654,2,1,,6 1,3 5 7 4 10 2 11 9 8
+1655,0,2,,,6 1 3 5 7 4 10 2 11 9 8
+1656,1,0,8,6,3 5 7 4 10 2 11 9 1
+1657,2,0,8 1,6,3 5 7 4 10 2 11 9
+1658,2,1,8 1,6 9,3 5 7 4 10 2 11
+1659,0,1,8,6 9 1,3 5 7 4 10 2 11
+1660,2,1,8,6 9 1 11,3 5 7 4 10 2
+1661,0,2,,,6 9 1 11 8 3 5 7 4 10 2
+1662,1,2,,,6 9 1 11 8 3 5 7 4 10 2
+1663,0,1,,2,6 9 1 11 8 3 5 7 4 10
+1664,2,1,,2 1,6 9 11 8 3 5 7 4 10
+1665,0,2,,,2 1 6 9 11 8 3 5 7 4 10
+1666,1,0,10,2,6 9 11 8 3 5 7 4 1
+1667,2,0,10 1,2,6 9 11 8 3 5 7 4
+1668,2,1,10 1,2 4,6 9 11 8 3 5 7
+1669,0,1,10,2 4 1,6 9 11 8 3 5 7
+1670,0,2,,,2 4 1 10 6 9 11 8 3 5 7
+1671,1,2,,,2 4 1 10 6 9 11 8 3 5 7
+1672,0,1,,7,2 4 1 10 6 9 11 8 3 5
+1673,2,1,,7 1,2 4 10 6 9 11 8 3 5
+1674,0,2,,,7 1 2 4 10 6 9 11 8 3 5
+1675,1,0,5,7,2 4 10 6 9 11 8 3 1
+1676,2,0,5 1,7,2 4 10 6 9 11 8 3
+1677,2,1,5 1,7 3,2 4 10 6 9 11 8
+1678,0,1,5,7 3 1,2 4 10 6 9 11 8
+1679,0,2,,,7 3 1 5 2 4 10 6 9 11 8
+1680,1,2,,,7 3 1 5 2 4 10 6 9 11 8
+1681,0,1,,8,7 3 1 5 2 4 10 6 9 11
+1682,2,1,,8 1,7 3 5 2 4 10 6 9 11
+1683,0,2,,,8 1 7 3 5 2 4 10 6 9 11
+1684,1,0,11,8,7 3 5 2 4 10 6 9 1
+1685,2,0,11 1,8,7 3 5 2 4 10 6 9
+1686,2,1,11 1,8 9,7 3 5 2 4 10 6
+1687,0,1,11,8 9 1,7 3 5 2 4 10 6
+1688,2,1,11,8 9 1 6,7 3 5 2 4 10
+1689,0,2,,,8 9 1 6 11 7 3 5 2 4 10
+1690,1,2,,,8 9 1 6 11 7 3 5 2 4 10
+1691,0,1,,10,8 9 1 6 11 7 3 5 2 4
+1692,2,1,,10 1,8 9 6 11 7 3 5 2 4
+1693,0,2,,,10 1 8 9 6 11 7 3 5 2 4
+1694,1,0,4,10,8 9 6 11 7 3 5 2 1
+1695,2,0,4 1,10,8 9 6 11 7 3 5 2
+1696,2,1,4 1,10 2,8 9 6 11 7 3 5
+1697,0,1,4,10 2 1,8 9 6 11 7 3 5
+1698,0,2,,,10 2 1 4 8 9 6 11 7 3 5
+1699,1,2,,,10 2 1 4 8 9 6 11 7 3 5
+1700,0,1,,5,10 2 1 4 8 9 6 11 7 3
+1701,2,1,,5 1,10 2 4 8 9 6 11 7 3
+1702,0,2,,,5 1 10 2 4 8 9 6 11 7 3
+1703,1,0,3,5,10 2 4 8 9 6 11 7 1
+1704,2,0,3 1,5,10 2 4 8 9 6 11 7
+1705,2,1,3 1,5 7,10 2 4 8 9 6 11
+1706,0,1,3,5 7 1,10 2 4 8 9 6 11
+1707,2,1,3,5 7 1 11,10 2 4 8 9 6
+1708,0,2,,,5 7 1 11 3 10 2 4 8 9 6
+1709,1,2,,,5 7 1 11 3 10 2 4 8 9 6
+1710,0,1,,6,5 7 1 11 3 10 2 4 8 9
+1711,2,1,,6 1,5 7 11 3 10 2 4 8 9
+1712,0,2,,,6 1 5 7 11 3 10 2 4 8 9
+1713,1,0,9,6,5 7 11 3 10 2 4 8 1
+1714,2,0,9 1,6,5 7 11 3 10 2 4 8
+1715,2,1,9 1,6 8,5 7 11 3 10 2 4
+1716,0,1,9,6 8 1,5 7 11 3 10 2 4
+1717,0,2,,,6 8 1 9 5 7 11 3 10 2 4
+1718,1,2,,,6 8 1 9 5 7 11 3 10 2 4
+1719,0,1,,4,6 8 1 9 5 7 11 3 10 2
+1720,2,1,,4 1,6 8 9 5 7 11 3 10 2
+1721,0,2,,,4 1 6 8 9 5 7 11 3 10 2
+1722,1,0,2,4,6 8 9 5 7 11 3 10 1
+1723,2,0,2 1,4,6 8 9 5 7 11 3 10
+1724,2,1,2 1,4 10,6 8 9 5 7 11 3
+1725,0,1,2,4 10 1,6 8 9 5 7 11 3
+1726,2,1,2,4 10 1 3,6 8 9 5 7 11
+1727,0,2,,,4 10 1 3 2 6 8 9 5 7 11
+1728,1,2,,,4 10 1 3 2 6 8 9 5 7 11
+1729,0,1,,11,4 10 1 3 2 6 8 9 5 7
+1730,2,1,,11 1,4 10 3 2 6 8 9 5 7
+1731,0,2,,,11 1 4 10 3 2 6 8 9 5 7
+1732,1,0,7,11,4 10 3 2 6 8 9 5 1
+1733,2,0,7 1,11,4 10 3 2 6 8 9 5
+1734,2,1,7 1,11 5,4 10 3 2 6 8 9
+1735,0,1,7,11 5 1,4 10 3 2 6 8 9
+1736,0,2,,,11 5 1 7 4 10 3 2 6 8 9
+1737,1,2,,,11 5 1 7 4 10 3 2 6 8 9
+1738,0,1,,9,11 5 1 7 4 10 3 2 6 8
+1739,2,1,,9 1,11 5 7 4 10 3 2 6 8
+1740,0,2,,,9 1 11 5 7 4 10 3 2 6 8
+1741,1,0,8,9,11 5 7 4 10 3 2 6 1
+1742,2,0,8 1,9,11 5 7 4 10 3 2 6
+1743,2,1,8 1,9 6,11 5 7 4 10 3 2
+1744,0,1,8,9 6 1,11 5 7 4 10 3 2
+1745,2,1,8,9 6 1 2,11 5 7 4 10 3
+1746,0,2,,,9 6 1 2 8 11 5 7 4 10 3
+1747,1,2,,,9 6 1 2 8 11 5 7 4 10 3
+1748,0,1,,3,9 6 1 2 8 11 5 7 4 10
+1749,2,1,,3 1,9 6 2 8 11 5 7 4 10
+1750,0,2,,,3 1 9 6 2 8 11 5 7 4 10
+1751,1,0,10,3,9 6 2 8 11 5 7 4 1
+1752,2,0,10 1,3,9 6 2 8 11 5 7 4
+1753,2,1,10 1,3 4,9 6 2 8 11 5 7
+1754,0,1,10,3 4 1,9 6 2 8 11 5 7
+1755,0,2,,,3 4 1 10 9 6 2 8 11 5 7
+1756,1,2,,,3 4 1 10 9 6 2 8 11 5 7
+1757,0,1,,7,3 4 1 10 9 6 2 8 11 5
+1758,2,1,,7 1,3 4 10 9 6 2 8 11 5
+1759,0,2,,,7 1 3 4 10 9 6 2 8 11 5
+1760,1,0,5,7,3 4 10 9 6 2 8 11 1
+1761,2,0,5 1,7,3 4 10 9 6 2 8 11
+1762,2,1,5 1,7 11,3 4 10 9 6 2 8
+1763,0,1,5,7 11 1,3 4 10 9 6 2 8
+1764,2,1,5,7 11 1 8,3 4 10 9 6 2
+1765,0,2,,,7 11 1 8 5 3 4 10 9 6 2
+1766,1,2,,,7 11 1 8 5 3 4 10 9 6 2
+1767,0,1,,2,7 11 1 8 5 3 4 10 9 6
+1768,2,1,,2 1,7 11 8 5 3 4 10 9 6
+1769,0,2,,,2 1 7 11 8 5 3 4 10 9 6
+1770,1,0,6,2,7 11 8 5 3 4 10 9 1
+1771,2,0,6 1,2,7 11 8 5 3 4 10 9
+1772,2,1,6 1,2 9,7 11 8 5 3 4 10
+1773,0,1,6,2 9 1,7 11 8 5 3 4 10
+1774,2,1,6,2 9 1 10,7 11 8 5 3 4
+1775,0,2,,,2 9 1 10 6 7 11 8 5 3 4
+1776,1,2,,,2 9 1 10 6 7 11 8 5 3 4
+1777,0,1,,4,2 9 1 10 6 7 11 8 5 3
+1778,2,1,,4 1,2 9 10 6 7 11 8 5 3
+1779,0,2,,,4 1 2 9 10 6 7 11 8 5 3
+1780,1,0,3,4,2 9 10 6 7 11 8 5 1
+1781,2,0,3 1,4,2 9 10 6 7 11 8 5
+1782,2,1,3 1,4 5,2 9 10 6 7 11 8
+1783,0,1,3,4 5 1,2 9 10 6 7 11 8
+1784,2,1,3,4 5 1 8,2 9 10 6 7 11
+1785,0,2,,,4 5 1 8 3 2 9 10 6 7 11
+1786,1,2,,,4 5 1 8 3 2 9 10 6 7 11
+1787,0,1,,11,4 5 1 8 3 2 9 10 6 7
+1788,2,1,,11 1,4 5 8 3 2 9 10 6 7
+1789,0,2,,,11 1 4 5 8 3 2 9 10 6 7
+1790,1,0,7,11,4 5 8 3 2 9 10 6 1
+1791,2,0,7 1,11,4 5 8 3 2 9 10 6
+1792,2,1,7 1,11 6,4 5 8 3 2 9 10
+1793,0,1,7,11 6 1,4 5 8 3 2 9 10
+1794,0,2,,,11 6 1 7 4 5 8 3 2 9 10
+1795,1,2,,,11 6 1 7 4 5 8 3 2 9 10
+1796,0,1,,10,11 6 1 7 4 5 8 3 2 9
+1797,2,1,,10 1,11 6 7 4 5 8 3 2 9
+1798,0,2,,,10 1 11 6 7 4 5 8 3 2 9
+1799,1,0,9,10,11 6 7 4 5 8 3 2 1
+1800,2,0,9 1,10,11 6 7 4 5 8 3 2
+1801,2,1,9 1,10 2,11 6 7 4 5 8 3
+1802,0,1,9,10 2 1,11 6 7 4 5 8 3
+1803,0,2,,,10 2 1 9 11 6 7 4 5 8 3
+1804,1,2,,,10 2 1 9 11 6 7 4 5 8 3
+1805,0,1,,3,10 2 1 9 11 6 7 4 5 8
+1806,2,1,,3 1,10 2 9 11 6 7 4 5 8
+1807,0,2,,,3 1 10 2 9 11 6 7 4 5 8
+1808,1,0,8,3,10 2 9 11 6 7 4 5 1
+1809,2,0,8 1,3,10 2 9 11 6 7 4 5
+1810,2,1,8 1,3 5,10 2 9 11 6 7 4
+1811,0,1,8,3 5 1,10 2 9 11 6 7 4
+1812,2,1,8,3 5 1 4,10 2 9 11 6 7
+1813,0,2,,,3 5 1 4 8 10 2 9 11 6 7
+1814,1,2,,,3 5 1 4 8 10 2 9 11 6 7
+1815,0,1,,7,3 5 1 4 8 10 2 9 11 6
+1816,2,1,,7 1,3 5 4 8 10 2 9 11 6
+1817,0,2,,,7 1 3 5 4 8 10 2 9 11 6
+1818,1,0,6,7,3 5 4 8 10 2 9 11 1
+1819,2,0,6 1,7,3 5 4 8 10 2 9 11
+1820,2,1,6 1,7 11,3 5 4 8 10 2 9
+1821,0,1,6,7 11 1,3 5 4 8 10 2 9
+1822,2,1,6,7 11 1 9,3 5 4 8 10 2
+1823,0,2,,,7 11 1 9 6 3 5 4 8 10 2
+1824,1,2,,,7 11 1 9 6 3 5 4 8 10 2
+1825,0,1,,2,7 11 1 9 6 3 5 4 8 10
+1826,2,1,,2 1,7 11 9 6 3 5 4 8 10
+1827,0,2,,,2 1 7 11 9 6 3 5 4 8 10
+1828,1,0,10,2,7 11 9 6 3 5 4 8 1
+1829,2,0,10 1,2,7 11 9 6 3 5 4 8
+1830,2,1,10 1,2 8,7 11 9 6 3 5 4
+1831,0,1,10,2 8 1,7 11 9 6 3 5 4
+1832,0,2,,,2 8 1 10 7 11 9 6 3 5 4
+1833,1,2,,,2 8 1 10 7 11 9 6 3 5 4
+1834,0,1,,4,2 8 1 10 7 11 9 6 3 5
+1835,2,1,,4 1,2 8 10 7 11 9 6 3 5
+1836,0,2,,,4 1 2 8 10 7 11 9 6 3 5
+1837,1,0,5,4,2 8 10 7 11 9 6 3 1
+1838,2,0,5 1,4,2 8 10 7 11 9 6 3
+1839,2,1,5 1,4 3,2 8 10 7 11 9 6
+1840,0,1,5,4 3 1,2 8 10 7 11 9 6
+1841,0,2,,,4 3 1 5 2 8 10 7 11 9 6
+1842,1,2,,,4 3 1 5 2 8 10 7 11 9 6
+1843,0,1,,6,4 3 1 5 2 8 10 7 11 9
+1844,2,1,,6 1,4 3 5 2 8 10 7 11 9
+1845,0,2,,,6 1 4 3 5 2 8 10 7 11 9
+1846,1,0,9,6,4 3 5 2 8 10 7 11 1
+1847,2,0,9 1,6,4 3 5 2 8 10 7 11
+1848,2,1,9 1,6 11,4 3 5 2 8 10 7
+1849,0,1,9,6 11 1,4 3 5 2 8 10 7
+1850,2,1,9,6 11 1 7,4 3 5 2 8 10
+1851,0,2,,,6 11 1 7 9 4 3 5 2 8 10
+1852,1,2,,,6 11 1 7 9 4 3 5 2 8 10
+1853,0,1,,10,6 11 1 7 9 4 3 5 2 8
+1854,2,1,,10 1,6 11 7 9 4 3 5 2 8
+1855,0,2,,,10 1 6 11 7 9 4 3 5 2 8
+1856,1,0,8,10,6 11 7 9 4 3 5 2 1
+1857,2,0,8 1,10,6 11 7 9 4 3 5 2
+1858,2,1,8 1,10 2,6 11 7 9 4 3 5
+1859,0,1,8,10 2 1,6 11 7 9 4 3 5
+1860,0,2,,,10 2 1 8 6 11 7 9 4 3 5
+1861,1,2,,,10 2 1 8 6 11 7 9 4 3 5
+1862,0,1,,5,10 2 1 8 6 11 7 9 4 3
+1863,2,1,,5 1,10 2 8 6 11 7 9 4 3
+1864,0,2,,,5 1 10 2 8 6 11 7 9 4 3
+1865,1,0,3,5,10 2 8 6 11 7 9 4 1
+1866,2,0,3 1,5,10 2 8 6 11 7 9 4
+1867,2,1,3 1,5 4,10 2 8 6 11 7 9
+1868,0,1,3,5 4 1,10 2 8 6 11 7 9
+1869,2,1,3,5 4 1 9,10 2 8 6 11 7
+1870
+

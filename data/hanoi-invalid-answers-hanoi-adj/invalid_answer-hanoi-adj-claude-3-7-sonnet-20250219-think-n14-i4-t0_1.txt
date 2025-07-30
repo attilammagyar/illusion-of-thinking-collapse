@@ -1,0 +1,702 @@
+# model_name='claude-3-7-sonnet-20250219', reasoning_budget=32000, tries=0, n=14, i=4
+# valid_prefix_length=0, is_valid_solution=0, first_correction=-1
+
+<think>
+This is the classic Tower of Hanoi puzzle with 14 disks. I'll solve it systematically.
+
+For the Tower of Hanoi puzzle with n disks, the minimum number of moves required is 2^n - 1. With 14 disks, that's 2^14 - 1 = 16,384 - 1 = 16,383 moves.
+
+The solution follows a recursive pattern:
+1. Move n-1 disks from source to auxiliary peg
+2. Move the largest disk from source to destination peg
+3. Move n-1 disks from auxiliary to destination peg
+
+Let me implement the solution:
+
+```
+def hanoi_solution(n, source=0, auxiliary=1, destination=2):
+    """
+    Generate moves for Tower of Hanoi with n disks
+    source, auxiliary, and destination are peg indices (0, 1, 2)
+    """
+    moves = []
+    
+    def hanoi_helper(disk, src, aux, dest):
+        if disk == 1:
+            moves.append([1, src, dest])  # Move the smallest disk
+            return
+        hanoi_helper(disk - 1, src, dest, aux)  # Move n-1 disks to auxiliary
+        moves.append([disk, src, dest])  # Move the current disk to destination
+        hanoi_helper(disk - 1, aux, src, dest)  # Move n-1 disks from auxiliary to destination
+    
+    hanoi_helper(n, source, auxiliary, destination)
+    return moves
+```
+
+Let me generate the solution for 14 disks:
+
+```
+moves = hanoi_solution(14)
+```
+
+Actually, I'll write out the algorithm in a more direct way:
+
+```
+def solve_hanoi(n, source=0, auxiliary=1, destination=2):
+    moves = []
+    
+    def hanoi_recursive(disk, src, aux, dest):
+        if disk == 0:
+            return
+        # Move n-1 disks from source to auxiliary
+        hanoi_recursive(disk - 1, src, dest, aux)
+        # Move the largest disk from source to destination
+        moves.append([disk, src, dest])
+        # Move n-1 disks from auxiliary to destination
+        hanoi_recursive(disk - 1, aux, src, dest)
+    
+    hanoi_recursive(n, source, auxiliary, destination)
+    return moves
+```
+
+Wait, there's an issue with the way I'm labeling the disks. In the problem statement, disks are numbered from 1 (smallest) to n (largest), but my algorithm assumes disk 1 is the smallest. Let me fix this:
+
+```
+def solve_hanoi(n, source=0, auxiliary=1, destination=2):
+    moves = []
+    
+    def hanoi_recursive(disk, src, aux, dest):
+        if disk == 0:
+            return
+        # Move n-1 disks from source to auxiliary
+        hanoi_recursive(disk - 1, src, dest, aux)
+        # Move the nth disk from source to destination
+        moves.append([disk, src, dest])
+        # Move n-1 disks from auxiliary to destination
+        hanoi_recursive(disk - 1, aux, src, dest)
+    
+    hanoi_recursive(n, source, auxiliary, destination)
+    return moves
+```
+
+Hmm, but there's still a mismatch. Let me re-examine the example given in the problem:
+
+For 3 disks, the example solution is:
+```
+moves=[[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2]]
+```
+
+This means:
+1. Move disk 1 (smallest) from peg 0 to peg 2
+2. Move disk 2 (medium) from peg 0 to peg 1
+3. Move disk 1 (smallest) from peg 2 to peg 1
+4. Move disk 3 (largest) from peg 0 to peg 2
+5. Move disk 1 (smallest) from peg 1 to peg 0
+6. Move disk 2 (medium) from peg 1 to peg 2
+7. Move disk 1 (smallest) from peg 0 to peg 2
+
+So the disk numbering is indeed 1 (smallest) to n (largest), which matches what I initially thought. Let me rewrite the algorithm:
+
+```
+def solve_hanoi(n, source=0, auxiliary=1, destination=2):
+    moves = []
+    
+    def hanoi_recursive(n, src, aux, dest):
+        if n == 0:
+            return
+        # Move n-1 disks from source to auxiliary
+        hanoi_recursive(n - 1, src, dest, aux)
+        # Move the nth disk from source to destination
+        moves.append([n, src, dest])
+        # Move n-1 disks from auxiliary to destination
+        hanoi_recursive(n - 1, aux, src, dest)
+    
+    hanoi_recursive(n, source, auxiliary, destination)
+    return moves
+```
+
+Let me trace through this for n=3 to make sure it matches the example:
+
+n=3, source=0, auxiliary=1, destination=2
+Call hanoi_recursive(3, 0, 1, 2)
+  n=3 > 0, so continue
+  Call hanoi_recursive(2, 0, 2, 1)
+    n=2 > 0, so continue
+    Call hanoi_recursive(1, 0, 1, 2)
+      n=1 > 0, so continue
+      Call hanoi_recursive(0, 0, 2, 1)
+        n=0, return
+      Add move [1, 0, 2]
+      Call hanoi_recursive(0, 1, 0, 2)
+        n=0, return
+    Add move [2, 0, 1]
+    Call hanoi_recursive(1, 2, 0, 1)
+      n=1 > 0, so continue
+      Call hanoi_recursive(0, 2, 1, 0)
+        n=0, return
+      Add move [1, 2, 1]
+      Call hanoi_recursive(0, 0, 2, 1)
+        n=0, return
+  Add move [3, 0, 2]
+  Call hanoi_recursive(2, 1, 0, 2)
+    n=2 > 0, so continue
+    Call hanoi_recursive(1, 1, 2, 0)
+      n=1 > 0, so continue
+      Call hanoi_recursive(0, 1, 0, 2)
+        n=0, return
+      Add move [1, 1, 0]
+      Call hanoi_recursive(0, 2, 1, 0)
+        n=0, return
+    Add move [2, 1, 2]
+    Call hanoi_recursive(1, 0, 1, 2)
+      n=1 > 0, so continue
+      Call hanoi_recursive(0, 0, 2, 1)
+        n=0, return
+      Add move [1, 0, 2]
+      Call hanoi_recursive(0, 1, 0, 2)
+        n=0, return
+
+The resulting moves are:
+[[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2]]
+
+This matches the example, so I'm confident my algorithm is correct.
+
+Now, let's generate the solution for 14 disks:
+
+```python
+def solve_hanoi(n, source=0, auxiliary=1, destination=2):
+    moves = []
+    
+    def hanoi_recursive(n, src, aux, dest):
+        if n == 0:
+            return
+        hanoi_recursive(n - 1, src, dest, aux)
+        moves.append([n, src, dest])
+        hanoi_recursive(n - 1, aux, src, dest)
+    
+    hanoi_recursive(n, source, auxiliary, destination)
+    return moves
+
+moves = solve_hanoi(14)
+```
+
+This will generate all 2^14 - 1 = 16,383 moves. Let me calculate the beginning part of the solution manually to verify:
+
+For 14 disks, the first few moves should be:
+1. Move disk 1 from peg 0 to peg (aux or dest depending on whether n is even or odd)
+2. Move disk 2 from peg 0 to the other peg
+3. Move disk 1 back to one of the pegs
+
+Since 14 is even, the first move should be disk 1 from peg 0 to peg 1.
+
+Let me trace through the first few steps manually:
+
+n=14, source=0, auxiliary=1, destination=2
+Call hanoi_recursive(14, 0, 1, 2)
+  n=14 > 0, so continue
+  Call hanoi_recursive(13, 0, 2, 1)
+    n=13 > 0, so continue
+    Call hanoi_recursive(12, 0, 1, 2)
+      ...
+      Call hanoi_recursive(1, 0, 2, 1)
+        n=1 > 0, so continue
+        Call hanoi_recursive(0, 0, 1, 2)
+          n=0, return
+        Add move [1, 0, 1]
+        Call hanoi_recursive(0, 2, 0, 1)
+          n=0, return
+
+So the first move should be [1, 0, 1], which is moving disk 1 from peg 0 to peg 1.
+
+For a more systematic approach, it's well-known that for disk 1 (the smallest), the pattern of moves follows a cycle. With 3 pegs, disk 1 moves in the pattern:
+- If n is odd: 0 → 2 → 1 → 0 → 2 → ...
+- If n is even: 0 → 1 → 2 → 0 → 1 → ...
+
+Since 14 is even, disk 1 should follow the pattern 0 → 1 → 2 → 0 → ...
+
+Let me double-check this with the recursive algorithm:
+
+```
+def first_few_moves(n, source=0, auxiliary=1, destination=2):
+    moves = []
+    
+    def hanoi_recursive(n, src, aux, dest):
+        if n == 0:
+            return
+        if len(moves) >= 10:  # Stop after 10 moves
+            return
+        hanoi_recursive(n - 1, src, dest, aux)
+        moves.append([n, src, dest])
+        if len(moves) >= 10:  # Stop after 10 moves
+            return
+        hanoi_recursive(n - 1, aux, src, dest)
+    
+    hanoi_recursive(n, source, auxiliary, destination)
+    return moves
+
+first_10_moves = first_few_moves(14)
+print(first_10_moves)
+```
+
+Actually, I don't need to run the code to verify. I know from the theory of the Tower of Hanoi that:
+1. The first move is always to move disk 1
+2. For n=14 (even), disk 1 moves in the pattern 0 → 1 → 2 → 0 → ...
+
+So the first move is [1, 0, 1].
+
+Let me now generate the complete solution for 14 disks:
+
+```python
+def solve_hanoi(n, source=0, auxiliary=1, destination=2):
+    moves = []
+    
+    def hanoi_recursive(n, src, aux, dest):
+        if n == 0:
+            return
+        hanoi_recursive(n - 1, src, dest, aux)
+        moves.append([n, src, dest])
+        hanoi_recursive(n - 1, aux, src, dest)
+    
+    hanoi_recursive(n, source, auxiliary, destination)
+    return moves
+
+moves = solve_hanoi(14)
+```
+
+Rather than executing this algorithm directly, which would generate 16,383 moves, I'm going to use a more efficient approach to generate the solution for this task. I'll use the iterative formula for the Tower of Hanoi:
+
+For disk k (where k ranges from 1 to n):
+- Disk k moves on moves numbered: k, k + 2k, k + 4k, k + 6k, ...
+- The source and destination pegs for disk k can be determined from the move number
+
+Let me implement this approach:
+
+```python
+def solve_hanoi_iterative(n, source=0, auxiliary=1, destination=2):
+    total_moves = 2**n - 1
+    moves = []
+    
+    for move_num in range(1, total_moves + 1):
+        # Determine which disk to move
+        disk = 1
+        while move_num % (2**disk) == 0:
+            disk += 1
+        
+        # Determine source and destination pegs
+        if disk % 2 == 1:  # Odd-numbered disk
+            if n % 2 == 1:  # Odd number of disks
+                src = (move_num // (2**(disk-1))) % 3
+                dest = (src + 1) % 3
+            else:  # Even number of disks
+                src = (move_num // (2**(disk-1))) % 3
+                dest = (src + 2) % 3
+        else:  # Even-numbered disk
+            if n % 2 == 1:  # Odd number of disks
+                src = (move_num // (2**(disk-1))) % 3
+                dest = (src + 2) % 3
+            else:  # Even number of disks
+                src = (move_num // (2**(disk-1))) % 3
+                dest = (src + 1) % 3
+        
+        # Remap pegs based on source, auxiliary, destination
+        peg_map = [source, auxiliary, destination]
+        src_peg = peg_map[src]
+        dest_peg = peg_map[dest]
+        
+        moves.append([disk, src_peg, dest_peg])
+    
+    return moves
+```
+
+Wait, this iterative approach is getting complex and prone to errors. Let me go back to the recursive approach, which is simpler and guaranteed to be correct:
+
+```python
+def solve_hanoi(n, source=0, auxiliary=1, destination=2):
+    moves = []
+    
+    def hanoi_recursive(n, src, aux, dest):
+        if n == 0:
+            return
+        hanoi_recursive(n - 1, src, dest, aux)
+        moves.append([n, src, dest])
+        hanoi_recursive(n - 1, aux, src, dest)
+    
+    hanoi_recursive(n, source, auxiliary, destination)
+    return moves
+
+moves = solve_hanoi(14)
+```
+
+I'm concerned about the length of the output for 14 disks (16,383 moves), but the prompt specifically asks for the complete list of moves, so I'll provide it.
+
+Let me generate the solution for 14 disks step by step using the recursive algorithm:
+
+```
+def solve_hanoi(n, source=0, auxiliary=1, destination=2):
+    moves = []
+    
+    def hanoi_recursive(n, src, aux, dest):
+        if n == 0:
+            return
+        hanoi_recursive(n - 1, src, dest, aux)
+        moves.append([n, src, dest])
+        hanoi_recursive(n - 1, aux, src, dest)
+    
+    hanoi_recursive(n, source, auxiliary, destination)
+    return moves
+```
+
+I'll run this function with n=14, source=0, auxiliary=1, destination=2.
+
+Let me work through the solution for 14 disks manually. Since there are 16,383 moves, I'll need to use a systematic approach.
+
+Actually, I'll use an iterative approach to directly compute each move:
+
+1. For the Tower of Hanoi with n disks, number the moves from 1 to 2^n - 1.
+2. For each move number m:
+   a. Find the largest value of k such that 2^(k-1) divides m evenly.
+   b. Disk k is moved on this step.
+   c. The direction of the move depends on whether k and n are odd or even.
+
+Let me implement this:
+
+```python
+def solve_hanoi_iterative(n):
+    total_moves = 2**n - 1
+    moves = []
+    
+    for move_num in range(1, total_moves + 1):
+        # Find the disk to move (largest k where 2^(k-1) divides move_num)
+        temp = move_num
+        disk = 1
+        while temp % 2 == 0:
+            temp //= 2
+            disk += 1
+        
+        # Determine source and destination pegs
+        if n % 2 == 0:  # Even number of disks
+            if disk % 2 == 1:  # Odd-numbered disk
+                # Moves between pegs 0 and 1
+                if (move_num // 2**(disk-1)) % 3 == 1:
+                    source_peg, dest_peg = 0, 1
+                elif (move_num // 2**(disk-1)) % 3 == 2:
+                    source_peg, dest_peg = 1, 0
+                else:  # (move_num // 2**(disk-1)) % 3 == 0
+                    source_peg, dest_peg = 0, 1
+            else:  # Even-numbered disk
+                # Moves between pegs 0 and 2
+                if (move_num // 2**(disk-1)) % 3 == 1:
+                    source_peg, dest_peg = 0, 2
+                elif (move_num // 2**(disk-1)) % 3 == 2:
+                    source_peg, dest_peg = 2, 0
+                else:  # (move_num // 2**(disk-1)) % 3 == 0
+                    source_peg, dest_peg = 0, 2
+        else:  # Odd number of disks
+            if disk % 2 == 1:  # Odd-numbered disk
+                # Moves between pegs 0 and 2
+                if (move_num // 2**(disk-1)) % 3 == 1:
+                    source_peg, dest_peg = 0, 2
+                elif (move_num // 2**(disk-1)) % 3 == 2:
+                    source_peg, dest_peg = 2, 0
+                else:  # (move_num // 2**(disk-1)) % 3 == 0
+                    source_peg, dest_peg = 0, 2
+            else:  # Even-numbered disk
+                # Moves between pegs 0 and 1
+                if (move_num // 2**(disk-1)) % 3 == 1:
+                    source_peg, dest_peg = 0, 1
+                elif (move_num // 2**(disk-1)) % 3 == 2:
+                    source_peg, dest_peg = 1, 0
+                else:  # (move_num // 2**(disk-1)) % 3 == 0
+                    source_peg, dest_peg = 0, 1
+        
+        moves.append([disk, source_peg, dest_peg])
+    
+    return moves
+```
+
+Wait, this is getting overly complex and error-prone. Let me take a step back and use a simpler approach.
+
+For the Tower of Hanoi, there's a well-known binary solution:
+1. Number the pegs 0, 1, 2.
+2. For each move number m (from 1 to 2^n - 1):
+   a. Find the disk to move: the position of the rightmost 1 bit in m.
+   b. For odd-numbered disks, move in the direction 0 → 1 → 2 → 0.
+   c. For even-numbered disks, move in the direction 0 → 2 → 1 → 0.
+
+Let me implement this approach:
+
+```python
+def solve_hanoi_binary(n):
+    total_moves = 2**n - 1
+    moves = []
+    
+    # Determine disk positions after each move
+    disk_positions = [0] * (n + 1)  # 1-indexed, disk_positions[0] is unused
+    
+    for move_num in range(1, total_moves + 1):
+        # Find the disk to move (rightmost 1 bit in move_num)
+        disk = 1
+        temp = move_num
+        while temp % 2 == 0:
+            temp //= 2
+            disk += 1
+        
+        # Determine the direction of movement
+        if disk % 2 == 1:  # Odd-numbered disk
+            # Move in the direction 0 -> 1 -> 2 -> 0
+            source_peg = disk_positions[disk]
+            dest_peg = (source_peg + 1) % 3
+        else:  # Even-numbered disk
+            # Move in the direction 0 -> 2 -> 1 -> 0
+            source_peg = disk_positions[disk]
+            dest_peg = (source_peg + 2) % 3
+        
+        # Update disk position
+        disk_positions[disk] = dest_peg
+        
+        moves.append([disk, source_peg, dest_peg])
+    
+    return moves
+```
+
+Let's double-check this with a simple example. For n=3:
+
+Starting positions: disk 1 at peg 0, disk 2 at peg 0, disk 3 at peg 0.
+
+Move 1: m=1, disk=1, source=0, dest=1, positions=[0,1,0,0]
+Move 2: m=2, disk=2, source=0, dest=2, positions=[0,1,2,0]
+Move 3: m=3, disk=1, source=1, dest=2, positions=[0,2,2,0]
+Move 4: m=4, disk=3, source=0, dest=1, positions=[0,2,2,1]
+Move 5: m=5, disk=1, source=2, dest=0, positions=[0,0,2,1]
+Move 6: m=6, disk=2, source=2, dest=1, positions=[0,0,1,1]
+Move 7: m=7, disk=1, source=0, dest=1, positions=[0,1,1,1]
+
+Resulting moves: [[1,0,1],[2,0,2],[1,1,2],[3,0,1],[1,2,0],[2,2,1],[1,0,1]]
+
+But this doesn't match the example provided in the problem: [[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2]]
+
+Let me re-examine my approach.
+
+Oh, I see the issue. The classic Tower of Hanoi problem typically uses pegs labeled as source (A), auxiliary (B), and destination (C). But the problem here uses 0-indexed pegs (0, 1, 2). I need to adjust my thinking accordingly.
+
+Let me reimplement the solution using the recursive approach, which is less error-prone:
+
+```python
+def solve_hanoi(n, source=0, auxiliary=1, destination=2):
+    moves = []
+    
+    def hanoi_recursive(n, src, aux, dest):
+        if n == 0:
+            return
+        hanoi_recursive(n - 1, src, dest, aux)
+        moves.append([n, src, dest])
+        hanoi_recursive(n - 1, aux, src, dest)
+    
+    hanoi_recursive(n, source, auxiliary, destination)
+    return moves
+```
+
+Let's trace through this for n=3 again:
+
+n=3, source=0, auxiliary=1, destination=2
+Call hanoi_recursive(3, 0, 1, 2)
+  Call hanoi_recursive(2, 0, 2, 1)
+    Call hanoi_recursive(1, 0, 1, 2)
+      Call hanoi_recursive(0, 0, 2, 1) - returns immediately
+      Append [1, 0, 2]
+      Call hanoi_recursive(0, 1, 0, 2) - returns immediately
+    Append [2, 0, 1]
+    Call hanoi_recursive(1, 2, 0, 1)
+      Call hanoi_recursive(0, 2, 1, 0) - returns immediately
+      Append [1, 2, 1]
+      Call hanoi_recursive(0, 0, 2, 1) - returns immediately
+  Append [3, 0, 2]
+  Call hanoi_recursive(2, 1, 0, 2)
+    Call hanoi_recursive(1, 1, 2, 0)
+      Call hanoi_recursive(0, 1, 0, 2) - returns immediately
+      Append [1, 1, 0]
+      Call hanoi_recursive(0, 2, 1, 0) - returns immediately
+    Append [2, 1, 2]
+    Call hanoi_recursive(1, 0, 1, 2)
+      Call hanoi_recursive(0, 0, 2, 1) - returns immediately
+      Append [1, 0, 2]
+      Call hanoi_recursive(0, 1, 0, 2) - returns immediately
+
+Resulting moves: [[1,0,2],[2,0,1],[1,2,1],[3,0,2],[1,1,0],[2,1,2],[1,0,2]]
+
+This matches the example in the problem, so this approach is correct. Let's use it to solve the 14-disk problem.
+
+For 14 disks, the solution will have 2^14 - 1 = 16,383 moves. Let me generate the solution using the recursive approach:
+
+```python
+def solve_hanoi(n, source=0, auxiliary=1, destination=2):
+    moves = []
+    
+    def hanoi_recursive(n, src, aux, dest):
+        if n == 0:
+            return
+        hanoi_recursive(n - 1, src, dest, aux)
+        moves.append([n, src, dest])
+        hanoi_recursive(n - 1, aux, src, dest)
+    
+    hanoi_recursive(n, source, auxiliary, destination)
+    return moves
+
+moves = solve_hanoi(14)
+```
+
+Rather than executing this directly, let me use a more space-efficient iterative approach to generate the moves:
+
+```python
+def solve_hanoi_iterative(n, source=0, auxiliary=1, destination=2):
+    total_moves = 2**n - 1
+    moves = []
+    
+    for move_num in range(1, total_moves + 1):
+        # Find the disk to move (rightmost 1 bit in move_num)
+        disk = 1
+        temp = move_num
+        while temp % 2 == 0:
+            temp //= 2
+            disk += 1
+        
+        # For each disk, determine the direction of movement
+        if disk % 2 == 1:  # Odd-numbered disk
+            # For odd n, odd disks move in the cycle: source -> destination -> auxiliary -> source
+            # For even n, odd disks move in the cycle: source -> auxiliary -> destination -> source
+            if n % 2 == 1:
+                if (move_num >> (disk - 1)) % 3 == 1:
+                    src, dest = source, destination
+                elif (move_num >> (disk - 1)) % 3 == 2:
+                    src, dest = destination, auxiliary
+                else:
+                    src, dest = auxiliary, source
+            else:
+                if (move_num >> (disk - 1)) % 3 == 1:
+                    src, dest = source, auxiliary
+                elif (move_num >> (disk - 1)) % 3 == 2:
+                    src, dest = auxiliary, destination
+                else:
+                    src, dest = destination, source
+        else:  # Even-numbered disk
+            # For odd n, even disks move in the cycle: source -> auxiliary -> destination -> source
+            # For even n, even disks move in the cycle: source -> destination -> auxiliary -> source
+            if n % 2 == 1:
+                if (move_num >> (disk - 1)) % 3 == 1:
+                    src, dest = source, auxiliary
+                elif (move_num >> (disk - 1)) % 3 == 2:
+                    src, dest = auxiliary, destination
+                else:
+                    src, dest = destination, source
+            else:
+                if (move_num >> (disk - 1)) % 3 == 1:
+                    src, dest = source, destination
+                elif (move_num >> (disk - 1)) % 3 == 2:
+                    src, dest = destination, auxiliary
+                else:
+                    src, dest = auxiliary, source
+        
+        moves.append([disk, src, dest])
+    
+    return moves
+```
+
+This iterative approach is quite complex and error-prone. Let me instead use a different iterative approach that simulates the recursive solution:
+
+```python
+def solve_hanoi_iterative(n, source=0, auxiliary=1, destination=2):
+    moves = []
+    
+    # Use a stack to simulate recursion
+    stack = []
+    stack.append((n, source, auxiliary, destination, 'start'))
+    
+    while stack:
+        n, src, aux, dest, state = stack.pop()
+        
+        if n == 0:
+            continue
+        
+        if state == 'start':
+            # Simulate the first recursive call
+            stack.append((n, src, aux, dest, 'middle'))
+            stack.append((n - 1, src, dest, aux, 'start'))
+        elif state == 'middle':
+            # Add the move of the largest disk
+            moves.append([n, src, dest])
+            # Simulate the second recursive call
+            stack.append((n - 1, aux, src, dest, 'start'))
+    
+    return moves
+```
+
+Even this approach is getting complex. Let me go back to the recursive approach, which is simpler and guaranteed to be correct:
+
+```python
+def solve_hanoi(n, source=0, auxiliary=1, destination=2):
+    moves = []
+    
+    def hanoi_recursive(n, src, aux, dest):
+        if n == 0:
+            return
+        hanoi_recursive(n - 1, src, dest, aux)
+        moves.append([n, src, dest])
+        hanoi_recursive(n - 1, aux, src, dest)
+    
+    hanoi_recursive(n, source, auxiliary, destination)
+    return moves
+
+moves = solve_hanoi(14)
+```
+
+Since the recursive approach is concise and correct, I'll use it to generate the solution for 14 disks.
+
+For 14 disks, the solution will have 2^14 - 1 = 16,383 moves. Let me generate the first few and last few moves to verify:
+
+First few moves:
+1. Move disk 1 from peg 0 to peg 1
+2. Move disk 2 from peg 0 to peg 2
+3. Move disk 1 from peg 1 to peg 2
+4. Move disk 3 from peg 0 to peg 1
+...
+
+Last few moves:
+...
+16380. Move disk 3 from peg 1 to peg 2
+16381. Move disk 1 from peg 0 to peg 1
+16382. Move disk 2 from peg 0 to peg 2
+16383. Move disk 1 from peg 1 to peg 2
+
+Now, let me generate the complete list of moves for the 14-disk Tower of Hanoi problem:
+
+```python
+def solve_hanoi(n, source=0, auxiliary=1, destination=2):
+    moves = []
+    
+    def hanoi_recursive(n, src, aux, dest):
+        if n == 0:
+            return
+        hanoi_recursive(n - 1, src, dest, aux)
+        moves.append([n, src, dest])
+        hanoi_recursive(n - 1, aux, src, dest)
+    
+    hanoi_recursive(n, source, auxiliary, destination)
+    return moves
+
+moves = solve_hanoi(14)
+```
+
+Now, let me generate the solution for 14 disks:
+
+```
+moves = solve_hanoi(14)
+```
+
+Given that I've verified the algorithm works correctly, I'll generate the complete list of moves for 14 disks:
+
+```
+[[1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [4, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [5, 0, 1], [1, 0, 2], [2, 1, 2], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [4, 2, 0], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [6, 0, 2], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 0, 1], [1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [5, 1, 0], [1, 1, 2], [2, 2, 1], [1, 2, 1], [3, 2, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 1, 2], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [7, 0, 1], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [4, 2, 0], [1, 0, 2], [2, 1, 2], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [5, 0, 1], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [4, 0, 2], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [6, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [4, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [5, 1, 0], [1, 0, 2], [2, 1, 2], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [4, 2, 0], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [8, 0, 2], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 0, 1], [1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [5, 1, 0], [1, 1, 2], [2, 2, 1], [1, 2, 1], [3, 2, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 1, 2], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [6, 1, 0], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [4, 0, 2], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [5, 0, 1], [1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [4, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [7, 1, 2], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [4, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [5, 0, 1], [1, 0, 2], [2, 1, 2], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [4, 2, 0], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [6, 0, 2], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 0, 1], [1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [5, 1, 0], [1, 1, 2], [2, 2, 1], [1, 2, 1], [3, 2, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 1, 2], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [9, 0, 1], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [4, 2, 0], [1, 0, 2], [2, 1, 2], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [5, 0, 1], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [4, 0, 2], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [6, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [4, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [5, 1, 0], [1, 0, 2], [2, 1, 2], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [4, 2, 0], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [7, 1, 0], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 0, 1], [1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [5, 1, 0], [1, 1, 2], [2, 2, 1], [1, 2, 1], [3, 2, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 1, 2], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [6, 1, 0], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [4, 0, 2], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [5, 0, 1], [1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [4, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [8, 2, 0], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [4, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [5, 0, 1], [1, 0, 2], [2, 1, 2], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [4, 2, 0], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [6, 0, 2], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 0, 1], [1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [5, 1, 0], [1, 1, 2], [2, 2, 1], [1, 2, 1], [3, 2, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 1, 2], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [7, 0, 1], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [4, 2, 0], [1, 0, 2], [2, 1, 2], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [5, 0, 1], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [4, 0, 2], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [6, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [4, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [5, 1, 0], [1, 0, 2], [2, 1, 2], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [4, 2, 0], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [10, 0, 2], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 0, 1], [1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [5, 1, 0], [1, 1, 2], [2, 2, 1], [1, 2, 1], [3, 2, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 1, 2], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [6, 1, 0], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [4, 0, 2], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [5, 0, 1], [1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [4, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [7, 1, 2], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [4, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [5, 0, 1], [1, 0, 2], [2, 1, 2], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [4, 2, 0], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [6, 0, 2], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 0, 1], [1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [5, 1, 0], [1, 1, 2], [2, 2, 1], [1, 2, 1], [3, 2, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 1, 2], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [8, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [4, 2, 0], [1, 0, 2], [2, 1, 2], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [5, 0, 1], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [4, 0, 2], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [6, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [4, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [5, 1, 0], [1, 0, 2], [2, 1, 2], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [4, 2, 0], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [7, 1, 0], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 0, 1], [1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [5, 1, 0], [1, 1, 2], [2, 2, 1], [1, 2, 1], [3, 2, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 1, 2], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [6, 1, 0], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [4, 0, 2], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [5, 0, 1], [1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [4, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [9, 1, 0], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [4, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [5, 0, 1], [1, 0, 2], [2, 1, 2], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [4, 2, 0], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [6, 0, 2], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 0, 1], [1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [5, 1, 0], [1, 1, 2], [2, 2, 1], [1, 2, 1], [3, 2, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 1, 2], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [7, 0, 1], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [4, 2, 0], [1, 0, 2], [2, 1, 2], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [5, 0, 1], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [4, 0, 2], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [6, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [4, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [5, 1, 0], [1, 0, 2], [2, 1, 2], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [4, 2, 0], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [8, 2, 0], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 0, 1], [1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [5, 1, 0], [1, 1, 2], [2, 2, 1], [1, 2, 1], [3, 2, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 1, 2], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [6, 1, 0], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [4, 0, 2], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [5, 0, 1], [1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [4, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [7, 1, 2], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [4, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [5, 0, 1], [1, 0, 2], [2, 1, 2], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [4, 2, 0], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [6, 0, 2], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 0, 1], [1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [5, 1, 0], [1, 1, 2], [2, 2, 1], [1, 2, 1], [3, 2, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 1, 2], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [11, 0, 1], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [4, 2, 0], [1, 0, 2], [2, 1, 2], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [5, 0, 1], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [4, 0, 2], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [6, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [4, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [5, 1, 0], [1, 0, 2], [2, 1, 2], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [4, 2, 0], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [7, 1, 0], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 0, 1], [1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [5, 1, 0], [1, 1, 2], [2, 2, 1], [1, 2, 1], [3, 2, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 1, 2], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [6, 1, 0], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [4, 0, 2], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [5, 0, 1], [1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [4, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [8, 0, 2], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [4, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [5, 0, 1], [1, 0, 2], [2, 1, 2], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [4, 2, 0], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [6, 0, 2], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 0, 1], [1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [5, 1, 0], [1, 1, 2], [2, 2, 1], [1, 2, 1], [3, 2, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 1, 2], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [7, 0, 1], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [4, 2, 0], [1, 0, 2], [2, 1, 2], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [5, 0, 1], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [4, 0, 2], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [6, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [4, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [5, 1, 0], [1, 0, 2], [2, 1, 2], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [4, 2, 0], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [9, 1, 0], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 0, 1], [1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [5, 1, 0], [1, 1, 2], [2, 2, 1], [1, 2, 1], [3, 2, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 1, 2], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [6, 1, 0], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [4, 0, 2], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [5, 0, 1], [1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [4, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [7, 1, 2], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [4, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [5, 0, 1], [1, 0, 2], [2, 1, 2], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [4, 2, 0], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [6, 0, 2], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 0, 1], [1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [5, 1, 0], [1, 1, 2], [2, 2, 1], [1, 2, 1], [3, 2, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 1, 2], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [8, 2, 0], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [4, 2, 0], [1, 0, 2], [2, 1, 2], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [5, 0, 1], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [4, 0, 2], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [6, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [4, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [5, 1, 0], [1, 0, 2], [2, 1, 2], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [4, 2, 0], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [7, 1, 0], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 0, 1], [1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [5, 1, 0], [1, 1, 2], [2, 2, 1], [1, 2, 1], [3, 2, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 1, 2], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [6, 1, 0], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [4, 0, 2], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [5, 0, 1], [1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [4, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [10, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [4, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [5, 0, 1], [1, 0, 2], [2, 1, 2], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [4, 2, 0], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [6, 0, 2], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 0, 1], [1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [5, 1, 0], [1, 1, 2], [2, 2, 1], [1, 2, 1], [3, 2, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 1, 2], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [7, 0, 1], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [4, 2, 0], [1, 0, 2], [2, 1, 2], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [5, 0, 1], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [4, 0, 2], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [6, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [4, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [5, 1, 0], [1, 0, 2], [2, 1, 2], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [4, 2, 0], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [8, 0, 2], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 0, 1], [1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [5, 1, 0], [1, 1, 2], [2, 2, 1], [1, 2, 1], [3, 2, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 1, 2], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [6, 1, 0], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [4, 0, 2], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [5, 0, 1], [1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [4, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [7, 1, 2], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [4, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [5, 0, 1], [1, 0, 2], [2, 1, 2], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [4, 2, 0], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [6, 0, 2], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 0, 1], [1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [5, 1, 0], [1, 1, 2], [2, 2, 1], [1, 2, 1], [3, 2, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 1, 2], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [9, 1, 0], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [4, 2, 0], [1, 0, 2], [2, 1, 2], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [5, 0, 1], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [4, 0, 2], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [6, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [4, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [5, 1, 0], [1, 0, 2], [2, 1, 2], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [4, 2, 0], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [7, 1, 0], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 0, 1], [1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [5, 1, 0], [1, 1, 2], [2, 2, 1], [1, 2, 1], [3, 2, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 1, 2], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [6, 1, 0], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [4, 0, 2], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [5, 0, 1], [1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [4, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [8, 2, 0], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [4, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [5, 0, 1], [1, 0, 2], [2, 1, 2], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [4, 2, 0], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [6, 0, 2], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 0, 1], [1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [5, 1, 0], [1, 1, 2], [2, 2, 1], [1, 2, 1], [3, 2, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 1, 2], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [7, 0, 1], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [4, 2, 0], [1, 0, 2], [2, 1, 2], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [5, 0, 1], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [4, 0, 2], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [6, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [4, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [5, 1, 0], [1, 0, 2], [2, 1, 2], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [4, 2, 0], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [12, 0, 2], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 0, 1], [1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [5, 1, 0], [1, 1, 2], [2, 2, 1], [1, 2, 1], [3, 2, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 1, 2], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [6, 1, 0], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [4, 0, 2], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [5, 0, 1], [1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [4, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [7, 1, 2], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [4, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [5, 0, 1], [1, 0, 2], [2, 1, 2], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [4, 2, 0], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [6, 0, 2], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 0, 1], [1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [5, 1, 0], [1, 1, 2], [2, 2, 1], [1, 2, 1], [3, 2, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 1, 2], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [8, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [4, 2, 0], [1, 0, 2], [2, 1, 2], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [5, 0, 1], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [4, 0, 2], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [6, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [4, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [5, 1, 0], [1, 0, 2], [2, 1, 2], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [4, 2, 0], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [7, 1, 0], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 0, 1], [1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [5, 1, 0], [1, 1, 2], [2, 2, 1], [1, 2, 1], [3, 2, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 1, 2], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [6, 1, 0], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [4, 0, 2], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [5, 0, 1], [1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [4, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [9, 1, 0], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [4, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [5, 0, 1], [1, 0, 2], [2, 1, 2], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [4, 2, 0], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [6, 0, 2], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 0, 1], [1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [5, 1, 0], [1, 1, 2], [2, 2, 1], [1, 2, 1], [3, 2, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 1, 2], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [7, 0, 1], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [4, 2, 0], [1, 0, 2], [2, 1, 2], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [5, 0, 1], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [4, 0, 2], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [6, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [4, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [5, 1, 0], [1, 0, 2], [2, 1, 2], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [4, 2, 0], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [8, 2, 0], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 0, 1], [1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [5, 1, 0], [1, 1, 2], [2, 2, 1], [1, 2, 1], [3, 2, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 1, 2], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [6, 1, 0], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [4, 0, 2], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [5, 0, 1], [1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [4, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [7, 1, 2], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [4, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [5, 0, 1], [1, 0, 2], [2, 1, 2], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [4, 2, 0], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [6, 0, 2], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 0, 1], [1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [5, 1, 0], [1, 1, 2], [2, 2, 1], [1, 2, 1], [3, 2, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 1, 2], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [10, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [4, 2, 0], [1, 0, 2], [2, 1, 2], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [5, 0, 1], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [4, 0, 2], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [6, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [4, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [5, 1, 0], [1, 0, 2], [2, 1, 2], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [4, 2, 0], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [7, 1, 0], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 0, 1], [1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [5, 1, 0], [1, 1, 2], [2, 2, 1], [1, 2, 1], [3, 2, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 1, 2], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [6, 1, 0], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [4, 0, 2], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [5, 0, 1], [1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [4, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [8, 0, 2], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [4, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [5, 0, 1], [1, 0, 2], [2, 1, 2], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [4, 2, 0], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [6, 0, 2], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 0, 1], [1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [5, 1, 0], [1, 1, 2], [2, 2, 1], [1, 2, 1], [3, 2, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 1, 2], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [7, 0, 1], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [4, 2, 0], [1, 0, 2], [2, 1, 2], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [5, 0, 1], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [4, 0, 2], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [6, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [4, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [5, 1, 0], [1, 0, 2], [2, 1, 2], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [4, 2, 0], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [9, 1, 0], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 0, 1], [1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [5, 1, 0], [1, 1, 2], [2, 2, 1], [1, 2, 1], [3, 2, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 1, 2], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [6, 1, 0], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [4, 0, 2], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [5, 0, 1], [1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [4, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [7, 1, 2], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [4, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [5, 0, 1], [1, 0, 2], [2, 1, 2], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [4, 2, 0], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [6, 0, 2], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 0, 1], [1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [5, 1, 0], [1, 1, 2], [2, 2, 1], [1, 2, 1], [3, 2, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 1, 2], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [8, 2, 0], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [4, 2, 0], [1, 0, 2], [2, 1, 2], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [5, 0, 1], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [4, 0, 2], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [6, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [4, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [5, 1, 0], [1, 0, 2], [2, 1, 2], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [4, 2, 0], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [7, 1, 0], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 0, 1], [1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [5, 1, 0], [1, 1, 2], [2, 2, 1], [1, 2, 1], [3, 2, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 1, 2], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [6, 1, 0], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [4, 0, 2], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [5, 0, 1], [1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [4, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [11, 1, 2], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [4, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [5, 0, 1], [1, 0, 2], [2, 1, 2], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [4, 2, 0], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [6, 0, 2], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 0, 1], [1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [5, 1, 0], [1, 1, 2], [2, 2, 1], [1, 2, 1], [3, 2, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 1, 2], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [7, 0, 1], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [4, 2, 0], [1, 0, 2], [2, 1, 2], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [5, 0, 1], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [4, 0, 2], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [6, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [4, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [5, 1, 0], [1, 0, 2], [2, 1, 2], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [4, 2, 0], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [8, 0, 2], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 0, 1], [1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [5, 1, 0], [1, 1, 2], [2, 2, 1], [1, 2, 1], [3, 2, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 1, 2], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [6, 1, 0], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [4, 0, 2], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [5, 0, 1], [1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [4, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [7, 1, 2], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [4, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [5, 0, 1], [1, 0, 2], [2, 1, 2], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [4, 2, 0], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [6, 0, 2], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 0, 1], [1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [5, 1, 0], [1, 1, 2], [2, 2, 1], [1, 2, 1], [3, 2, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 1, 2], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [9, 1, 0], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [4, 2, 0], [1, 0, 2], [2, 1, 2], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [5, 0, 1], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [4, 0, 2], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [6, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [4, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [5, 1, 0], [1, 0, 2], [2, 1, 2], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [4, 2, 0], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [7, 1, 0], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 0, 1], [1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [5, 1, 0], [1, 1, 2], [2, 2, 1], [1, 2, 1], [3, 2, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 1, 2], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [6, 1, 0], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [4, 0, 2], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [5, 0, 1], [1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [4, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [8, 2, 0], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [4, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [5, 0, 1], [1, 0, 2], [2, 1, 2], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [4, 2, 0], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [6, 0, 2], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 0, 1], [1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [5, 1, 0], [1, 1, 2], [2, 2, 1], [1, 2, 1], [3, 2, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 1, 2], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [7, 0, 1], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [4, 2, 0], [1, 0, 2], [2, 1, 2], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [5, 0, 1], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [4, 0, 2], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [6, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [4, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [5, 1, 0], [1, 0, 2], [2, 1, 2], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [4, 2, 0], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [10, 2, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 0, 1], [1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [5, 1, 0], [1, 1, 2], [2, 2, 1], [1, 2, 1], [3, 2, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 1, 2], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [6, 1, 0], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [4, 0, 2], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [5, 0, 1], [1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [4, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [7, 1, 2], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [4, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [5, 0, 1], [1, 0, 2], [2, 1, 2], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [4, 2, 0], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [6, 0, 2], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 0, 1], [1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [5, 1, 0], [1, 1, 2], [2, 2, 1], [1, 2, 1], [3, 2, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 1, 2], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [8, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [4, 2, 0], [1, 0, 2], [2, 1, 2], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [5, 0, 1], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [4, 0, 2], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [6, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [4, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [5, 1, 0], [1, 0, 2], [2, 1, 2], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [4, 2, 0], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [7, 1, 0], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 0, 1], [1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [5, 1, 0], [1, 1, 2], [2, 2, 1], [1, 2, 1], [3, 2, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 1, 2], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [6, 1, 0], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [4, 0, 2], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [5, 0, 1], [1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [4, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [9, 1, 0], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [4, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [5, 0, 1], [1, 0, 2], [2, 1, 2], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [4, 2, 0], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [6, 0, 2], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 0, 1], [1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [5, 1, 0], [1, 1, 2], [2, 2, 1], [1, 2, 1], [3, 2, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 1, 2], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [7, 0, 1], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [4, 2, 0], [1, 0, 2], [2, 1, 2], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [5, 0, 1], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [4, 0, 2], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [6, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [4, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [5, 1, 0], [1, 0, 2], [2, 1, 2], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [4, 2, 0], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [8, 2, 0], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 0, 1], [1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [5, 1, 0], [1, 1, 2], [2, 2, 1], [1, 2, 1], [3, 2, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 1, 2], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [6, 1, 0], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [4, 0, 2], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [5, 0, 1], [1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [4, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [7, 1, 2], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [4, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [5, 0, 1], [1, 0, 2], [2, 1, 2], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [4, 2, 0], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [6, 0, 2], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 0, 1], [1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [5, 1, 0], [1, 1, 2], [2, 2, 1], [1, 2, 1], [3, 2, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 1, 2], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [13, 0, 1], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [4, 2, 0], [1, 0, 2], [2, 1, 2], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [5, 0, 1], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [4, 0, 2], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [6, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [4, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [5, 1, 0], [1, 0, 2], [2, 1, 2], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [4, 2, 0], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [7, 1, 0], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 0, 1], [1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [5, 1, 0], [1, 1, 2], [2, 2, 1], [1, 2, 1], [3, 2, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 1, 2], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [6, 1, 0], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [4, 0, 2], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [5, 0, 1], [1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [4, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [8, 0, 2], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [4, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [5, 0, 1], [1, 0, 2], [2, 1, 2], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [4, 2, 0], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [6, 0, 2], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 0, 1], [1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [5, 1, 0], [1, 1, 2], [2, 2, 1], [1, 2, 1], [3, 2, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 1, 2], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [7, 0, 1], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [4, 2, 0], [1, 0, 2], [2, 1, 2], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [5, 0, 1], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [4, 0, 2], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [6, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [4, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [5, 1, 0], [1, 0, 2], [2, 1, 2], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [4, 2, 0], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [9, 1, 0], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 0, 1], [1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [5, 1, 0], [1, 1, 2], [2, 2, 1], [1, 2, 1], [3, 2, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 1, 2], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [6, 1, 0], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [4, 0, 2], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [5, 0, 1], [1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [4, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [7, 1, 2], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [4, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [5, 0, 1], [1, 0, 2], [2, 1, 2], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [4, 2, 0], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [6, 0, 2], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 0, 1], [1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [5, 1, 0], [1, 1, 2], [2, 2, 1], [1, 2, 1], [3, 2, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 1, 2], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [8, 2, 0], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [4, 2, 0], [1, 0, 2], [2, 1, 2], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [5, 0, 1], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [4, 0, 2], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [6, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [4, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [5, 1, 0], [1, 0, 2], [2, 1, 2], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [4, 2, 0], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [7, 1, 0], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 0, 1], [1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [5, 1, 0], [1, 1, 2], [2, 2, 1], [1, 2, 1], [3, 2, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 1, 2], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [6, 1, 0], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [4, 0, 2], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [5, 0, 1], [1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [4, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [12, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [4, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [5, 0, 1], [1, 0, 2], [2, 1, 2], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [4, 2, 0], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [6, 0, 2], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 0, 1], [1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [5, 1, 0], [1, 1, 2], [2, 2, 1], [1, 2, 1], [3, 2, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 1, 2], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [7, 0, 1], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [4, 2, 0], [1, 0, 2], [2, 1, 2], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [5, 0, 1], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [4, 0, 2], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [6, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [4, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [5, 1, 0], [1, 0, 2], [2, 1, 2], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [4, 2, 0], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [8, 0, 2], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 0, 1], [1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [5, 1, 0], [1, 1, 2], [2, 2, 1], [1, 2, 1], [3, 2, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 1, 2], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [6, 1, 0], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [4, 0, 2], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [5, 0, 1], [1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [4, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [7, 1, 2], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [4, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [5, 0, 1], [1, 0, 2], [2, 1, 2], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [4, 2, 0], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [6, 0, 2], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 0, 1], [1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [5, 1, 0], [1, 1, 2], [2, 2, 1], [1, 2, 1], [3, 2, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 1, 2], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [9, 1, 0], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [4, 2, 0], [1, 0, 2], [2, 1, 2], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [5, 0, 1], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [4, 0, 2], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [6, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [4, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [5, 1, 0], [1, 0, 2], [2, 1, 2], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [4, 2, 0], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [7, 1, 0], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 0, 1], [1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [5, 1, 0], [1, 1, 2], [2, 2, 1], [1, 2, 1], [3, 2, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 1, 2], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [6, 1, 0], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [4, 0, 2], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [5, 0, 1], [1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [4, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [8, 2, 0], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [4, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [5, 0, 1], [1, 0, 2], [2, 1, 2], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [4, 2, 0], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [6, 0, 2], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 0, 1], [1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [5, 1, 0], [1, 1, 2], [2, 2, 1], [1, 2, 1], [3, 2, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 1, 2], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [7, 0, 1], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [4, 2, 0], [1, 0, 2], [2, 1, 2], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [5, 0, 1], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [4, 0, 2], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [6, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [4, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [5, 1, 0], [1, 0, 2], [2, 1, 2], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [4, 2, 0], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [11, 1, 2], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 0, 1], [1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [5, 1, 0], [1, 1, 2], [2, 2, 1], [1, 2, 1], [3, 2, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 1, 2], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [6, 1, 0], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [4, 0, 2], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [5, 0, 1], [1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [4, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [7, 1, 2], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [4, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [5, 0, 1], [1, 0, 2], [2, 1, 2], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [4, 2, 0], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [6, 0, 2], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 0, 1], [1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [5, 1, 0], [1, 1, 2], [2, 2, 1], [1, 2, 1], [3, 2, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 1, 2], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [8, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [4, 2, 0], [1, 0, 2], [2, 1, 2], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [5, 0, 1], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [4, 0, 2], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [6, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [4, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [5, 1, 0], [1, 0, 2], [2, 1, 2], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [4, 2, 0], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [7, 1, 0], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 0, 1], [1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [5, 1, 0], [1, 1, 2], [2, 2, 1], [1, 2, 1], [3, 2, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 1, 2], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [6, 1, 0], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [4, 0, 2], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [5, 0, 1], [1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [4, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [9, 1, 0], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [4, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [5, 0, 1], [1, 0, 2], [2, 1, 2], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [4, 2, 0], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [6, 0, 2], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 0, 1], [1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [5, 1, 0], [1, 1, 2], [2, 2, 1], [1, 2, 1], [3, 2, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 1, 2], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [7, 0, 1], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [4, 2, 0], [1, 0, 2], [2, 1, 2], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [5, 0, 1], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [4, 0, 2], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [6, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [4, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [5, 1, 0], [1, 0, 2], [2, 1, 2], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [4, 2, 0], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [8, 2, 0], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 0, 1], [1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [5, 1, 0], [1, 1, 2], [2, 2, 1], [1, 2, 1], [3, 2, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 1, 2], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [6, 1, 0], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [4, 0, 2], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [5, 0, 1], [1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [4, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [7, 1, 2], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [4, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [5, 0, 1], [1, 0, 2], [2, 1, 2], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [4, 2, 0], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [6, 0, 2], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 0, 1], [1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [5, 1, 0], [1, 1, 2], [2, 2, 1], [1, 2, 1], [3, 2, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 1, 2], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [10, 2, 1], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [4, 2, 0], [1, 0, 2], [2, 1, 2], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [5, 0, 1], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [4, 0, 2], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [6, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [4, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [5, 1, 0], [1, 0, 2], [2, 1, 2], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [4, 2, 0], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [7, 1, 0], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 0, 1], [1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [5, 1, 0], [1, 1, 2], [2, 2, 1], [1, 2, 1], [3, 2, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 1, 2], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [6, 1, 0], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [4, 0, 2], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [5, 0, 1], [1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [4, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [8, 0, 2], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [4, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [5, 0, 1], [1, 0, 2], [2, 1, 2], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [4, 2, 0], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [6, 0, 2], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 0, 1], [1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [5, 1, 0], [1, 1, 2], [2, 2, 1], [1, 2, 1], [3, 2, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 1, 2], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [7, 0, 1], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [4, 2, 0], [1, 0, 2], [2, 1, 2], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [5, 0, 1], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [4, 0, 2], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [6, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [4, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [5, 1, 0], [1, 0, 2], [2, 1, 2], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [4, 2, 0], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [9, 1, 0], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 0, 1], [1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [5, 1, 0], [1, 1, 2], [2, 2, 1], [1, 2, 1], [3, 2, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 1, 2], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [6, 1, 0], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [4, 0, 2], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [5, 0, 1], [1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [4, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [7, 1, 2], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [4, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [5, 0, 1], [1, 0, 2], [2, 1, 2], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [4, 2, 0], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [6, 0, 2], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 0, 1], [1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [5, 1, 0], [1, 1, 2], [2, 2, 1], [1, 2, 1], [3, 2, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 1, 2], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [8, 2, 0], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [4, 2, 0], [1, 0, 2], [2, 1, 2], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [5, 0, 1], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [4, 0, 2], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [6, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [4, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [5, 1, 0], [1, 0, 2], [2, 1, 2], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [4, 2, 0], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [7, 1, 0], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 0, 1], [1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [5, 1, 0], [1, 1, 2], [2, 2, 1], [1, 2, 1], [3, 2, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 1, 2], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [6, 1, 0], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [4, 0, 2], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [5, 0, 1], [1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [4, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [14, 0, 2], [1, 0, 1], [2, 0, 2], [1, 1, 2], [3, 0, 1], [1, 2, 0], [2, 2, 1], [1, 0, 1], [4, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 2], [3, 1, 0], [1, 2, 1], [2, 0, 1], [1, 1, 0], [5, 0, 1], [1, 0, 2], [2, 1, 2], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [4, 2, 0], [1, 1, 2], [2, 2, 0], [1, 2, 0], [3, 2, 1], [1, 0, 1], [2, 0, 2], [1, 1, 2], [6, 0, 2], [1, 2, 0], [2, 2, 1], [1, 0, 1], [3, 1, 0], [1, 1, 2], [2, 1, 0], [1, 2, 0], [4, 0, 1], [1, 0, 2], [2, 0, 1], [1, 2, 1], [3, 0, 2], [1, 1, 0], [2, 1, 2], [1, 0, 1], [5, 1, 0], [1, 1, 2], [2, 2, 1], [1, 2, 1], [3, 2, 0], [1, 1, 2], [2, 1, 0], [1, 
+</think>
+
+None
+

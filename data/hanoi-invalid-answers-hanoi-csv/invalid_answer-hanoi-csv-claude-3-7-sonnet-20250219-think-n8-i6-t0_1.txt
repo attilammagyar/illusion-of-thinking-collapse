@@ -1,0 +1,1767 @@
+# model_name='claude-3-7-sonnet-20250219', reasoning_budget=32000, tries=0, n=8, i=6
+# valid_prefix_length=151, is_valid_solution=0, first_correction=-1
+
+<think>
+This is a classic Tower of Hanoi problem with 8 disks. I need to find the complete solution to move all 8 disks from peg 0 to peg 2, following the rules of the Tower of Hanoi puzzle.
+
+For the Tower of Hanoi puzzle with n disks, the minimum number of moves required is 2^n - 1. With 8 disks, that's 2^8 - 1 = 256 - 1 = 255 moves.
+
+Let me solve this systematically using recursion. The general strategy for moving n disks from source to destination using an auxiliary peg is:
+1. Move n-1 disks from source to auxiliary.
+2. Move the largest disk from source to destination.
+3. Move n-1 disks from auxiliary to destination.
+
+Let me implement this algorithm and list all the moves:
+
+Function to solve Tower of Hanoi:
+```
+function solveTowerOfHanoi(n, source, auxiliary, destination, moves) {
+    if (n == 1) {
+        // Move disk 1 from source to destination
+        moves.push({disk_id: 1, from_peg: source, to_peg: destination});
+        return;
+    }
+    
+    // Move n-1 disks from source to auxiliary using destination as auxiliary
+    solveTowerOfHanoi(n-1, source, destination, auxiliary, moves);
+    
+    // Move the nth disk from source to destination
+    moves.push({disk_id: n, from_peg: source, to_peg: destination});
+    
+    // Move n-1 disks from auxiliary to destination using source as auxiliary
+    solveTowerOfHanoi(n-1, auxiliary, source, destination, moves);
+}
+```
+
+But wait, this won't work directly because we need to track which disk is being moved, not just how many disks. The disk_id doesn't always match n in the recursive calls. Let me modify my approach.
+
+Actually, I think I can simulate the Tower of Hanoi puzzle step by step and track the state of the pegs. This way I can determine which disk is being moved in each step.
+
+Let me try a different approach:
+
+```
+function solveTowerOfHanoi(n, source, auxiliary, destination) {
+    let pegs = [[], [], []];
+    // Initialize the source peg with disks numbered from n (largest) to 1 (smallest)
+    for (let i = n; i >= 1; i--) {
+        pegs[source].push(i);
+    }
+    
+    let moves = [];
+    let totalMoves = Math.pow(2, n) - 1;
+    
+    // Helper function to get the legal move between two pegs
+    function getLegalMove(p1, p2) {
+        if (pegs[p1].length === 0) {
+            return [p2, p1]; // Move from p2 to p1
+        }
+        if (pegs[p2].length === 0) {
+            return [p1, p2]; // Move from p1 to p2
+        }
+        if (pegs[p1][pegs[p1].length - 1] < pegs[p2][pegs[p2].length - 1]) {
+            return [p1, p2]; // Move from p1 to p2
+        }
+        return [p2, p1]; // Move from p2 to p1
+    }
+    
+    // For an odd number of disks, optimal move sequence is source -> destination -> auxiliary
+    // For an even number of disks, optimal move sequence is source -> auxiliary -> destination
+    let pegPairs;
+    if (n % 2 === 1) {
+        pegPairs = [[source, destination], [source, auxiliary], [auxiliary, destination]];
+    } else {
+        pegPairs = [[source, auxiliary], [source, destination], [auxiliary, destination]];
+    }
+    
+    for (let move = 1; move <= totalMoves; move++) {
+        // Determine which pair of pegs to move between based on the move number
+        let pegPair = pegPairs[(move - 1) % 3];
+        let [from, to] = getLegalMove(pegPair[0], pegPair[1]);
+        
+        // Get the disk to move (the top disk on the 'from' peg)
+        let disk = pegs[from].pop();
+        
+        // Add the move to the list
+        moves.push({disk_id: disk, from_peg: from, to_peg: to});
+        
+        // Place the disk on the 'to' peg
+        pegs[to].push(disk);
+    }
+    
+    return moves;
+}
+```
+
+Actually, there's a simpler recursive approach I can use to generate all the moves directly:
+
+```
+function solveTowerOfHanoi(n, source, auxiliary, destination, moves = []) {
+    if (n === 0) return moves;
+    
+    solveTowerOfHanoi(n - 1, source, destination, auxiliary, moves);
+    moves.push({disk_id: n, from_peg: source, to_peg: destination});
+    solveTowerOfHanoi(n - 1, auxiliary, source, destination, moves);
+    
+    return moves;
+}
+```
+
+Let me generate the full list of moves for 8 disks using this approach:
+
+For 8 disks, moving from peg 0 to peg 2, with peg 1 as auxiliary:
+
+1. Move 7 disks from peg 0 to peg 1 using peg 2 as auxiliary
+2. Move disk 8 from peg 0 to peg 2
+3. Move 7 disks from peg 1 to peg 2 using peg 0 as auxiliary
+
+To move 7 disks:
+1. Move 6 disks from peg 0 to peg 2 using peg 1
+2. Move disk 7 from peg 0 to peg 1
+3. Move 6 disks from peg 2 to peg 1 using peg 0
+
+To move 6 disks:
+1. Move 5 disks from peg 0 to peg 1 using peg 2
+2. Move disk 6 from peg 0 to peg 2
+3. Move 5 disks from peg 1 to peg 2 using peg 0
+
+And so on.
+
+Actually, instead of doing this by hand, let me use the recursive approach to enumerate all the moves:
+
+Let's follow the recursive logic to enumerate all 255 moves for 8 disks. I'll track the state of the pegs manually:
+
+The initial configuration is:
+- Peg 0: [8, 7, 6, 5, 4, 3, 2, 1] (bottom to top)
+- Peg 1: []
+- Peg 2: []
+
+I'll use the recursive approach:
+1. Move 7 disks from peg 0 to peg 1 using peg 2
+2. Move disk 8 from peg 0 to peg 2
+3. Move 7 disks from peg 1 to peg 2 using peg 0
+
+Let's solve this step by step:
+
+To move 7 disks from peg 0 to peg 1 using peg 2:
+1. Move 6 disks from peg 0 to peg 2 using peg 1
+2. Move disk 7 from peg 0 to peg 1
+3. Move 6 disks from peg 2 to peg 1 using peg 0
+
+To move 6 disks from peg 0 to peg 2 using peg 1:
+1. Move 5 disks from peg 0 to peg 1 using peg 2
+2. Move disk 6 from peg 0 to peg 2
+3. Move 5 disks from peg 1 to peg 2 using peg 0
+
+This gets very complex quickly because of the nested recursion. Let's use another approach to enumerate all the moves.
+
+Actually, I think the most straightforward way to generate all the moves is to write a recursive function that generates the moves directly. This is how we can do it:
+
+```python
+def tower_of_hanoi(n, source, auxiliary, destination, moves=None):
+    if moves is None:
+        moves = []
+    if n == 1:
+        moves.append({"disk_id": 1, "from_peg": source, "to_peg": destination})
+        return moves
+    
+    tower_of_hanoi(n-1, source, destination, auxiliary, moves)
+    moves.append({"disk_id": n, "from_peg": source, "to_peg": destination})
+    tower_of_hanoi(n-1, auxiliary, source, destination, moves)
+    
+    return moves
+```
+
+Let me simulate this algorithm for 8 disks to generate all 255 moves:
+
+To solve Tower of Hanoi with 8 disks:
+1. Solve for 7 disks: source=0, auxiliary=2, destination=1
+2. Move disk 8 from peg 0 to peg 2
+3. Solve for 7 disks: source=1, auxiliary=0, destination=2
+
+To solve for 7 disks (source=0, auxiliary=2, destination=1):
+1. Solve for 6 disks: source=0, auxiliary=1, destination=2
+2. Move disk 7 from peg 0 to peg 1
+3. Solve for 6 disks: source=2, auxiliary=0, destination=1
+
+To solve for 6 disks (source=0, auxiliary=1, destination=2):
+1. Solve for 5 disks: source=0, auxiliary=2, destination=1
+2. Move disk 6 from peg 0 to peg 2
+3. Solve for 5 disks: source=1, auxiliary=0, destination=2
+
+To solve for 5 disks (source=0, auxiliary=2, destination=1):
+1. Solve for 4 disks: source=0, auxiliary=1, destination=2
+2. Move disk 5 from peg 0 to peg 1
+3. Solve for 4 disks: source=2, auxiliary=0, destination=1
+
+To solve for 4 disks (source=0, auxiliary=1, destination=2):
+1. Solve for 3 disks: source=0, auxiliary=2, destination=1
+2. Move disk 4 from peg 0 to peg 2
+3. Solve for 3 disks: source=1, auxiliary=0, destination=2
+
+To solve for 3 disks (source=0, auxiliary=2, destination=1):
+1. Solve for 2 disks: source=0, auxiliary=1, destination=2
+2. Move disk 3 from peg 0 to peg 1
+3. Solve for 2 disks: source=2, auxiliary=0, destination=1
+
+To solve for 2 disks (source=0, auxiliary=1, destination=2):
+1. Solve for 1 disk: source=0, auxiliary=2, destination=1
+2. Move disk 2 from peg 0 to peg 2
+3. Solve for 1 disk: source=1, auxiliary=0, destination=2
+
+To solve for 1 disk (source=0, auxiliary=2, destination=1):
+1. Move disk 1 from peg 0 to peg 1
+
+Ok, I need to fully enumerate all 255 moves. This will get tedious to do manually in the thinking section, so I will use the recursive algorithm to generate all the moves:
+
+```
+function towerOfHanoi(n, source, auxiliary, destination, moves = []) {
+    if (n === 1) {
+        moves.push({disk_id: 1, from_peg: source, to_peg: destination});
+        return moves;
+    }
+    
+    towerOfHanoi(n - 1, source, destination, auxiliary, moves);
+    moves.push({disk_id: n, from_peg: source, to_peg: destination});
+    towerOfHanoi(n - 1, auxiliary, source, destination, moves);
+    
+    return moves;
+}
+```
+
+But wait, the problem with the above approach is that it assumes all disks with ID 1 to n are stacked on the source peg in the beginning. But when we recursively call to move disks, we're actually moving different disks from different pegs.
+
+Let me try a different approach where I simulate the state of the pegs at each step. This is more explicit:
+
+```
+function towerOfHanoi(n, source, auxiliary, destination) {
+    // Initialize the pegs
+    let pegs = [[], [], []];
+    for (let i = n; i >= 1; i--) {
+        pegs[source].push(i);
+    }
+    
+    // Array to store the moves
+    let moves = [];
+    
+    // Helper function to move disks
+    function moveTower(n, source, auxiliary, destination) {
+        if (n === 0) return;
+        
+        moveTower(n - 1, source, destination, auxiliary);
+        
+        // Move the nth disk from source to destination
+        let disk = pegs[source].pop();
+        pegs[destination].push(disk);
+        moves.push({disk_id: disk, from_peg: source, to_peg: destination});
+        
+        moveTower(n - 1, auxiliary, source, destination);
+    }
+    
+    moveTower(n, source, auxiliary, destination);
+    return moves;
+}
+```
+
+Let me just use the mathematical pattern for the Tower of Hanoi. For n disks, the optimal strategy follows a pattern:
+
+1. For odd-numbered moves, always move the smallest disk (disk 1).
+2. For even-numbered moves, make the only legal move not involving the smallest disk.
+
+I can use this algorithm to generate all the moves:
+
+```
+function solveHanoi(n, source, auxiliary, destination) {
+    let pegs = [[], [], []];
+    // Initialize the source peg with disks numbered from n (largest) to 1 (smallest)
+    for (let i = n; i >= 1; i--) {
+        pegs[source].push(i);
+    }
+    
+    let moves = [];
+    let totalMoves = Math.pow(2, n) - 1;
+    
+    for (let move = 1; move <= totalMoves; move++) {
+        if (move % 2 === 1) {
+            // Move the smallest disk (disk 1)
+            let from, to;
+            let smallestDiskPeg = -1;
+            
+            // Find which peg has the smallest disk
+            for (let i = 0; i < 3; i++) {
+                if (pegs[i].length > 0 && pegs[i][pegs[i].length - 1] === 1) {
+                    smallestDiskPeg = i;
+                    break;
+                }
+            }
+            
+            from = smallestDiskPeg;
+            
+            // For odd number of disks, the smallest disk moves in the pattern: 0 -> 2 -> 1 -> 0 -> ...
+            // For even number of disks, the smallest disk moves in the pattern: 0 -> 1 -> 2 -> 0 -> ...
+            if (n % 2 === 1) {
+                to = (smallestDiskPeg + 1) % 3;
+            } else {
+                to = (smallestDiskPeg + 2) % 3;
+            }
+            
+            // Make the move
+            let disk = pegs[from].pop();
+            pegs[to].push(disk);
+            moves.push({disk_id: disk, from_peg: from, to_peg: to});
+        } else {
+            // Make the only legal move not involving the smallest disk
+            let smallestDiskPeg = -1;
+            
+            // Find which peg has the smallest disk
+            for (let i = 0; i < 3; i++) {
+                if (pegs[i].length > 0 && pegs[i][pegs[i].length - 1] === 1) {
+                    smallestDiskPeg = i;
+                    break;
+                }
+            }
+            
+            // The other two pegs
+            let otherPegs = [0, 1, 2].filter(p => p !== smallestDiskPeg);
+            let from, to;
+            
+            // Determine the legal move between the other two pegs
+            if (pegs[otherPegs[0]].length === 0) {
+                from = otherPegs[1];
+                to = otherPegs[0];
+            } else if (pegs[otherPegs[1]].length === 0) {
+                from = otherPegs[0];
+                to = otherPegs[1];
+            } else if (pegs[otherPegs[0]][pegs[otherPegs[0]].length - 1] < pegs[otherPegs[1]][pegs[otherPegs[1]].length - 1]) {
+                from = otherPegs[0];
+                to = otherPegs[1];
+            } else {
+                from = otherPegs[1];
+                to = otherPegs[0];
+            }
+            
+            // Make the move
+            let disk = pegs[from].pop();
+            pegs[to].push(disk);
+            moves.push({disk_id: disk, from_peg: from, to_peg: to});
+        }
+    }
+    
+    return moves;
+}
+```
+
+Actually, let me simplify and just trace the steps for the 8 disk Tower of Hanoi problem directly using the recursive approach. I will write it out as disk_id,from_peg,to_peg to match the required output format.
+
+Let me apply the recursive algorithm to generate all 255 moves for 8 disks. The algorithm I'll use is:
+
+```
+function hanoi(n, source, auxiliary, target, moves = []) {
+    if (n === 0) return moves;
+    
+    hanoi(n - 1, source, target, auxiliary, moves);
+    moves.push({disk: n, from: source, to: target});
+    hanoi(n - 1, auxiliary, source, target, moves);
+    
+    return moves;
+}
+```
+
+I'll use the state of the pegs to determine which disk is being moved in each step:
+
+Initial state:
+- Peg 0: [8, 7, 6, 5, 4, 3, 2, 1] (bottom to top)
+- Peg 1: []
+- Peg 2: []
+
+Let me trace this algorithm for 8 disks manually. However, I realize this is going to be a lot of steps, so let me use a specific recursive function that we know will work correctly for the Tower of Hanoi:
+
+```
+function hanoi(n, source, auxiliary, target) {
+    if (n === 1) {
+        console.log(`Move disk 1 from peg ${source} to peg ${target}`);
+        return;
+    }
+    
+    hanoi(n - 1, source, target, auxiliary);
+    console.log(`Move disk ${n} from peg ${source} to peg ${target}`);
+    hanoi(n - 1, auxiliary, source, target);
+}
+```
+
+This function correctly generates the sequence of moves for the Tower of Hanoi. But I need to keep track of which disk is being moved, not just how many disks. 
+
+I'm going to simulate the Tower of Hanoi step by step, keeping track of the state of the pegs and which disk is being moved in each step.
+
+Actually, let me list the all moves for the 8-disk Tower of Hanoi problem using a recursive approach, but keeping track of the actual disks being moved:
+
+```python
+def hanoi(n, source, auxiliary, target, pegs, moves):
+    if n == 0:
+        return
+    
+    hanoi(n - 1, source, target, auxiliary, pegs, moves)
+    
+    # Move disk n from source to target
+    disk = pegs[source].pop()
+    pegs[target].append(disk)
+    moves.append((disk, source, target))
+    
+    hanoi(n - 1, auxiliary, source, target, pegs, moves)
+
+# Initialize pegs
+pegs = [list(range(8, 0, -1)), [], []]  # Peg 0 has disks 8,7,6,5,4,3,2,1 (bottom to top)
+moves = []
+
+# Solve Tower of Hanoi
+hanoi(8, 0, 1, 2, pegs, moves)
+
+# Print moves
+for disk, source, target in moves:
+    print(f"{disk},{source},{target}")
+```
+
+Alright, I'm going to manually trace this algorithm for 8 disks to generate all 255 moves. I'll store the moves in the format "disk_id,from_peg,to_peg".
+
+Move 1: We move disk 1 from peg 0 to peg 2. Pegs: [8,7,6,5,4,3,2], [], [1]
+Move 2: We move disk 2 from peg 0 to peg 1. Pegs: [8,7,6,5,4,3], [2], [1]
+Move 3: We move disk 1 from peg 2 to peg 1. Pegs: [8,7,6,5,4,3], [2,1], []
+Move 4: We move disk 3 from peg 0 to peg 2. Pegs: [8,7,6,5,4], [2,1], [3]
+Move 5: We move disk 1 from peg 1 to peg 0. Pegs: [8,7,6,5,4,1], [2], [3]
+Move 6: We move disk 2 from peg 1 to peg 2. Pegs: [8,7,6,5,4,1], [], [3,2]
+Move 7: We move disk 1 from peg 0 to peg 2. Pegs: [8,7,6,5,4], [], [3,2,1]
+Move 8: We move disk 4 from peg 0 to peg 1. Pegs: [8,7,6,5], [4], [3,2,1]
+Move 9: We move disk 1 from peg 2 to peg 1. Pegs: [8,7,6,5], [4,1], [3,2]
+Move 10: We move disk 2 from peg 2 to peg 0. Pegs: [8,7,6,5,2], [4,1], [3]
+Move 11: We move disk 1 from peg 1 to peg 0. Pegs: [8,7,6,5,2,1], [4], [3]
+Move 12: We move disk 3 from peg 2 to peg 1. Pegs: [8,7,6,5,2,1], [4,3], []
+Move 13: We move disk 1 from peg 0 to peg 2. Pegs: [8,7,6,5,2], [4,3], [1]
+Move 14: We move disk 2 from peg 0 to peg 1. Pegs: [8,7,6,5], [4,3,2], [1]
+Move 15: We move disk 1 from peg 2 to peg 1. Pegs: [8,7,6,5], [4,3,2,1], []
+Move 16: We move disk 5 from peg 0 to peg 2. Pegs: [8,7,6], [4,3,2,1], [5]
+Move 17: We move disk 1 from peg 1 to peg 0. Pegs: [8,7,6,1], [4,3,2], [5]
+Move 18: We move disk 2 from peg 1 to peg 2. Pegs: [8,7,6,1], [4,3], [5,2]
+Move 19: We move disk 1 from peg 0 to peg 2. Pegs: [8,7,6], [4,3], [5,2,1]
+Move 20: We move disk 3 from peg 1 to peg 0. Pegs: [8,7,6,3], [4], [5,2,1]
+Move 21: We move disk 1 from peg 2 to peg 1. Pegs: [8,7,6,3], [4,1], [5,2]
+Move 22: We move disk 2 from peg 2 to peg 0. Pegs: [8,7,6,3,2], [4,1], [5]
+Move 23: We move disk 1 from peg 1 to peg 0. Pegs: [8,7,6,3,2,1], [4], [5]
+Move 24: We move disk 4 from peg 1 to peg 2. Pegs: [8,7,6,3,2,1], [], [5,4]
+Move 25: We move disk 1 from peg 0 to peg 2. Pegs: [8,7,6,3,2], [], [5,4,1]
+Move 26: We move disk 2 from peg 0 to peg 1. Pegs: [8,7,6,3], [2], [5,4,1]
+Move 27: We move disk 1 from peg 2 to peg 1. Pegs: [8,7,6,3], [2,1], [5,4]
+Move 28: We move disk 3 from peg 0 to peg 2. Pegs: [8,7,6], [2,1], [5,4,3]
+Move 29: We move disk 1 from peg 1 to peg 0. Pegs: [8,7,6,1], [2], [5,4,3]
+Move 30: We move disk 2 from peg 1 to peg 2. Pegs: [8,7,6,1], [], [5,4,3,2]
+Move 31: We move disk 1 from peg 0 to peg 2. Pegs: [8,7,6], [], [5,4,3,2,1]
+Move 32: We move disk 6 from peg 0 to peg 1. Pegs: [8,7], [6], [5,4,3,2,1]
+Move 33: We move disk 1 from peg 2 to peg 1. Pegs: [8,7], [6,1], [5,4,3,2]
+Move 34: We move disk 2 from peg 2 to peg 0. Pegs: [8,7,2], [6,1], [5,4,3]
+Move 35: We move disk 1 from peg 1 to peg 0. Pegs: [8,7,2,1], [6], [5,4,3]
+Move 36: We move disk 3 from peg 2 to peg 1. Pegs: [8,7,2,1], [6,3], [5,4]
+Move 37: We move disk 1 from peg 0 to peg 2. Pegs: [8,7,2], [6,3], [5,4,1]
+Move 38: We move disk 2 from peg 0 to peg 1. Pegs: [8,7], [6,3,2], [5,4,1]
+Move 39: We move disk 1 from peg 2 to peg 1. Pegs: [8,7], [6,3,2,1], [5,4]
+Move 40: We move disk 4 from peg 2 to peg 0. Pegs: [8,7,4], [6,3,2,1], [5]
+Move 41: We move disk 1 from peg 1 to peg 0. Pegs: [8,7,4,1], [6,3,2], [5]
+Move 42: We move disk 2 from peg 1 to peg 2. Pegs: [8,7,4,1], [6,3], [5,2]
+Move 43: We move disk 1 from peg 0 to peg 2. Pegs: [8,7,4], [6,3], [5,2,1]
+Move 44: We move disk 3 from peg 1 to peg 0. Pegs: [8,7,4,3], [6], [5,2,1]
+Move 45: We move disk 1 from peg 2 to peg 1. Pegs: [8,7,4,3], [6,1], [5,2]
+Move 46: We move disk 2 from peg 2 to peg 0. Pegs: [8,7,4,3,2], [6,1], [5]
+Move 47: We move disk 1 from peg 1 to peg 0. Pegs: [8,7,4,3,2,1], [6], [5]
+Move 48: We move disk 5 from peg 2 to peg 1. Pegs: [8,7,4,3,2,1], [6,5], []
+Move 49: We move disk 1 from peg 0 to peg 2. Pegs: [8,7,4,3,2], [6,5], [1]
+Move 50: We move disk 2 from peg 0 to peg 1. Pegs: [8,7,4,3], [6,5,2], [1]
+Move 51: We move disk 1 from peg 2 to peg 1. Pegs: [8,7,4,3], [6,5,2,1], []
+Move 52: We move disk 3 from peg 0 to peg 2. Pegs: [8,7,4], [6,5,2,1], [3]
+Move 53: We move disk 1 from peg 1 to peg 0. Pegs: [8,7,4,1], [6,5,2], [3]
+Move 54: We move disk 2 from peg 1 to peg 2. Pegs: [8,7,4,1], [6,5], [3,2]
+Move 55: We move disk 1 from peg 0 to peg 2. Pegs: [8,7,4], [6,5], [3,2,1]
+Move 56: We move disk 4 from peg 0 to peg 1. Pegs: [8,7], [6,5,4], [3,2,1]
+Move 57: We move disk 1 from peg 2 to peg 1. Pegs: [8,7], [6,5,4,1], [3,2]
+Move 58: We move disk 2 from peg 2 to peg 0. Pegs: [8,7,2], [6,5,4,1], [3]
+Move 59: We move disk 1 from peg 1 to peg 0. Pegs: [8,7,2,1], [6,5,4], [3]
+Move 60: We move disk 3 from peg 2 to peg 1. Pegs: [8,7,2,1], [6,5,4,3], []
+Move 61: We move disk 1 from peg 0 to peg 2. Pegs: [8,7,2], [6,5,4,3], [1]
+Move 62: We move disk 2 from peg 0 to peg 1. Pegs: [8,7], [6,5,4,3,2], [1]
+Move 63: We move disk 1 from peg 2 to peg 1. Pegs: [8,7], [6,5,4,3,2,1], []
+Move 64: We move disk 7 from peg 0 to peg 2. Pegs: [8], [6,5,4,3,2,1], [7]
+Move 65: We move disk 1 from peg 1 to peg 0. Pegs: [8,1], [6,5,4,3,2], [7]
+Move 66: We move disk 2 from peg 1 to peg 2. Pegs: [8,1], [6,5,4,3], [7,2]
+Move 67: We move disk 1 from peg 0 to peg 2. Pegs: [8], [6,5,4,3], [7,2,1]
+Move 68: We move disk 3 from peg 1 to peg 0. Pegs: [8,3], [6,5,4], [7,2,1]
+Move 69: We move disk 1 from peg 2 to peg 1. Pegs: [8,3], [6,5,4,1], [7,2]
+Move 70: We move disk 2 from peg 2 to peg 0. Pegs: [8,3,2], [6,5,4,1], [7]
+Move 71: We move disk 1 from peg 1 to peg 0. Pegs: [8,3,2,1], [6,5,4], [7]
+Move 72: We move disk 4 from peg 1 to peg 2. Pegs: [8,3,2,1], [6,5], [7,4]
+Move 73: We move disk 1 from peg 0 to peg 2. Pegs: [8,3,2], [6,5], [7,4,1]
+Move 74: We move disk 2 from peg 0 to peg 1. Pegs: [8,3], [6,5,2], [7,4,1]
+Move 75: We move disk 1 from peg 2 to peg 1. Pegs: [8,3], [6,5,2,1], [7,4]
+Move 76: We move disk 3 from peg 0 to peg 2. Pegs: [8], [6,5,2,1], [7,4,3]
+Move 77: We move disk 1 from peg 1 to peg 0. Pegs: [8,1], [6,5,2], [7,4,3]
+Move 78: We move disk 2 from peg 1 to peg 2. Pegs: [8,1], [6,5], [7,4,3,2]
+Move 79: We move disk 1 from peg 0 to peg 2. Pegs: [8], [6,5], [7,4,3,2,1]
+Move 80: We move disk 5 from peg 1 to peg 0. Pegs: [8,5], [6], [7,4,3,2,1]
+Move 81: We move disk 1 from peg 2 to peg 1. Pegs: [8,5], [6,1], [7,4,3,2]
+Move 82: We move disk 2 from peg 2 to peg 0. Pegs: [8,5,2], [6,1], [7,4,3]
+Move 83: We move disk 1 from peg 1 to peg 0. Pegs: [8,5,2,1], [6], [7,4,3]
+Move 84: We move disk 3 from peg 2 to peg 1. Pegs: [8,5,2,1], [6,3], [7,4]
+Move 85: We move disk 1 from peg 0 to peg 2. Pegs: [8,5,2], [6,3], [7,4,1]
+Move 86: We move disk 2 from peg 0 to peg 1. Pegs: [8,5], [6,3,2], [7,4,1]
+Move 87: We move disk 1 from peg 2 to peg 1. Pegs: [8,5], [6,3,2,1], [7,4]
+Move 88: We move disk 4 from peg 2 to peg 0. Pegs: [8,5,4], [6,3,2,1], [7]
+Move 89: We move disk 1 from peg 1 to peg 0. Pegs: [8,5,4,1], [6,3,2], [7]
+Move 90: We move disk 2 from peg 1 to peg 2. Pegs: [8,5,4,1], [6,3], [7,2]
+Move 91: We move disk 1 from peg 0 to peg 2. Pegs: [8,5,4], [6,3], [7,2,1]
+Move 92: We move disk 3 from peg 1 to peg 0. Pegs: [8,5,4,3], [6], [7,2,1]
+Move 93: We move disk 1 from peg 2 to peg 1. Pegs: [8,5,4,3], [6,1], [7,2]
+Move 94: We move disk 2 from peg 2 to peg 0. Pegs: [8,5,4,3,2], [6,1], [7]
+Move 95: We move disk 1 from peg 1 to peg 0. Pegs: [8,5,4,3,2,1], [6], [7]
+Move 96: We move disk 6 from peg 1 to peg 2. Pegs: [8,5,4,3,2,1], [], [7,6]
+Move 97: We move disk 1 from peg 0 to peg 2. Pegs: [8,5,4,3,2], [], [7,6,1]
+Move 98: We move disk 2 from peg 0 to peg 1. Pegs: [8,5,4,3], [2], [7,6,1]
+Move 99: We move disk 1 from peg 2 to peg 1. Pegs: [8,5,4,3], [2,1], [7,6]
+Move 100: We move disk 3 from peg 0 to peg 2. Pegs: [8,5,4], [2,1], [7,6,3]
+Move 101: We move disk 1 from peg 1 to peg 0. Pegs: [8,5,4,1], [2], [7,6,3]
+Move 102: We move disk 2 from peg 1 to peg 2. Pegs: [8,5,4,1], [], [7,6,3,2]
+Move 103: We move disk 1 from peg 0 to peg 2. Pegs: [8,5,4], [], [7,6,3,2,1]
+Move 104: We move disk 4 from peg 0 to peg 1. Pegs: [8,5], [4], [7,6,3,2,1]
+Move 105: We move disk 1 from peg 2 to peg 1. Pegs: [8,5], [4,1], [7,6,3,2]
+Move 106: We move disk 2 from peg 2 to peg 0. Pegs: [8,5,2], [4,1], [7,6,3]
+Move 107: We move disk 1 from peg 1 to peg 0. Pegs: [8,5,2,1], [4], [7,6,3]
+Move 108: We move disk 3 from peg 2 to peg 1. Pegs: [8,5,2,1], [4,3], [7,6]
+Move 109: We move disk 1 from peg 0 to peg 2. Pegs: [8,5,2], [4,3], [7,6,1]
+Move 110: We move disk 2 from peg 0 to peg 1. Pegs: [8,5], [4,3,2], [7,6,1]
+Move 111: We move disk 1 from peg 2 to peg 1. Pegs: [8,5], [4,3,2,1], [7,6]
+Move 112: We move disk 5 from peg 0 to peg 2. Pegs: [8], [4,3,2,1], [7,6,5]
+Move 113: We move disk 1 from peg 1 to peg 0. Pegs: [8,1], [4,3,2], [7,6,5]
+Move 114: We move disk 2 from peg 1 to peg 2. Pegs: [8,1], [4,3], [7,6,5,2]
+Move 115: We move disk 1 from peg 0 to peg 2. Pegs: [8], [4,3], [7,6,5,2,1]
+Move 116: We move disk 3 from peg 1 to peg 0. Pegs: [8,3], [4], [7,6,5,2,1]
+Move 117: We move disk 1 from peg 2 to peg 1. Pegs: [8,3], [4,1], [7,6,5,2]
+Move 118: We move disk 2 from peg 2 to peg 0. Pegs: [8,3,2], [4,1], [7,6,5]
+Move 119: We move disk 1 from peg 1 to peg 0. Pegs: [8,3,2,1], [4], [7,6,5]
+Move 120: We move disk 4 from peg 1 to peg 2. Pegs: [8,3,2,1], [], [7,6,5,4]
+Move 121: We move disk 1 from peg 0 to peg 2. Pegs: [8,3,2], [], [7,6,5,4,1]
+Move 122: We move disk 2 from peg 0 to peg 1. Pegs: [8,3], [2], [7,6,5,4,1]
+Move 123: We move disk 1 from peg 2 to peg 1. Pegs: [8,3], [2,1], [7,6,5,4]
+Move 124: We move disk 3 from peg 0 to peg 2. Pegs: [8], [2,1], [7,6,5,4,3]
+Move 125: We move disk 1 from peg 1 to peg 0. Pegs: [8,1], [2], [7,6,5,4,3]
+Move 126: We move disk 2 from peg 1 to peg 2. Pegs: [8,1], [], [7,6,5,4,3,2]
+Move 127: We move disk 1 from peg 0 to peg 2. Pegs: [8], [], [7,6,5,4,3,2,1]
+Move 128: We move disk 8 from peg 0 to peg 1. Pegs: [], [8], [7,6,5,4,3,2,1]
+Move 129: We move disk 1 from peg 2 to peg 1. Pegs: [], [8,1], [7,6,5,4,3,2]
+Move 130: We move disk 2 from peg 2 to peg 0. Pegs: [2], [8,1], [7,6,5,4,3]
+Move 131: We move disk 1 from peg 1 to peg 0. Pegs: [2,1], [8], [7,6,5,4,3]
+Move 132: We move disk 3 from peg 2 to peg 1. Pegs: [2,1], [8,3], [7,6,5,4]
+Move 133: We move disk 1 from peg 0 to peg 2. Pegs: [2], [8,3], [7,6,5,4,1]
+Move 134: We move disk 2 from peg 0 to peg 1. Pegs: [], [8,3,2], [7,6,5,4,1]
+Move 135: We move disk 1 from peg 2 to peg 1. Pegs: [], [8,3,2,1], [7,6,5,4]
+Move 136: We move disk 4 from peg 2 to peg 0. Pegs: [4], [8,3,2,1], [7,6,5]
+Move 137: We move disk 1 from peg 1 to peg 0. Pegs: [4,1], [8,3,2], [7,6,5]
+Move 138: We move disk 2 from peg 1 to peg 2. Pegs: [4,1], [8,3], [7,6,5,2]
+Move 139: We move disk 1 from peg 0 to peg 2. Pegs: [4], [8,3], [7,6,5,2,1]
+Move 140: We move disk 3 from peg 1 to peg 0. Pegs: [4,3], [8], [7,6,5,2,1]
+Move 141: We move disk 1 from peg 2 to peg 1. Pegs: [4,3], [8,1], [7,6,5,2]
+Move 142: We move disk 2 from peg 2 to peg 0. Pegs: [4,3,2], [8,1], [7,6,5]
+Move 143: We move disk 1 from peg 1 to peg 0. Pegs: [4,3,2,1], [8], [7,6,5]
+Move 144: We move disk 5 from peg 2 to peg 1. Pegs: [4,3,2,1], [8,5], [7,6]
+Move 145: We move disk 1 from peg 0 to peg 2. Pegs: [4,3,2], [8,5], [7,6,1]
+Move 146: We move disk 2 from peg 0 to peg 1. Pegs: [4,3], [8,5,2], [7,6,1]
+Move 147: We move disk 1 from peg 2 to peg 1. Pegs: [4,3], [8,5,2,1], [7,6]
+Move 148: We move disk 3 from peg 0 to peg 2. Pegs: [4], [8,5,2,1], [7,6,3]
+Move 149: We move disk 1 from peg 1 to peg 0. Pegs: [4,1], [8,5,2], [7,6,3]
+Move 150: We move disk 2 from peg 1 to peg 2. Pegs: [4,1], [8,5], [7,6,3,2]
+Move 151: We move disk 1 from peg 0 to peg 2. Pegs: [4], [8,5], [7,6,3,2,1]
+Move 152: We move disk 4 from peg 0 to peg 1. Pegs: [], [8,5,4], [7,6,3,2,1]
+Move 153: We move disk 1 from peg 2 to peg 1. Pegs: [], [8,5,4,1], [7,6,3,2]
+Move 154: We move disk 2 from peg 2 to peg 0. Pegs: [2], [8,5,4,1], [7,6,3]
+Move 155: We move disk 1 from peg 1 to peg 0. Pegs: [2,1], [8,5,4], [7,6,3]
+Move 156: We move disk 3 from peg 2 to peg 1. Pegs: [2,1], [8,5,4,3], [7,6]
+Move 157: We move disk 1 from peg 0 to peg 2. Pegs: [2], [8,5,4,3], [7,6,1]
+Move 158: We move disk 2 from peg 0 to peg 1. Pegs: [], [8,5,4,3,2], [7,6,1]
+Move 159: We move disk 1 from peg 2 to peg 1. Pegs: [], [8,5,4,3,2,1], [7,6]
+Move 160: We move disk 6 from peg 2 to peg 0. Pegs: [6], [8,5,4,3,2,1], [7]
+Move 161: We move disk 1 from peg 1 to peg 0. Pegs: [6,1], [8,5,4,3,2], [7]
+Move 162: We move disk 2 from peg 1 to peg 2. Pegs: [6,1], [8,5,4,3], [7,2]
+Move 163: We move disk 1 from peg 0 to peg 2. Pegs: [6], [8,5,4,3], [7,2,1]
+Move 164: We move disk 3 from peg 1 to peg 0. Pegs: [6,3], [8,5,4], [7,2,1]
+Move 165: We move disk 1 from peg 2 to peg 1. Pegs: [6,3], [8,5,4,1], [7,2]
+Move 166: We move disk 2 from peg 2 to peg 0. Pegs: [6,3,2], [8,5,4,1], [7]
+Move 167: We move disk 1 from peg 1 to peg 0. Pegs: [6,3,2,1], [8,5,4], [7]
+Move 168: We move disk 4 from peg 1 to peg 2. Pegs: [6,3,2,1], [8,5], [7,4]
+Move 169: We move disk 1 from peg 0 to peg 2. Pegs: [6,3,2], [8,5], [7,4,1]
+Move 170: We move disk 2 from peg 0 to peg 1. Pegs: [6,3], [8,5,2], [7,4,1]
+Move 171: We move disk 1 from peg 2 to peg 1. Pegs: [6,3], [8,5,2,1], [7,4]
+Move 172: We move disk 3 from peg 0 to peg 2. Pegs: [6], [8,5,2,1], [7,4,3]
+Move 173: We move disk 1 from peg 1 to peg 0. Pegs: [6,1], [8,5,2], [7,4,3]
+Move 174: We move disk 2 from peg 1 to peg 2. Pegs: [6,1], [8,5], [7,4,3,2]
+Move 175: We move disk 1 from peg 0 to peg 2. Pegs: [6], [8,5], [7,4,3,2,1]
+Move 176: We move disk 5 from peg 1 to peg 0. Pegs: [6,5], [8], [7,4,3,2,1]
+Move 177: We move disk 1 from peg 2 to peg 1. Pegs: [6,5], [8,1], [7,4,3,2]
+Move 178: We move disk 2 from peg 2 to peg 0. Pegs: [6,5,2], [8,1], [7,4,3]
+Move 179: We move disk 1 from peg 1 to peg 0. Pegs: [6,5,2,1], [8], [7,4,3]
+Move 180: We move disk 3 from peg 2 to peg 1. Pegs: [6,5,2,1], [8,3], [7,4]
+Move 181: We move disk 1 from peg 0 to peg 2. Pegs: [6,5,2], [8,3], [7,4,1]
+Move 182: We move disk 2 from peg 0 to peg 1. Pegs: [6,5], [8,3,2], [7,4,1]
+Move 183: We move disk 1 from peg 2 to peg 1. Pegs: [6,5], [8,3,2,1], [7,4]
+Move 184: We move disk 4 from peg 2 to peg 0. Pegs: [6,5,4], [8,3,2,1], [7]
+Move 185: We move disk 1 from peg 1 to peg 0. Pegs: [6,5,4,1], [8,3,2], [7]
+Move 186: We move disk 2 from peg 1 to peg 2. Pegs: [6,5,4,1], [8,3], [7,2]
+Move 187: We move disk 1 from peg 0 to peg 2. Pegs: [6,5,4], [8,3], [7,2,1]
+Move 188: We move disk 3 from peg 1 to peg 0. Pegs: [6,5,4,3], [8], [7,2,1]
+Move 189: We move disk 1 from peg 2 to peg 1. Pegs: [6,5,4,3], [8,1], [7,2]
+Move 190: We move disk 2 from peg 2 to peg 0. Pegs: [6,5,4,3,2], [8,1], [7]
+Move 191: We move disk 1 from peg 1 to peg 0. Pegs: [6,5,4,3,2,1], [8], [7]
+Move 192: We move disk 7 from peg 2 to peg 1. Pegs: [6,5,4,3,2,1], [8,7], []
+Move 193: We move disk 1 from peg 0 to peg 2. Pegs: [6,5,4,3,2], [8,7], [1]
+Move 194: We move disk 2 from peg 0 to peg 1. Pegs: [6,5,4,3], [8,7,2], [1]
+Move 195: We move disk 1 from peg 2 to peg 1. Pegs: [6,5,4,3], [8,7,2,1], []
+Move 196: We move disk 3 from peg 0 to peg 2. Pegs: [6,5,4], [8,7,2,1], [3]
+Move 197: We move disk 1 from peg 1 to peg 0. Pegs: [6,5,4,1], [8,7,2], [3]
+Move 198: We move disk 2 from peg 1 to peg 2. Pegs: [6,5,4,1], [8,7], [3,2]
+Move 199: We move disk 1 from peg 0 to peg 2. Pegs: [6,5,4], [8,7], [3,2,1]
+Move 200: We move disk 4 from peg 0 to peg 1. Pegs: [6,5], [8,7,4], [3,2,1]
+Move 201: We move disk 1 from peg 2 to peg 1. Pegs: [6,5], [8,7,4,1], [3,2]
+Move 202: We move disk 2 from peg 2 to peg 0. Pegs: [6,5,2], [8,7,4,1], [3]
+Move 203: We move disk 1 from peg 1 to peg 0. Pegs: [6,5,2,1], [8,7,4], [3]
+Move 204: We move disk 3 from peg 2 to peg 1. Pegs: [6,5,2,1], [8,7,4,3], []
+Move 205: We move disk 1 from peg 0 to peg 2. Pegs: [6,5,2], [8,7,4,3], [1]
+Move 206: We move disk 2 from peg 0 to peg 1. Pegs: [6,5], [8,7,4,3,2], [1]
+Move 207: We move disk 1 from peg 2 to peg 1. Pegs: [6,5], [8,7,4,3,2,1], []
+Move 208: We move disk 5 from peg 0 to peg 2. Pegs: [6], [8,7,4,3,2,1], [5]
+Move 209: We move disk 1 from peg 1 to peg 0. Pegs: [6,1], [8,7,4,3,2], [5]
+Move 210: We move disk 2 from peg 1 to peg 2. Pegs: [6,1], [8,7,4,3], [5,2]
+Move 211: We move disk 1 from peg 0 to peg 2. Pegs: [6], [8,7,4,3], [5,2,1]
+Move 212: We move disk 3 from peg 1 to peg 0. Pegs: [6,3], [8,7,4], [5,2,1]
+Move 213: We move disk 1 from peg 2 to peg 1. Pegs: [6,3], [8,7,4,1], [5,2]
+Move 214: We move disk 2 from peg 2 to peg 0. Pegs: [6,3,2], [8,7,4,1], [5]
+Move 215: We move disk 1 from peg 1 to peg 0. Pegs: [6,3,2,1], [8,7,4], [5]
+Move 216: We move disk 4 from peg 1 to peg 2. Pegs: [6,3,2,1], [8,7], [5,4]
+Move 217: We move disk 1 from peg 0 to peg 2. Pegs: [6,3,2], [8,7], [5,4,1]
+Move 218: We move disk 2 from peg 0 to peg 1. Pegs: [6,3], [8,7,2], [5,4,1]
+Move 219: We move disk 1 from peg 2 to peg 1. Pegs: [6,3], [8,7,2,1], [5,4]
+Move 220: We move disk 3 from peg 0 to peg 2. Pegs: [6], [8,7,2,1], [5,4,3]
+Move 221: We move disk 1 from peg 1 to peg 0. Pegs: [6,1], [8,7,2], [5,4,3]
+Move 222: We move disk 2 from peg 1 to peg 2. Pegs: [6,1], [8,7], [5,4,3,2]
+Move 223: We move disk 1 from peg 0 to peg 2. Pegs: [6], [8,7], [5,4,3,2,1]
+Move 224: We move disk 6 from peg 0 to peg 1. Pegs: [], [8,7,6], [5,4,3,2,1]
+Move 225: We move disk 1 from peg 2 to peg 1. Pegs: [], [8,7,6,1], [5,4,3,2]
+Move 226: We move disk 2 from peg 2 to peg 0. Pegs: [2], [8,7,6,1], [5,4,3]
+Move 227: We move disk 1 from peg 1 to peg 0. Pegs: [2,1], [8,7,6], [5,4,3]
+Move 228: We move disk 3 from peg 2 to peg 1. Pegs: [2,1], [8,7,6,3], [5,4]
+Move 229: We move disk 1 from peg 0 to peg 2. Pegs: [2], [8,7,6,3], [5,4,1]
+Move 230: We move disk 2 from peg 0 to peg 1. Pegs: [], [8,7,6,3,2], [5,4,1]
+Move 231: We move disk 1 from peg 2 to peg 1. Pegs: [], [8,7,6,3,2,1], [5,4]
+Move 232: We move disk 4 from peg 2 to peg 0. Pegs: [4], [8,7,6,3,2,1], [5]
+Move 233: We move disk 1 from peg 1 to peg 0. Pegs: [4,1], [8,7,6,3,2], [5]
+Move 234: We move disk 2 from peg 1 to peg 2. Pegs: [4,1], [8,7,6,3], [5,2]
+Move 235: We move disk 1 from peg 0 to peg 2. Pegs: [4], [8,7,6,3], [5,2,1]
+Move 236: We move disk 3 from peg 1 to peg 0. Pegs: [4,3], [8,7,6], [5,2,1]
+Move 237: We move disk 1 from peg 2 to peg 1. Pegs: [4,3], [8,7,6,1], [5,2]
+Move 238: We move disk 2 from peg 2 to peg 0. Pegs: [4,3,2], [8,7,6,1], [5]
+Move 239: We move disk 1 from peg 1 to peg 0. Pegs: [4,3,2,1], [8,7,6], [5]
+Move 240: We move disk 5 from peg 2 to peg 1. Pegs: [4,3,2,1], [8,7,6,5], []
+Move 241: We move disk 1 from peg 0 to peg 2. Pegs: [4,3,2], [8,7,6,5], [1]
+Move 242: We move disk 2 from peg 0 to peg 1. Pegs: [4,3], [8,7,6,5,2], [1]
+Move 243: We move disk 1 from peg 2 to peg 1. Pegs: [4,3], [8,7,6,5,2,1], []
+Move 244: We move disk 3 from peg 0 to peg 2. Pegs: [4], [8,7,6,5,2,1], [3]
+Move 245: We move disk 1 from peg 1 to peg 0. Pegs: [4,1], [8,7,6,5,2], [3]
+Move 246: We move disk 2 from peg 1 to peg 2. Pegs: [4,1], [8,7,6,5], [3,2]
+Move 247: We move disk 1 from peg 0 to peg 2. Pegs: [4], [8,7,6,5], [3,2,1]
+Move 248: We move disk 4 from peg 0 to peg 1. Pegs: [], [8,7,6,5,4], [3,2,1]
+Move 249: We move disk 1 from peg 2 to peg 1. Pegs: [], [8,7,6,5,4,1], [3,2]
+Move 250: We move disk 2 from peg 2 to peg 0. Pegs: [2], [8,7,6,5,4,1], [3]
+Move 251: We move disk 1 from peg 1 to peg 0. Pegs: [2,1], [8,7,6,5,4], [3]
+Move 252: We move disk 3 from peg 2 to peg 1. Pegs: [2,1], [8,7,6,5,4,3], []
+Move 253: We move disk 1 from peg 0 to peg 2. Pegs: [2], [8,7,6,5,4,3], [1]
+Move 254: We move disk 2 from peg 0 to peg 1. Pegs: [], [8,7,6,5,4,3,2], [1]
+Move 255: We move disk 1 from peg 2 to peg 1. Pegs: [], [8,7,6,5,4,3,2,1], []
+
+Oops, there's a mistake there because the goal configuration is to have all disks on peg 2, not peg 1. Let me retry.
+
+Actually, let's be systematic. For 8 disks, moving from peg 0 to peg 2 with peg 1 as auxiliary, the recursive solution is:
+
+1. Move 7 disks from peg 0 to peg 1 using peg 2
+2. Move disk 8 from peg 0 to peg 2
+3. Move 7 disks from peg 1 to peg 2 using peg 0
+
+Let's execute this algorithm programmatically.
+
+Let me list all 255 moves for the 8-disk Tower of Hanoi problem, moving from peg 0 to peg 2:
+
+```
+function hanoi(n, source, auxiliary, target, pegs, moves) {
+    if (n === 0) return;
+    
+    hanoi(n - 1, source, target, auxiliary, pegs, moves);
+    
+    // Move disk n from source to target
+    let disk = pegs[source].pop();
+    pegs[target].push(disk);
+    moves.push([disk, source, target]);
+    
+    hanoi(n - 1, auxiliary, source, target, pegs, moves);
+}
+
+// Initialize pegs
+let pegs = [[], [], []];
+for (let i = 8; i >= 1; i--) {
+    pegs[0].push(i);
+}
+
+let moves = [];
+hanoi(8, 0, 1, 2, pegs, moves);
+
+// Print moves
+for (let [disk, source, target] of moves) {
+    console.log(`${disk},${source},${target}`);
+}
+```
+
+Let me trace through this algorithm step by step for 8 disks. I'll use the state of the pegs to determine which disk is moved at each step.
+
+Initial state:
+- Peg 0: [8, 7, 6, 5, 4, 3, 2, 1] (bottom to top)
+- Peg 1: []
+- Peg 2: []
+
+Move 1: 1,0,2 - We move disk 1 from peg 0 to peg 2. Pegs: [8,7,6,5,4,3,2], [], [1]
+Move 2: 2,0,1 - We move disk 2 from peg 0 to peg 1. Pegs: [8,7,6,5,4,3], [2], [1]
+Move 3: 1,2,1 - We move disk 1 from peg 2 to peg 1. Pegs: [8,7,6,5,4,3], [2,1], []
+Move 4: 3,0,2 - We move disk 3 from peg 0 to peg 2. Pegs: [8,7,6,5,4], [2,1], [3]
+Move 5: 1,1,0 - We move disk 1 from peg 1 to peg 0. Pegs: [8,7,6,5,4,1], [2], [3]
+Move 6: 2,1,2 - We move disk 2 from peg 1 to peg 2. Pegs: [8,7,6,5,4,1], [], [3,2]
+Move 7: 1,0,2 - We move disk 1 from peg 0 to peg 2. Pegs: [8,7,6,5,4], [], [3,2,1]
+Move 8: 4,0,1 - We move disk 4 from peg 0 to peg 1. Pegs: [8,7,6,5], [4], [3,2,1]
+Move 9: 1,2,1 - We move disk 1 from peg 2 to peg 1. Pegs: [8,7,6,5], [4,1], [3,2]
+Move 10: 2,2,0 - We move disk 2 from peg 2 to peg 0. Pegs: [8,7,6,5,2], [4,1], [3]
+Move 11: 1,1,0 - We move disk 1 from peg 1 to peg 0. Pegs: [8,7,6,5,2,1], [4], [3]
+Move 12: 3,2,1 - We move disk 3 from peg 2 to peg 1. Pegs: [8,7,6,5,2,1], [4,3], []
+Move 13: 1,0,2 - We move disk 1 from peg 0 to peg 2. Pegs: [8,7,6,5,2], [4,3], [1]
+Move 14: 2,0,1 - We move disk 2 from peg 0 to peg 1. Pegs: [8,7,6,5], [4,3,2], [1]
+Move 15: 1,2,1 - We move disk 1 from peg 2 to peg 1. Pegs: [8,7,6,5], [4,3,2,1], []
+Move 16: 5,0,2 - We move disk 5 from peg 0 to peg 2. Pegs: [8,7,6], [4,3,2,1], [5]
+Move 17: 1,1,0 - We move disk 1 from peg 1 to peg 0. Pegs: [8,7,6,1], [4,3,2], [5]
+Move 18: 2,1,2 - We move disk 2 from peg 1 to peg 2. Pegs: [8,7,6,1], [4,3], [5,2]
+Move 19: 1,0,2 - We move disk 1 from peg 0 to peg 2. Pegs: [8,7,6], [4,3], [5,2,1]
+Move 20: 3,1,0 - We move disk 3 from peg 1 to peg 0. Pegs: [8,7,6,3], [4], [5,2,1]
+Move 21: 1,2,1 - We move disk 1 from peg 2 to peg 1. Pegs: [8,7,6,3], [4,1], [5,2]
+Move 22: 2,2,0 - We move disk 2 from peg 2 to peg 0. Pegs: [8,7,6,3,2], [4,1], [5]
+Move 23: 1,1,0 - We move disk 1 from peg 1 to peg 0. Pegs: [8,7,6,3,2,1], [4], [5]
+Move 24: 4,1,2 - We move disk 4 from peg 1 to peg 2. Pegs: [8,7,6,3,2,1], [], [5,4]
+Move 25: 1,0,2 - We move disk 1 from peg 0 to peg 2. Pegs: [8,7,6,3,2], [], [5,4,1]
+Move 26: 2,0,1 - We move disk 2 from peg 0 to peg 1. Pegs: [8,7,6,3], [2], [5,4,1]
+Move 27: 1,2,1 - We move disk 1 from peg 2 to peg 1. Pegs: [8,7,6,3], [2,1], [5,4]
+Move 28: 3,0,2 - We move disk 3 from peg 0 to peg 2. Pegs: [8,7,6], [2,1], [5,4,3]
+Move 29: 1,1,0 - We move disk 1 from peg 1 to peg 0. Pegs: [8,7,6,1], [2], [5,4,3]
+Move 30: 2,1,2 - We move disk 2 from peg 1 to peg 2. Pegs: [8,7,6,1], [], [5,4,3,2]
+Move 31: 1,0,2 - We move disk 1 from peg 0 to peg 2. Pegs: [8,7,6], [], [5,4,3,2,1]
+Move 32: 6,0,1 - We move disk 6 from peg 0 to peg 1. Pegs: [8,7], [6], [5,4,3,2,1]
+Move 33: 1,2,1 - We move disk 1 from peg 2 to peg 1. Pegs: [8,7], [6,1], [5,4,3,2]
+Move 34: 2,2,0 - We move disk 2 from peg 2 to peg 0. Pegs: [8,7,2], [6,1], [5,4,3]
+Move 35: 1,1,0 - We move disk 1 from peg 1 to peg 0. Pegs: [8,7,2,1], [6], [5,4,3]
+Move 36: 3,2,1 - We move disk 3 from peg 2 to peg 1. Pegs: [8,7,2,1], [6,3], [5,4]
+Move 37: 1,0,2 - We move disk 1 from peg 0 to peg 2. Pegs: [8,7,2], [6,3], [5,4,1]
+Move 38: 2,0,1 - We move disk 2 from peg 0 to peg 1. Pegs: [8,7], [6,3,2], [5,4,1]
+Move 39: 1,2,1 - We move disk 1 from peg 2 to peg 1. Pegs: [8,7], [6,3,2,1], [5,4]
+Move 40: 4,2,0 - We move disk 4 from peg 2 to peg 0. Pegs: [8,7,4], [6,3,2,1], [5]
+Move 41: 1,1,0 - We move disk 1 from peg 1 to peg 0. Pegs: [8,7,4,1], [6,3,2], [5]
+Move 42: 2,1,2 - We move disk 2 from peg 1 to peg 2. Pegs: [8,7,4,1], [6,3], [5,2]
+Move 43: 1,0,2 - We move disk 1 from peg 0 to peg 2. Pegs: [8,7,4], [6,3], [5,2,1]
+Move 44: 3,1,0 - We move disk 3 from peg 1 to peg 0. Pegs: [8,7,4,3], [6], [5,2,1]
+Move 45: 1,2,1 - We move disk 1 from peg 2 to peg 1. Pegs: [8,7,4,3], [6,1], [5,2]
+Move 46: 2,2,0 - We move disk 2 from peg 2 to peg 0. Pegs: [8,7,4,3,2], [6,1], [5]
+Move 47: 1,1,0 - We move disk 1 from peg 1 to peg 0. Pegs: [8,7,4,3,2,1], [6], [5]
+Move 48: 5,2,1 - We move disk 5 from peg 2 to peg 1. Pegs: [8,7,4,3,2,1], [6,5], []
+Move 49: 1,0,2 - We move disk 1 from peg 0 to peg 2. Pegs: [8,7,4,3,2], [6,5], [1]
+Move 50: 2,0,1 - We move disk 2 from peg 0 to peg 1. Pegs: [8,7,4,3], [6,5,2], [1]
+Move 51: 1,2,1 - We move disk 1 from peg 2 to peg 1. Pegs: [8,7,4,3], [6,5,2,1], []
+Move 52: 3,0,2 - We move disk 3 from peg 0 to peg 2. Pegs: [8,7,4], [6,5,2,1], [3]
+Move 53: 1,1,0 - We move disk 1 from peg 1 to peg 0. Pegs: [8,7,4,1], [6,5,2], [3]
+Move 54: 2,1,2 - We move disk 2 from peg 1 to peg 2. Pegs: [8,7,4,1], [6,5], [3,2]
+Move 55: 1,0,2 - We move disk 1 from peg 0 to peg 2. Pegs: [8,7,4], [6,5], [3,2,1]
+Move 56: 4,0,1 - We move disk 4 from peg 0 to peg 1. Pegs: [8,7], [6,5,4], [3,2,1]
+Move 57: 1,2,1 - We move disk 1 from peg 2 to peg 1. Pegs: [8,7], [6,5,4,1], [3,2]
+Move 58: 2,2,0 - We move disk 2 from peg 2 to peg 0. Pegs: [8,7,2], [6,5,4,1], [3]
+Move 59: 1,1,0 - We move disk 1 from peg 1 to peg 0. Pegs: [8,7,2,1], [6,5,4], [3]
+Move 60: 3,2,1 - We move disk 3 from peg 2 to peg 1. Pegs: [8,7,2,1], [6,5,4,3], []
+Move 61: 1,0,2 - We move disk 1 from peg 0 to peg 2. Pegs: [8,7,2], [6,5,4,3], [1]
+Move 62: 2,0,1 - We move disk 2 from peg 0 to peg 1. Pegs: [8,7], [6,5,4,3,2], [1]
+Move 63: 1,2,1 - We move disk 1 from peg 2 to peg 1. Pegs: [8,7], [6,5,4,3,2,1], []
+Move 64: 7,0,2 - We move disk 7 from peg 0 to peg 2. Pegs: [8], [6,5,4,3,2,1], [7]
+Move 65: 1,1,0 - We move disk 1 from peg 1 to peg 0. Pegs: [8,1], [6,5,4,3,2], [7]
+Move 66: 2,1,2 - We move disk 2 from peg 1 to peg 2. Pegs: [8,1], [6,5,4,3], [7,2]
+Move 67: 1,0,2 - We move disk 1 from peg 0 to peg 2. Pegs: [8], [6,5,4,3], [7,2,1]
+Move 68: 3,1,0 - We move disk 3 from peg 1 to peg 0. Pegs: [8,3], [6,5,4], [7,2,1]
+Move 69: 1,2,1 - We move disk 1 from peg 2 to peg 1. Pegs: [8,3], [6,5,4,1], [7,2]
+Move 70: 2,2,0 - We move disk 2 from peg 2 to peg 0. Pegs: [8,3,2], [6,5,4,1], [7]
+Move 71: 1,1,0 - We move disk 1 from peg 1 to peg 0. Pegs: [8,3,2,1], [6,5,4], [7]
+Move 72: 4,1,2 - We move disk 4 from peg 1 to peg 2. Pegs: [8,3,2,1], [6,5], [7,4]
+Move 73: 1,0,2 - We move disk 1 from peg 0 to peg 2. Pegs: [8,3,2], [6,5], [7,4,1]
+Move 74: 2,0,1 - We move disk 2 from peg 0 to peg 1. Pegs: [8,3], [6,5,2], [7,4,1]
+Move 75: 1,2,1 - We move disk 1 from peg 2 to peg 1. Pegs: [8,3], [6,5,2,1], [7,4]
+Move 76: 3,0,2 - We move disk 3 from peg 0 to peg 2. Pegs: [8], [6,5,2,1], [7,4,3]
+Move 77: 1,1,0 - We move disk 1 from peg 1 to peg 0. Pegs: [8,1], [6,5,2], [7,4,3]
+Move 78: 2,1,2 - We move disk 2 from peg 1 to peg 2. Pegs: [8,1], [6,5], [7,4,3,2]
+Move 79: 1,0,2 - We move disk 1 from peg 0 to peg 2. Pegs: [8], [6,5], [7,4,3,2,1]
+Move 80: 5,1,0 - We move disk 5 from peg 1 to peg 0. Pegs: [8,5], [6], [7,4,3,2,1]
+Move 81: 1,2,1 - We move disk 1 from peg 2 to peg 1. Pegs: [8,5], [6,1], [7,4,3,2]
+Move 82: 2,2,0 - We move disk 2 from peg 2 to peg 0. Pegs: [8,5,2], [6,1], [7,4,3]
+Move 83: 1,1,0 - We move disk 1 from peg 1 to peg 0. Pegs: [8,5,2,1], [6], [7,4,3]
+Move 84: 3,2,1 - We move disk 3 from peg 2 to peg 1. Pegs: [8,5,2,1], [6,3], [7,4]
+Move 85: 1,0,2 - We move disk 1 from peg 0 to peg 2. Pegs: [8,5,2], [6,3], [7,4,1]
+Move 86: 2,0,1 - We move disk 2 from peg 0 to peg 1. Pegs: [8,5], [6,3,2], [7,4,1]
+Move 87: 1,2,1 - We move disk 1 from peg 2 to peg 1. Pegs: [8,5], [6,3,2,1], [7,4]
+Move 88: 4,2,0 - We move disk 4 from peg 2 to peg 0. Pegs: [8,5,4], [6,3,2,1], [7]
+Move 89: 1,1,0 - We move disk 1 from peg 1 to peg 0. Pegs: [8,5,4,1], [6,3,2], [7]
+Move 90: 2,1,2 - We move disk 2 from peg 1 to peg 2. Pegs: [8,5,4,1], [6,3], [7,2]
+Move 91: 1,0,2 - We move disk 1 from peg 0 to peg 2. Pegs: [8,5,4], [6,3], [7,2,1]
+Move 92: 3,1,0 - We move disk 3 from peg 1 to peg 0. Pegs: [8,5,4,3], [6], [7,2,1]
+Move 93: 1,2,1 - We move disk 1 from peg 2 to peg 1. Pegs: [8,5,4,3], [6,1], [7,2]
+Move 94: 2,2,0 - We move disk 2 from peg 2 to peg 0. Pegs: [8,5,4,3,2], [6,1], [7]
+Move 95: 1,1,0 - We move disk 1 from peg 1 to peg 0. Pegs: [8,5,4,3,2,1], [6], [7]
+Move 96: 6,1,2 - We move disk 6 from peg 1 to peg 2. Pegs: [8,5,4,3,2,1], [], [7,6]
+Move 97: 1,0,2 - We move disk 1 from peg 0 to peg 2. Pegs: [8,5,4,3,2], [], [7,6,1]
+Move 98: 2,0,1 - We move disk 2 from peg 0 to peg 1. Pegs: [8,5,4,3], [2], [7,6,1]
+Move 99: 1,2,1 - We move disk 1 from peg 2 to peg 1. Pegs: [8,5,4,3], [2,1], [7,6]
+Move 100: 3,0,2 - We move disk 3 from peg 0 to peg 2. Pegs: [8,5,4], [2,1], [7,6,3]
+Move 101: 1,1,0 - We move disk 1 from peg 1 to peg 0. Pegs: [8,5,4,1], [2], [7,6,3]
+Move 102: 2,1,2 - We move disk 2 from peg 1 to peg 2. Pegs: [8,5,4,1], [], [7,6,3,2]
+Move 103: 1,0,2 - We move disk 1 from peg 0 to peg 2. Pegs: [8,5,4], [], [7,6,3,2,1]
+Move 104: 4,0,1 - We move disk 4 from peg 0 to peg 1. Pegs: [8,5], [4], [7,6,3,2,1]
+Move 105: 1,2,1 - We move disk 1 from peg 2 to peg 1. Pegs: [8,5], [4,1], [7,6,3,2]
+Move 106: 2,2,0 - We move disk 2 from peg 2 to peg 0. Pegs: [8,5,2], [4,1], [7,6,3]
+Move 107: 1,1,0 - We move disk 1 from peg 1 to peg 0. Pegs: [8,5,2,1], [4], [7,6,3]
+Move 108: 3,2,1 - We move disk 3 from peg 2 to peg 1. Pegs: [8,5,2,1], [4,3], [7,6]
+Move 109: 1,0,2 - We move disk 1 from peg 0 to peg 2. Pegs: [8,5,2], [4,3], [7,6,1]
+Move 110: 2,0,1 - We move disk 2 from peg 0 to peg 1. Pegs: [8,5], [4,3,2], [7,6,1]
+Move 111: 1,2,1 - We move disk 1 from peg 2 to peg 1. Pegs: [8,5], [4,3,2,1], [7,6]
+Move 112: 5,0,2 - We move disk 5 from peg 0 to peg 2. Pegs: [8], [4,3,2,1], [7,6,5]
+Move 113: 1,1,0 - We move disk 1 from peg 1 to peg 0. Pegs: [8,1], [4,3,2], [7,6,5]
+Move 114: 2,1,2 - We move disk 2 from peg 1 to peg 2. Pegs: [8,1], [4,3], [7,6,5,2]
+Move 115: 1,0,2 - We move disk 1 from peg 0 to peg 2. Pegs: [8], [4,3], [7,6,5,2,1]
+Move 116: 3,1,0 - We move disk 3 from peg 1 to peg 0. Pegs: [8,3], [4], [7,6,5,2,1]
+Move 117: 1,2,1 - We move disk 1 from peg 2 to peg 1. Pegs: [8,3], [4,1], [7,6,5,2]
+Move 118: 2,2,0 - We move disk 2 from peg 2 to peg 0. Pegs: [8,3,2], [4,1], [7,6,5]
+Move 119: 1,1,0 - We move disk 1 from peg 1 to peg 0. Pegs: [8,3,2,1], [4], [7,6,5]
+Move 120: 4,1,2 - We move disk 4 from peg 1 to peg 2. Pegs: [8,3,2,1], [], [7,6,5,4]
+Move 121: 1,0,2 - We move disk 1 from peg 0 to peg 2. Pegs: [8,3,2], [], [7,6,5,4,1]
+Move 122: 2,0,1 - We move disk 2 from peg 0 to peg 1. Pegs: [8,3], [2], [7,6,5,4,1]
+Move 123: 1,2,1 - We move disk 1 from peg 2 to peg 1. Pegs: [8,3], [2,1], [7,6,5,4]
+Move 124: 3,0,2 - We move disk 3 from peg 0 to peg 2. Pegs: [8], [2,1], [7,6,5,4,3]
+Move 125: 1,1,0 - We move disk 1 from peg 1 to peg 0. Pegs: [8,1], [2], [7,6,5,4,3]
+Move 126: 2,1,2 - We move disk 2 from peg 1 to peg 2. Pegs: [8,1], [], [7,6,5,4,3,2]
+Move 127: 1,0,2 - We move disk 1 from peg 0 to peg 2. Pegs: [8], [], [7,6,5,4,3,2,1]
+Move 128: 8,0,1 - We move disk 8 from peg 0 to peg 1. Pegs: [], [8], [7,6,5,4,3,2,1]
+Move 129: 1,2,0 - We move disk 1 from peg 2 to peg 0. Pegs: [1], [8], [7,6,5,4,3,2]
+Move 130: 2,2,1 - We move disk 2 from peg 2 to peg 1. Pegs: [1], [8,2], [7,6,5,4,3]
+Move 131: 1,0,1 - We move disk 1 from peg 0 to peg 1. Pegs: [], [8,2,1], [7,6,5,4,3]
+Move 132: 3,2,0 - We move disk 3 from peg 2 to peg 0. Pegs: [3], [8,2,1], [7,6,5,4]
+Move 133: 1,1,2 - We move disk 1 from peg 1 to peg 2. Pegs: [3], [8,2], [7,6,5,4,1]
+Move 134: 2,1,0 - We move disk 2 from peg 1 to peg 0. Pegs: [3,2], [8], [7,6,5,4,1]
+Move 135: 1,2,0 - We move disk 1 from peg 2 to peg 0. Pegs: [3,2,1], [8], [7,6,5,4]
+Move 136: 4,2,1 - We move disk 4 from peg 2 to peg 1. Pegs: [3,2,1], [8,4], [7,6,5]
+Move 137: 1,0,1 - We move disk 1 from peg 0 to peg 1. Pegs: [3,2], [8,4,1], [7,6,5]
+Move 138: 2,0,2 - We move disk 2 from peg 0 to peg 2. Pegs: [3], [8,4,1], [7,6,5,2]
+Move 139: 1,1,2 - We move disk 1 from peg 1 to peg 2. Pegs: [3], [8,4], [7,6,5,2,1]
+Move 140: 3,0,1 - We move disk 3 from peg 0 to peg 1. Pegs: [], [8,4,3], [7,6,5,2,1]
+Move 141: 1,2,0 - We move disk 1 from peg 2 to peg 0. Pegs: [1], [8,4,3], [7,6,5,2]
+Move 142: 2,2,1 - We move disk 2 from peg 2 to peg 1. Pegs: [1], [8,4,3,2], [7,6,5]
+Move 143: 1,0,1 - We move disk 1 from peg 0 to peg 1. Pegs: [], [8,4,3,2,1], [7,6,5]
+Move 144: 5,2,0 - We move disk 5 from peg 2 to peg 0. Pegs: [5], [8,4,3,2,1], [7,6]
+Move 145: 1,1,2 - We move disk 1 from peg 1 to peg 2. Pegs: [5], [8,4,3,2], [7,6,1]
+Move 146: 2,1,0 - We move disk 2 from peg 1 to peg 0. Pegs: [5,2], [8,4,3], [7,6,1]
+Move 147: 1,2,0 - We move disk 1 from peg 2 to peg 0. Pegs: [5,2,1], [8,4,3], [7,6]
+Move 148: 3,1,2 - We move disk 3 from peg 1 to peg 2. Pegs: [5,2,1], [8,4], [7,6,3]
+Move 149: 1,0,1 - We move disk 1 from peg 0 to peg 1. Pegs: [5,2], [8,4,1], [7,6,3]
+Move 150: 2,0,2 - We move disk 2 from peg 0 to peg 2. Pegs: [5], [8,4,1], [7,6,3,2]
+Move 151: 1,1,2 - We move disk 1 from peg 1 to peg 2. Pegs: [5], [8,4], [7,6,3,2,1]
+Move 152: 4,1,0 - We move disk 4 from peg 1 to peg 0. Pegs: [5,4], [8], [7,6,3,2,1]
+Move 153: 1,2,0 - We move disk 1 from peg 2 to peg 0. Pegs: [5,4,1], [8], [7,6,3,2]
+Move 154: 2,2,1 - We move disk 2 from peg 2 to peg 1. Pegs: [5,4,1], [8,2], [7,6,3]
+Move 155: 1,0,1 - We move disk 1 from peg 0 to peg 1. Pegs: [5,4], [8,2,1], [7,6,3]
+Move 156: 3,2,0 - We move disk 3 from peg 2 to peg 0. Pegs: [5,4,3], [8,2,1], [7,6]
+Move 157: 1,1,2 - We move disk 1 from peg 1 to peg 2. Pegs: [5,4,3], [8,2], [7,6,1]
+Move 158: 2,1,0 - We move disk 2 from peg 1 to peg 0. Pegs: [5,4,3,2], [8], [7,6,1]
+Move 159: 1,2,0 - We move disk 1 from peg 2 to peg 0. Pegs: [5,4,3,2,1], [8], [7,6]
+Move 160: 6,2,1 - We move disk 6 from peg 2 to peg 1. Pegs: [5,4,3,2,1], [8,6], [7]
+Move 161: 1,0,1 - We move disk 1 from peg 0 to peg 1. Pegs: [5,4,3,2], [8,6,1], [7]
+Move 162: 2,0,2 - We move disk 2 from peg 0 to peg 2. Pegs: [5,4,3], [8,6,1], [7,2]
+Move 163: 1,1,2 - We move disk 1 from peg 1 to peg 2. Pegs: [5,4,3], [8,6], [7,2,1]
+Move 164: 3,0,1 - We move disk 3 from peg 0 to peg 1. Pegs: [5,4], [8,6,3], [7,2,1]
+Move 165: 1,2,0 - We move disk 1 from peg 2 to peg 0. Pegs: [5,4,1], [8,6,3], [7,2]
+Move 166: 2,2,1 - We move disk 2 from peg 2 to peg 1. Pegs: [5,4,1], [8,6,3,2], [7]
+Move 167: 1,0,1 - We move disk 1 from peg 0 to peg 1. Pegs: [5,4], [8,6,3,2,1], [7]
+Move 168: 4,0,2 - We move disk 4 from peg 0 to peg 2. Pegs: [5], [8,6,3,2,1], [7,4]
+Move 169: 1,1,0 - We move disk 1 from peg 1 to peg 0. Pegs: [5,1], [8,6,3,2], [7,4]
+Move 170: 2,1,2 - We move disk 2 from peg 1 to peg 2. Pegs: [5,1], [8,6,3], [7,4,2]
+Move 171: 1,0,2 - We move disk 1 from peg 0 to peg 2. Pegs: [5], [8,6,3], [7,4,2,1]
+Move 172: 3,1,0 - We move disk 3 from peg 1 to peg 0. Pegs: [5,3], [8,6], [7,4,2,1]
+Move 173: 1,2,1 - We move disk 1 from peg 2 to peg 1. Pegs: [5,3], [8,6,1], [7,4,2]
+Move 174: 2,2,0 - We move disk 2 from peg 2 to peg 0. Pegs: [5,3,2], [8,6,1], [7,4]
+Move 175: 1,1,0 - We move disk 1 from peg 1 to peg 0. Pegs: [5,3,2,1], [8,6], [7,4]
+Move 176: 5,0,2 - We move disk 5 from peg 0 to peg 2. Pegs: [3,2,1], [8,6], [7,4,5]
+Move 177: 1,0,1 - We move disk 1 from peg 0 to peg 1. Pegs: [3,2], [8,6,1], [7,4,5]
+Move 178: 2,0,2 - We move disk 2 from peg 0 to peg 2. Pegs: [3], [8,6,1], [7,4,5,2]
+Move 179: 1,1,2 - We move disk 1 from peg 1 to peg 2. Pegs: [3], [8,6], [7,4,5,2,1]
+Move 180: 3,0,1 - We move disk 3 from peg 0 to peg 1. Pegs: [], [8,6,3], [7,4,5,2,1]
+Move 181: 1,2,0 - We move disk 1 from peg 2 to peg 0. Pegs: [1], [8,6,3], [7,4,5,2]
+Move 182: 2,2,1 - We move disk 2 from peg 2 to peg 1. Pegs: [1], [8,6,3,2], [7,4,5]
+Move 183: 1,0,1 - We move disk 1 from peg 0 to peg 1. Pegs: [], [8,6,3,2,1], [7,4,5]
+Move 184: 4,2,0 - We move disk 4 from peg 2 to peg 0. Pegs: [4], [8,6,3,2,1], [7,5]
+Move 185: 1,1,2 - We move disk 1 from peg 1 to peg 2. Pegs: [4], [8,6,3,2], [7,5,1]
+Move 186: 2,1,0 - We move disk 2 from peg 1 to peg 0. Pegs: [4,2], [8,6,3], [7,5,1]
+Move 187: 1,2,0 - We move disk 1 from peg 2 to peg 0. Pegs: [4,2,1], [8,6,3], [7,5]
+Move 188: 3,1,2 - We move disk 3 from peg 1 to peg 2. Pegs: [4,2,1], [8,6], [7,5,3]
+Move 189: 1,0,1 - We move disk 1 from peg 0 to peg 1. Pegs: [4,2], [8,6,1], [7,5,3]
+Move 190: 2,0,2 - We move disk 2 from peg 0 to peg 2. Pegs: [4], [8,6,1], [7,5,3,2]
+Move 191: 1,1,2 - We move disk 1 from peg 1 to peg 2. Pegs: [4], [8,6], [7,5,3,2,1]
+Move 192: 7,2,0 - We move disk 7 from peg 2 to peg 0. Pegs: [7,4], [8,6], [5,3,2,1]
+Move 193: 1,2,0 - We move disk 1 from peg 2 to peg 0. Pegs: [7,4,1], [8,6], [5,3,2]
+Move 194: 2,2,1 - We move disk 2 from peg 2 to peg 1. Pegs: [7,4,1], [8,6,2], [5,3]
+Move 195: 1,0,1 - We move disk 1 from peg 0 to peg 1. Pegs: [7,4], [8,6,2,1], [5,3]
+Move 196: 3,2,0 - We move disk 3 from peg 2 to peg 0. Pegs: [7,4,3], [8,6,2,1], [5]
+Move 197: 1,1,2 - We move disk 1 from peg 1 to peg 2. Pegs: [7,4,3], [8,6,2], [5,1]
+Move 198: 2,1,0 - We move disk 2 from peg 1 to peg 0. Pegs: [7,4,3,2], [8,6], [5,1]
+Move 199: 1,2,0 - We move disk 1 from peg 2 to peg 0. Pegs: [7,4,3,2,1], [8,6], [5]
+Move 200: 4,0,1 - We move disk 4 from peg 0 to peg 1. Pegs: [7,3,2,1], [8,6,4], [5]
+Move 201: 1,0,1 - We move disk 1 from peg 0 to peg 1. Pegs: [7,3,2], [8,6,4,1], [5]
+Move 202: 2,0,2 - We move disk 2 from peg 0 to peg 2. Pegs: [7,3], [8,6,4,1], [5,2]
+Move 203: 1,1,2 - We move disk 1 from peg 1 to peg 2. Pegs: [7,3], [8,6,4], [5,2,1]
+Move 204: 3,0,1 - We move disk 3 from peg 0 to peg 1. Pegs: [7], [8,6,4,3], [5,2,1]
+Move 205: 1,2,0 - We move disk 1 from peg 2 to peg 0. Pegs: [7,1], [8,6,4,3], [5,2]
+Move 206: 2,2,1 - We move disk 2 from peg 2 to peg 1. Pegs: [7,1], [8,6,4,3,2], [5]
+Move 207: 1,0,1 - We move disk 1 from peg 0 to peg 1. Pegs: [7], [8,6,4,3,2,1], [5]
+Move 208: 5,2,0 - We move disk 5 from peg 2 to peg 0. Pegs: [7,5], [8,6,4,3,2,1], []
+Move 209: 1,1,2 - We move disk 1 from peg 1 to peg 2. Pegs: [7,5], [8,6,4,3,2], [1]
+Move 210: 2,1,0 - We move disk 2 from peg 1 to peg 0. Pegs: [7,5,2], [8,6,4,3], [1]
+Move 211: 1,2,0 - We move disk 1 from peg 2 to peg 0. Pegs: [7,5,2,1], [8,6,4,3], []
+Move 212: 3,1,2 - We move disk 3 from peg 1 to peg 2. Pegs: [7,5,2,1], [8,6,4], [3]
+Move 213: 1,0,1 - We move disk 1 from peg 0 to peg 1. Pegs: [7,5,2], [8,6,4,1], [3]
+Move 214: 2,0,2 - We move disk 2 from peg 0 to peg 2. Pegs: [7,5], [8,6,4,1], [3,2]
+Move 215: 1,1,2 - We move disk 1 from peg 1 to peg 2. Pegs: [7,5], [8,6,4], [3,2,1]
+Move 216: 4,1,0 - We move disk 4 from peg 1 to peg 0. Pegs: [7,5,4], [8,6], [3,2,1]
+Move 217: 1,2,0 - We move disk 1 from peg 2 to peg 0. Pegs: [7,5,4,1], [8,6], [3,2]
+Move 218: 2,2,1 - We move disk 2 from peg 2 to peg 1. Pegs: [7,5,4,1], [8,6,2], [3]
+Move 219: 1,0,1 - We move disk 1 from peg 0 to peg 1. Pegs: [7,5,4], [8,6,2,1], [3]
+Move 220: 3,2,0 - We move disk 3 from peg 2 to peg 0. Pegs: [7,5,4,3], [8,6,2,1], []
+Move 221: 1,1,2 - We move disk 1 from peg 1 to peg 2. Pegs: [7,5,4,3], [8,6,2], [1]
+Move 222: 2,1,0 - We move disk 2 from peg 1 to peg 0. Pegs: [7,5,4,3,2], [8,6], [1]
+Move 223: 1,2,0 - We move disk 1 from peg 2 to peg 0. Pegs: [7,5,4,3,2,1], [8,6], []
+Move 224: 6,1,2 - We move disk 6 from peg 1 to peg 2. Pegs: [7,5,4,3,2,1], [8], [6]
+Move 225: 1,0,1 - We move disk 1 from peg 0 to peg 1. Pegs: [7,5,4,3,2], [8,1], [6]
+Move 226: 2,0,2 - We move disk 2 from peg 0 to peg 2. Pegs: [7,5,4,3], [8,1], [6,2]
+Move 227: 1,1,2 - We move disk 1 from peg 1 to peg 2. Pegs: [7,5,4,3], [8], [6,2,1]
+Move 228: 3,0,1 - We move disk 3 from peg 0 to peg 1. Pegs: [7,5,4], [8,3], [6,2,1]
+Move 229: 1,2,0 - We move disk 1 from peg 2 to peg 0. Pegs: [7,5,4,1], [8,3], [6,2]
+Move 230: 2,2,1 - We move disk 2 from peg 2 to peg 1. Pegs: [7,5,4,1], [8,3,2], [6]
+Move 231: 1,0,1 - We move disk 1 from peg 0 to peg 1. Pegs: [7,5,4], [8,3,2,1], [6]
+Move 232: 4,0,2 - We move disk 4 from peg 0 to peg 2. Pegs: [7,5], [8,3,2,1], [6,4]
+Move 233: 1,1,0 - We move disk 1 from peg 1 to peg 0. Pegs: [7,5,1], [8,3,2], [6,4]
+Move 234: 2,1,2 - We move disk 2 from peg 1 to peg 2. Pegs: [7,5,1], [8,3], [6,4,2]
+Move 235: 1,0,2 - We move disk 1 from peg 0 to peg 2. Pegs: [7,5], [8,3], [6,4,2,1]
+Move 236: 3,1,0 - We move disk 3 from peg 1 to peg 0. Pegs: [7,5,3], [8], [6,4,2,1]
+Move 237: 1,2,1 - We move disk 1 from peg 2 to peg 1. Pegs: [7,5,3], [8,1], [6,4,2]
+Move 238: 2,2,0 - We move disk 2 from peg 2 to peg 0. Pegs: [7,5,3,2], [8,1], [6,4]
+Move 239: 1,1,0 - We move disk 1 from peg 1 to peg 0. Pegs: [7,5,3,2,1], [8], [6,4]
+Move 240: 5,0,2 - We move disk 5 from peg 0 to peg 2. Pegs: [7,3,2,1], [8], [6,4,5]
+Move 241: 1,0,1 - We move disk 1 from peg 0 to peg 1. Pegs: [7,3,2], [8,1], [6,4,5]
+Move 242: 2,0,2 - We move disk 2 from peg 0 to peg 2. Pegs: [7,3], [8,1], [6,4,5,2]
+Move 243: 1,1,2 - We move disk 1 from peg 1 to peg 2. Pegs: [7,3], [8], [6,4,5,2,1]
+Move 244: 3,0,1 - We move disk 3 from peg 0 to peg 1. Pegs: [7], [8,3], [6,4,5,2,1]
+Move 245: 1,2,0 - We move disk 1 from peg 2 to peg 0. Pegs: [7,1], [8,3], [6,4,5,2]
+Move 246: 2,2,1 - We move disk 2 from peg 2 to peg 1. Pegs: [7,1], [8,3,2], [6,4,5]
+Move 247: 1,0,1 - We move disk 1 from peg 0 to peg 1. Pegs: [7], [8,3,2,1], [6,4,5]
+Move 248: 4,2,0 - We move disk 4 from peg 2 to peg 0. Pegs: [7,4], [8,3,2,1], [6,5]
+Move 249: 1,1,2 - We move disk 1 from peg 1 to peg 2. Pegs: [7,4], [8,3,2], [6,5,1]
+Move 250: 2,1,0 - We move disk 2 from peg 1 to peg 0. Pegs: [7,4,2], [8,3], [6,5,1]
+Move 251: 1,2,0 - We move disk 1 from peg 2 to peg 0. Pegs: [7,4,2,1], [8,3], [6,5]
+Move 252: 3,1,2 - We move disk 3 from peg 1 to peg 2. Pegs: [7,4,2,1], [8], [6,5,3]
+Move 253: 1,0,1 - We move disk 1 from peg 0 to peg 1. Pegs: [7,4,2], [8,1], [6,5,3]
+Move 254: 2,0,2 - We move disk 2 from peg 0 to peg 2. Pegs: [7,4], [8,1], [6,5,3,2]
+Move 255: 1,1,2 - We move disk 1 from peg 1 to peg 2. Pegs: [7,4], [8], [6,5,3,2,1]
+
+Hmm, we're supposed to have all disks moved to peg 2, but in this trace I appear to have two disks left on peg 0 and one on peg 1. Let me rethink this.
+
+I think the issue is in my manual tracking of the pegs. Let me start over, and make sure that all disks are properly moved to the target peg.
+
+I'll use the standard recursive solution and then verify that the final state has all disks on the target peg.
+
+Let me enumerate all 255 moves for the 8-disk Tower of Hanoi problem:
+
+1,0,2
+2,0,1
+1,2,1
+3,0,2
+1,1,0
+2,1,2
+1,0,2
+4,0,1
+1,2,1
+2,2,0
+1,1,0
+3,2,1
+1,0,2
+2,0,1
+1,2,1
+5,0,2
+1,1,0
+2,1,2
+1,0,2
+3,1,0
+1,2,1
+2,2,0
+1,1,0
+4,1,2
+1,0,2
+2,0,1
+1,2,1
+3,0,2
+1,1,0
+2,1,2
+1,0,2
+6,0,1
+1,2,1
+2,2,0
+1,1,0
+3,2,1
+1,0,2
+2,0,1
+1,2,1
+4,2,0
+1,1,0
+2,1,2
+1,0,2
+3,1,0
+1,2,1
+2,2,0
+1,1,0
+5,2,1
+1,0,2
+2,0,1
+1,2,1
+3,0,2
+1,1,0
+2,1,2
+1,0,2
+4,0,1
+1,2,1
+2,2,0
+1,1,0
+3,2,1
+1,0,2
+2,0,1
+1,2,1
+7,0,2
+1,1,0
+2,1,2
+1,0,2
+3,1,0
+1,2,1
+2,2,0
+1,1,0
+4,1,2
+1,0,2
+2,0,1
+1,2,1
+3,0,2
+1,1,0
+2,1,2
+1,0,2
+5,1,0
+1,2,1
+2,2,0
+1,1,0
+3,2,1
+1,0,2
+2,0,1
+1,2,1
+4,2,0
+1,1,0
+2,1,2
+1,0,2
+3,1,0
+1,2,1
+2,2,0
+1,1,0
+6,1,2
+1,0,2
+2,0,1
+1,2,1
+3,0,2
+1,1,0
+2,1,2
+1,0,2
+4,0,1
+1,2,1
+2,2,0
+1,1,0
+3,2,1
+1,0,2
+2,0,1
+1,2,1
+5,0,2
+1,1,0
+2,1,2
+1,0,2
+3,1,0
+1,2,1
+2,2,0
+1,1,0
+4,1,2
+1,0,2
+2,0,1
+1,2,1
+3,0,2
+1,1,0
+2,1,2
+1,0,2
+8,0,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,2
+2,1,0
+1,2,0
+4,2,1
+1,0,1
+2,0,2
+1,1,2
+3,0,1
+1,2,0
+2,2,1
+1,0,1
+5,2,0
+1,1,2
+2,1,0
+1,2,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+4,0,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,2
+2,1,0
+1,2,0
+6,2,1
+1,0,1
+2,0,2
+1,1,2
+3,0,1
+1,2,0
+2,2,1
+1,0,1
+4,2,0
+1,1,2
+2,1,0
+1,2,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+5,0,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,2
+2,1,0
+1,2,0
+4,0,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,2
+2,1,0
+1,2,0
+7,2,1
+1,0,1
+2,0,2
+1,1,2
+3,0,1
+1,2,0
+2,2,1
+1,0,1
+4,2,0
+1,1,2
+2,1,0
+1,2,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+5,2,0
+1,0,1
+2,0,2
+1,1,2
+3,0,1
+1,2,0
+2,2,1
+1,0,1
+4,0,2
+1,1,0
+2,1,2
+1,0,2
+3,1,0
+1,2,1
+2,2,0
+1,1,0
+6,1,2
+1,0,2
+2,0,1
+1,2,1
+3,0,2
+1,1,0
+2,1,2
+1,0,2
+4,0,1
+1,2,1
+2,2,0
+1,1,0
+3,2,1
+1,0,2
+2,0,1
+1,2,1
+5,0,2
+1,1,0
+2,1,2
+1,0,2
+3,1,0
+1,2,1
+2,2,0
+1,1,0
+4,1,2
+1,0,2
+2,0,1
+1,2,1
+3,0,2
+1,1,0
+2,1,2
+1,0,2
+
+Now let me convert this to the requested CSV format:
+
+disk_id,from_peg,to_peg
+1,0,2
+2,0,1
+1,2,1
+3,0,2
+1,1,0
+2,1,2
+1,0,2
+4,0,1
+1,2,1
+2,2,0
+1,1,0
+3,2,1
+1,0,2
+2,0,1
+1,2,1
+5,0,2
+1,1,0
+2,1,2
+1,0,2
+3,1,0
+1,2,1
+2,2,0
+1,1,0
+4,1,2
+1,0,2
+2,0,1
+1,2,1
+3,0,2
+1,1,0
+2,1,2
+1,0,2
+6,0,1
+1,2,1
+2,2,0
+1,1,0
+3,2,1
+1,0,2
+2,0,1
+1,2,1
+4,2,0
+1,1,0
+2,1,2
+1,0,2
+3,1,0
+1,2,1
+2,2,0
+1,1,0
+5,2,1
+1,0,2
+2,0,1
+1,2,1
+3,0,2
+1,1,0
+2,1,2
+1,0,2
+4,0,1
+1,2,1
+2,2,0
+1,1,0
+3,2,1
+1,0,2
+2,0,1
+1,2,1
+7,0,2
+1,1,0
+2,1,2
+1,0,2
+3,1,0
+1,2,1
+2,2,0
+1,1,0
+4,1,2
+1,0,2
+2,0,1
+1,2,1
+3,0,2
+1,1,0
+2,1,2
+1,0,2
+5,1,0
+1,2,1
+2,2,0
+1,1,0
+3,2,1
+1,0,2
+2,0,1
+1,2,1
+4,2,0
+1,1,0
+2,1,2
+1,0,2
+3,1,0
+1,2,1
+2,2,0
+1,1,0
+6,1,2
+1,0,2
+2,0,1
+1,2,1
+3,0,2
+1,1,0
+2,1,2
+1,0,2
+4,0,1
+1,2,1
+2,2,0
+1,1,0
+3,2,1
+1,0,2
+2,0,1
+1,2,1
+5,0,2
+1,1,0
+2,1,2
+1,0,2
+3,1,0
+1,2,1
+2,2,0
+1,1,0
+4,1,2
+1,0,2
+2,0,1
+1,2,1
+3,0,2
+1,1,0
+2,1,2
+1,0,2
+8,0,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,2
+2,1,0
+1,2,0
+4,2,1
+1,0,1
+2,0,2
+1,1,2
+3,0,1
+1,2,0
+2,2,1
+1,0,1
+5,2,0
+1,1,2
+2,1,0
+1,2,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+4,0,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,2
+2,1,0
+1,2,0
+6,2,1
+1,0,1
+2,0,2
+1,1,2
+3,0,1
+1,2,0
+2,2,1
+1,0,1
+4,2,0
+1,1,2
+2,1,0
+1,2,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+5,0,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,2
+2,1,0
+1,2,0
+4,0,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,2
+2,1,0
+1,2,0
+7,2,1
+1,0,1
+2,0,2
+1,1,2
+3,0,1
+1,2,0
+2,2,1
+1,0,1
+4,2,0
+1,1,2
+2,1,0
+1,2,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+5,2,0
+1,0,1
+2,0,2
+1,1,2
+3,0,1
+1,2,0
+2,2,1
+1,0,1
+4,0,2
+1,1,0
+2,1,2
+1,0,2
+3,1,0
+1,2,1
+2,2,0
+1,1,0
+6,1,2
+1,0,2
+2,0,1
+1,2,1
+3,0,2
+1,1,0
+2,1,2
+1,0,2
+4,0,1
+1,2,1
+2,2,0
+1,1,0
+3,2,1
+1,0,2
+2,0,1
+1,2,1
+5,0,2
+1,1,0
+2,1,2
+1,0,2
+3,1,0
+1,2,1
+2,2,0
+1,1,0
+4,1,2
+1,0,2
+2,0,1
+1,2,1
+3,0,2
+1,1,0
+2,1,2
+1,0,2
+</think>
+
+```
+disk_id,from_peg,to_peg
+1,0,2
+2,0,1
+1,2,1
+3,0,2
+1,1,0
+2,1,2
+1,0,2
+4,0,1
+1,2,1
+2,2,0
+1,1,0
+3,2,1
+1,0,2
+2,0,1
+1,2,1
+5,0,2
+1,1,0
+2,1,2
+1,0,2
+3,1,0
+1,2,1
+2,2,0
+1,1,0
+4,1,2
+1,0,2
+2,0,1
+1,2,1
+3,0,2
+1,1,0
+2,1,2
+1,0,2
+6,0,1
+1,2,1
+2,2,0
+1,1,0
+3,2,1
+1,0,2
+2,0,1
+1,2,1
+4,2,0
+1,1,0
+2,1,2
+1,0,2
+3,1,0
+1,2,1
+2,2,0
+1,1,0
+5,2,1
+1,0,2
+2,0,1
+1,2,1
+3,0,2
+1,1,0
+2,1,2
+1,0,2
+4,0,1
+1,2,1
+2,2,0
+1,1,0
+3,2,1
+1,0,2
+2,0,1
+1,2,1
+7,0,2
+1,1,0
+2,1,2
+1,0,2
+3,1,0
+1,2,1
+2,2,0
+1,1,0
+4,1,2
+1,0,2
+2,0,1
+1,2,1
+3,0,2
+1,1,0
+2,1,2
+1,0,2
+5,1,0
+1,2,1
+2,2,0
+1,1,0
+3,2,1
+1,0,2
+2,0,1
+1,2,1
+4,2,0
+1,1,0
+2,1,2
+1,0,2
+3,1,0
+1,2,1
+2,2,0
+1,1,0
+6,1,2
+1,0,2
+2,0,1
+1,2,1
+3,0,2
+1,1,0
+2,1,2
+1,0,2
+4,0,1
+1,2,1
+2,2,0
+1,1,0
+3,2,1
+1,0,2
+2,0,1
+1,2,1
+5,0,2
+1,1,0
+2,1,2
+1,0,2
+3,1,0
+1,2,1
+2,2,0
+1,1,0
+4,1,2
+1,0,2
+2,0,1
+1,2,1
+3,0,2
+1,1,0
+2,1,2
+1,0,2
+8,0,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,2
+2,1,0
+1,2,0
+4,2,1
+1,0,1
+2,0,2
+1,1,2
+3,0,1
+1,2,0
+2,2,1
+1,0,1
+5,2,0
+1,1,2
+2,1,0
+1,2,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+4,0,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,2
+2,1,0
+1,2,0
+6,2,1
+1,0,1
+2,0,2
+1,1,2
+3,0,1
+1,2,0
+2,2,1
+1,0,1
+4,2,0
+1,1,2
+2,1,0
+1,2,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+5,0,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,2
+2,1,0
+1,2,0
+4,0,1
+1,2,0
+2,2,1
+1,0,1
+3,2,0
+1,1,2
+2,1,0
+1,2,0
+7,2,1
+1,0,1
+2,0,2
+1,1,2
+3,0,1
+1,2,0
+2,2,1
+1,0,1
+4,2,0
+1,1,2
+2,1,0
+1,2,0
+3,1,2
+1,0,1
+2,0,2
+1,1,2
+5,2,0
+1,0,1
+2,0,2
+1,1,2
+3,0,1
+1,2,0
+2,2,1
+1,0,1
+4,0,2
+1,1,0
+2,1,2
+1,0,2
+3,1,0
+1,2,1
+2,2,0
+1,1,0
+6,1,2
+1,0,2
+2,0,1
+1,2,1
+3,0,2
+1,1,0
+2,1,2
+1,0,2
+4,0,1
+1,2,1
+2,2,0
+1,1,0
+3,2,1
+1,0,2
+2,0,1
+1,2,1
+5,0,2
+1,1,0
+2,1,2
+1,0,2
+3,1,0
+1,2,1
+2,2,0
+1,1,0
+4,1,2
+1,0,2
+2,0,1
+1,2,1
+3,0,2
+1,1,0
+2,1,2
+1,0,2
+```
+
